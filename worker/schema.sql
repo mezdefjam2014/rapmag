@@ -19,3 +19,4 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX IF NOT EXISTS posts_pub ON posts(status, published_at DESC);
 CREATE INDEX IF NOT EXISTS posts_cat ON posts(category, status, published_at DESC);
 CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT);
+-- later columns/tables are in migrate-2.sql (run it after this file on a new database)

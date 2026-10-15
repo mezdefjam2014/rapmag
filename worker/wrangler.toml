@@ -16,3 +16,7 @@ binding = "IMAGES"
 bucket_name = "rapmag-images"
 
 # secrets (set with `wrangler secret put`, never committed): ADMIN_PASSWORD, SESSION_SECRET
+
+# posts scheduled stories to social when they go live (auto-posting must be switched on in Settings)
+[triggers]
+crons = ["*/15 * * * *"]
