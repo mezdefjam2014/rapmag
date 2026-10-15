@@ -80,6 +80,21 @@ export default {
         for (const k of keys) { if ((await usage(env, k)).length) kept.push(k); else { await env.IMAGES.delete(k); removed.push(k) } }
         return json({ ok: true, removed: removed.length, kept: kept.length });
       }
+      if (p === '/api/admin/link-search' && req.method === 'GET') {
+        /* web search for the highlighted words (Tavily or Brave Search; the key is a Cloudflare secret) */
+        const q = (url.searchParams.get('q') || '').trim().slice(0, 200); if (!q) return json({ results: [] });
+        if (env.TAVILY_API_KEY) {
+          const r = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env.TAVILY_API_KEY }, body: JSON.stringify({ query: q, max_results: 8, search_depth: 'basic', topic: 'general' }) });
+          const d = await r.json().catch(() => ({})); if (!r.ok) return json({ error: 'Search error: ' + (d.detail && (d.detail.error || d.detail) || r.status) }, 502);
+          return json({ results: (d.results || []).map(x => ({ title: x.title, url: x.url, snippet: String(x.content || '').slice(0, 400) })) });
+        }
+        if (env.BRAVE_API_KEY) {
+          const r = await fetch('https://api.search.brave.com/res/v1/web/search?count=8&q=' + encodeURIComponent(q), { headers: { Accept: 'application/json', 'X-Subscription-Token': env.BRAVE_API_KEY } });
+          const d = await r.json().catch(() => ({})); if (!r.ok) return json({ error: 'Search error ' + r.status }, 502);
+          return json({ results: ((d.web && d.web.results) || []).map(x => ({ title: x.title, url: x.url, snippet: String(x.description || '').replace(/<[^>]+>/g, '').slice(0, 400) })) });
+        }
+        return json({ error: 'not connected' }, 501);
+      }
       if (p === '/api/admin/images/usage' && req.method === 'GET') return json({ used: await usage(env, url.searchParams.get('key') || '') });
       if (p === '/api/admin/posts' && req.method === 'POST') {
         const b = body, slug = slugify(b.slug || b.title || '');
