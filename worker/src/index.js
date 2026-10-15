@@ -72,7 +72,15 @@ export default {
       if (p === '/api/admin/posts' && req.method === 'GET') return json({ posts: await all(`SELECT ${LIST},p.status,p.social_fb,p.social_x FROM posts p LEFT JOIN authors a ON a.id=p.author_id ORDER BY COALESCE(p.published_at,p.updated_at) DESC`) });
       m = p.match(/^\/api\/admin\/posts\/(\d+)$/);
       if (m && req.method === 'GET') return json({ post: await one('SELECT * FROM posts WHERE id=?', +m[1]) });
-      if (m && req.method === 'DELETE') { await DB.prepare('DELETE FROM posts WHERE id=?').bind(+m[1]).run(); return json({ ok: true }) }
+      if (m && req.method === 'DELETE') {
+        /* delete the article, then every file it used (cover, audio, story images) that nothing else still uses */
+        const post = await one('SELECT * FROM posts WHERE id=?', +m[1]); if (!post) return json({ ok: true });
+        await DB.prepare('DELETE FROM posts WHERE id=?').bind(post.id).run();
+        const keys = filesOf(post), removed = [], kept = [];
+        for (const k of keys) { if ((await usage(env, k)).length) kept.push(k); else { await env.IMAGES.delete(k); removed.push(k) } }
+        return json({ ok: true, removed: removed.length, kept: kept.length });
+      }
+      if (p === '/api/admin/images/usage' && req.method === 'GET') return json({ used: await usage(env, url.searchParams.get('key') || '') });
       if (p === '/api/admin/posts' && req.method === 'POST') {
         const b = body, slug = slugify(b.slug || b.title || '');
         if (!b.title || !slug) return json({ error: 'A title is needed' }, 400);
@@ -196,6 +204,18 @@ async function oauth1(method, u, env) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(enc(env.X_API_SECRET) + '&' + enc(env.X_ACCESS_SECRET)), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
   o.oauth_signature = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(base)))));
   return 'OAuth ' + Object.keys(o).sort().map(x => enc(x) + '="' + enc(o[x]) + '"').join(', ');
+}
+
+/* ---------- storage clean-up ---------- */
+/* storage keys (images/..., audio/...) an article points at */
+function filesOf(post) { const s = [post.cover, post.audio, post.body].join(' '), out = new Set(); for (const m of s.matchAll(/\/img\/((?:images|audio)\/[^"'\s)<>]+)/g)) out.add(decodeURIComponent(m[1])); return [...out] }
+/* where a stored file is still used: article titles, author names, or the site settings (logo, banner) */
+async function usage(env, key) {
+  if (!key) return []; const like = '%/img/' + key + '%', out = [];
+  const p = await env.DB.prepare('SELECT title FROM posts WHERE cover LIKE ? OR audio LIKE ? OR body LIKE ? LIMIT 10').bind(like, like, like).all(); p.results.forEach(r => out.push('Article: ' + r.title));
+  const a = await env.DB.prepare('SELECT name FROM authors WHERE photo LIKE ?').bind(like).all(); a.results.forEach(r => out.push('Author photo: ' + r.name));
+  const s = await env.DB.prepare('SELECT k FROM settings WHERE v LIKE ?').bind(like).all(); s.results.forEach(r => out.push('Site setting: ' + r.k.replace('_', ' ')));
+  return out;
 }
 
 /* ---------- helpers ---------- */
