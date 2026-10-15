@@ -1,7 +1,7 @@
 /* RAPMAG back office: log in, list articles, write/edit with a rich editor, upload images to Cloudflare R2 (cover, inline, paste, drag and drop), media library */
 (function(){
 const API=window.RM_API,$=s=>document.querySelector(s),app=$('#app'),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const CATS=[['news','News'],['new-music','New Music'],['interviews','Interviews'],['reviews','Reviews'],['culture','Culture'],['producers','Producers']];
+const CATS=[['breaking','Breaking'],['music','Music'],['entertainment','Entertainment'],['page','Page (About, Editorial Standards…)']];
 let TOKEN='';try{TOKEN=localStorage.getItem('rm_tok')||''}catch(e){}
 const img=u=>!u?'':/^https?:/.test(u)?u:API+u;
 async function api(p,o){o=o||{};const r=await fetch(API+p,{...o,headers:{...(o.body instanceof FormData?{}:{'Content-Type':'application/json'}),Authorization:'Bearer '+TOKEN,...(o.headers||{})}});const d=await r.json().catch(()=>({}));if(r.status===401&&p!=='/api/admin/login'){logout();throw new Error('Logged out')}if(!r.ok)throw new Error(d.error||('Error '+r.status));return d}
@@ -16,14 +16,14 @@ function login(){app.innerHTML=`<div class="login"><a class="logo"><b>RAPAECHELO
  $('#go').onclick=go;$('#pw').onkeydown=e=>{if(e.key==='Enter')go()};$('#pw').focus()}
 
 /* ---------- list ---------- */
-async function list(){app.innerHTML=`<div class="ah"><h1>ARTICLES</h1><a class="b" href="index.html" target="_blank">VIEW SITE</a><button class="b" id="lib">MEDIA</button><button class="b r" id="nw">+ NEW ARTICLE</button><button class="b" id="lo">LOG OUT</button></div><input type="text" id="q" placeholder="Search articles"><div class="lst" id="ls" style="margin-top:14px"><div class="st">Loading…</div></div>`;
- $('#nw').onclick=()=>edit(null);$('#lo').onclick=logout;$('#lib').onclick=()=>library();
+async function list(){app.innerHTML=`<div class="ah"><h1>ARTICLES</h1><a class="b" href="index.html" target="_blank">VIEW SITE</a><button class="b" id="lib">MEDIA</button><button class="b" id="set">SETTINGS</button><button class="b r" id="nw">+ NEW ARTICLE</button><button class="b" id="lo">LOG OUT</button></div><input type="text" id="q" placeholder="Search articles"><div class="lst" id="ls" style="margin-top:14px"><div class="st">Loading…</div></div>`;
+ $('#nw').onclick=()=>edit(null);$('#set').onclick=settings;$('#lo').onclick=logout;$('#lib').onclick=()=>library();
  const d=await api('/api/admin/posts'),draw=()=>{const q=$('#q').value.toLowerCase(),L=d.posts.filter(p=>!q||p.title.toLowerCase().includes(q));
   $('#ls').innerHTML=L.length?L.map(p=>`<div class="row" data-id="${p.id}"><div class="t">${p.cover?`<img src="${esc(img(p.cover))}">`:''}</div><div><b>${esc(p.title)}</b><small>${esc((CATS.find(c=>c[0]===p.category)||[0,p.category])[1])} · ${esc(p.author)} · ${p.published_at?'published '+p.published_at.slice(0,10):'edited '+String(p.updated_at).slice(0,10)}${p.featured?' · ★ COVER STORY':''} · ${p.views} views</small></div><span class="pill ${p.status}">${p.status}</span></div>`).join(''):'<div class="st">No articles yet. Click + NEW ARTICLE.</div>';
   document.querySelectorAll('.row').forEach(r=>r.onclick=()=>edit(+r.dataset.id))};$('#q').oninput=draw;draw()}
 
 /* ---------- editor ---------- */
-async function edit(id){let P={title:'',dek:'',body:'',cover:'',category:'news',tags:'',author:'RAPMAG Staff',status:'draft',featured:0,slug:''};
+async function edit(id){let P={title:'',dek:'',body:'',cover:'',category:'breaking',tags:'',author:'RAPMAG Staff',status:'draft',featured:0,slug:''};
  if(id)P=(await api('/api/admin/posts/'+id)).post;
  const DK='rm_draft_'+(id||'new');let saved=null;try{saved=JSON.parse(localStorage.getItem(DK)||'null')}catch(e){}
  app.innerHTML=`<div class="ah"><button class="b" id="bk">&larr; ARTICLES</button><h1 style="font-size:28px">${id?'EDIT':'NEW'} ARTICLE</h1><button class="b" id="pv">PREVIEW</button><button class="b" id="sd">SAVE DRAFT</button><button class="b r" id="pb">${P.status==='published'?'UPDATE':'PUBLISH'}</button></div>
@@ -76,6 +76,17 @@ function tidy(h){const d=document.createElement('div');d.innerHTML=h;d.querySele
  d.querySelectorAll('figcaption').forEach(f=>{if(!f.textContent.trim())f.remove()});
  return d.innerHTML.replace(/<p><br><\/p>\s*$/,'').trim()}
 function abs(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,b)=>a+API+b+'"')}
+async function settings(){let S={};try{S=(await (await fetch(API+'/api/settings')).json()).settings||{}}catch(e){}
+ const F=[['tagline','FOOTER TAGLINE','Music, entertainment, culture and breaking stories.'],['promo_label','BANNER LABEL','Featured partner'],['promo_link','BANNER LINK','https://www.youtube.com/@TheRapMag'],['youtube','YOUTUBE LINK','https://www.youtube.com/@…'],['instagram','INSTAGRAM LINK','https://instagram.com/…'],['x','X / TWITTER LINK','https://x.com/…']];
+ const pic=(k,t,h)=>`<label>${t}</label><div class="cov" data-k="${k}" style="aspect-ratio:${h}">${S[k]?`<img src="${esc(img(S[k]))}" style="object-fit:contain;background:#000">`:'CLICK OR DROP AN IMAGE'}</div><button class="b" data-x="${k}" style="margin-top:6px">REMOVE</button>`;
+ app.innerHTML=`<div class="ah"><button class="b" id="bk">&larr; ARTICLES</button><h1 style="font-size:28px">SITE SETTINGS</h1><button class="b r" id="sv">SAVE</button></div>
+ <div class="ed"><div class="pn">${pic('logo','LOGO (shown big in the black header; leave empty for the RAPAECHELON wordmark)','4/1')}${pic('promo_image','FEATURED PARTNER BANNER (top of the home page)','6/1')}</div>
+ <div class="pn">${F.map(([k,t,ph])=>`<label>${t}</label><input type="text" data-f="${k}" value="${esc(S[k]||'')}" placeholder="${esc(ph)}">`).join('')}<div class="st" id="ms"></div></div></div>`;
+ $('#bk').onclick=list;
+ const setPic=(k,u)=>{S[k]=u||'';const el=app.querySelector('.cov[data-k="'+k+'"]');el.innerHTML=u?`<img src="${esc(img(u))}" style="object-fit:contain;background:#000">`:'CLICK OR DROP AN IMAGE'};
+ app.querySelectorAll('.cov[data-k]').forEach(el=>{const k=el.dataset.k;el.onclick=async()=>{const [f]=await pick();if(f)setPic(k,(await upload(f)).url)};dropZone(el,async fs=>setPic(k,(await upload(fs[0])).url))});
+ app.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>setPic(b.dataset.x,''));
+ $('#sv').onclick=async()=>{const b={logo:S.logo||'',promo_image:S.promo_image||''};app.querySelectorAll('[data-f]').forEach(i=>b[i.dataset.f]=i.value.trim());$('#ms').textContent='Saving…';try{await api('/api/admin/settings',{method:'POST',body:JSON.stringify(b)});$('#ms').textContent='Saved. The site updates within a minute.'}catch(e){$('#ms').textContent=e.message}}}
 function dropZone(el,fn){el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drop')});el.addEventListener('dragleave',()=>el.classList.remove('drop'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('drop');const fs=[...e.dataTransfer.files].filter(f=>/^image\//.test(f.type));if(fs.length)fn(fs)})}
 function confirmBox(t){return window.confirm(t)}
 async function library(onPick){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="pn"><div class="ah" style="margin:0"><h1 style="font-size:30px">MEDIA</h1><button class="b r" id="mu">UPLOAD</button><button class="b" id="mx">CLOSE</button></div><div class="st">${onPick?'Click an image to use it.':'Every image you uploaded, stored in Cloudflare.'}</div><div class="lib" id="ml"><div class="st">Loading…</div></div></div>`;document.body.appendChild(m);

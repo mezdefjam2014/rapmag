@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS posts (
   dek TEXT DEFAULT '',
   body TEXT DEFAULT '',
   cover TEXT DEFAULT '',
-  category TEXT DEFAULT 'news',
+  category TEXT DEFAULT 'breaking',
   tags TEXT DEFAULT '',
   author TEXT DEFAULT 'RAPMAG Staff',
   status TEXT NOT NULL DEFAULT 'draft',
@@ -18,3 +18,4 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 CREATE INDEX IF NOT EXISTS posts_pub ON posts(status, published_at DESC);
 CREATE INDEX IF NOT EXISTS posts_cat ON posts(category, status, published_at DESC);
+CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT);

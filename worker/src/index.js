@@ -2,7 +2,8 @@
    Public:  GET /api/posts?cat=&q=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/trending   POST /api/view/:slug   GET /img/<key>
    Admin (Bearer token from /api/admin/login): GET/POST /api/admin/posts, GET/DELETE /api/admin/posts/:id, POST /api/admin/upload, GET /api/admin/images, DELETE /api/admin/images/<key>
    Images live in the R2 bucket bound as IMAGES and are served through /img/ with long cache headers. */
-const CATS = ['news', 'new-music', 'interviews', 'reviews', 'culture', 'producers'];
+const CATS = ['breaking', 'music', 'entertainment', 'page'];
+const SETTINGS = ['logo', 'promo_image', 'promo_link', 'promo_label', 'youtube', 'instagram', 'x', 'tagline'];
 const LIST_COLS = 'id,slug,title,dek,cover,category,tags,author,featured,views,published_at';
 
 export default {
@@ -23,7 +24,7 @@ export default {
       /* ---------- public ---------- */
       if (p === '/api/posts' && req.method === 'GET') {
         const cat = url.searchParams.get('cat'), q = (url.searchParams.get('q') || '').trim(), lim = Math.min(50, +url.searchParams.get('limit') || 24), off = Math.max(0, +url.searchParams.get('offset') || 0);
-        let sql = `SELECT ${LIST_COLS} FROM posts WHERE status='published'`, args = [];
+        let sql = `SELECT ${LIST_COLS} FROM posts WHERE status='published' AND category<>'page'`, args = [];
         if (cat) { sql += ' AND category=?'; args.push(cat) }
         if (q) { sql += ' AND (title LIKE ? OR dek LIKE ? OR tags LIKE ?)'; args.push(`%${q}%`, `%${q}%`, `%${q}%`) }
         sql += ' ORDER BY featured DESC, published_at DESC LIMIT ? OFFSET ?'; args.push(lim, off);
@@ -31,8 +32,12 @@ export default {
         return json({ posts: r.results }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
       if (p === '/api/trending' && req.method === 'GET') {
-        const r = await env.DB.prepare(`SELECT ${LIST_COLS} FROM posts WHERE status='published' AND published_at > datetime('now','-30 days') ORDER BY views DESC LIMIT 5`).all();
+        const r = await env.DB.prepare(`SELECT ${LIST_COLS} FROM posts WHERE status='published' AND category<>'page' AND published_at > datetime('now','-30 days') ORDER BY views DESC LIMIT 5`).all();
         return json({ posts: r.results }, 200, { 'Cache-Control': 'public, max-age=120' });
+      }
+      if (p === '/api/settings' && req.method === 'GET') {
+        const r = await env.DB.prepare('SELECT k,v FROM settings').all();
+        return json({ settings: Object.fromEntries(r.results.map(x => [x.k, x.v])) }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
       if (p === '/api/cats' && req.method === 'GET') {
         const r = await env.DB.prepare(`SELECT category, COUNT(*) n FROM posts WHERE status='published' GROUP BY category`).all();
@@ -67,7 +72,7 @@ export default {
         if (p === '/api/admin/posts' && req.method === 'POST') {
           const b = await req.json(), slug = slugify(b.slug || b.title || '');
           if (!b.title || !slug) return json({ error: 'A title is needed' }, 400);
-          const cat = CATS.includes(b.category) ? b.category : 'news', status = b.status === 'published' ? 'published' : 'draft';
+          const cat = CATS.includes(b.category) ? b.category : 'breaking', status = b.status === 'published' ? 'published' : 'draft';
           const vals = [slug, String(b.title).slice(0, 200), String(b.dek || '').slice(0, 400), clean(String(b.body || '')), String(b.cover || ''), cat, String(b.tags || '').slice(0, 300), String(b.author || 'RAPMAG Staff').slice(0, 80), status, b.featured ? 1 : 0];
           const dupe = await env.DB.prepare('SELECT id FROM posts WHERE slug=? AND id<>?').bind(slug, +b.id || 0).first();
           if (dupe) return json({ error: 'Another article already uses this link (slug). Change the title or slug.' }, 409);
@@ -80,6 +85,11 @@ export default {
             id = r.id;
           }
           return json({ post: await env.DB.prepare('SELECT * FROM posts WHERE id=?').bind(id).first() });
+        }
+        if (p === '/api/admin/settings' && req.method === 'POST') {
+          const b = await req.json();
+          for (const k of SETTINGS) if (k in b) await env.DB.prepare('INSERT INTO settings (k,v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').bind(k, String(b[k] || '').slice(0, 500)).run();
+          return json({ ok: true });
         }
         if (p === '/api/admin/upload' && req.method === 'POST') {
           const fd = await req.formData(), f = fd.get('file');
