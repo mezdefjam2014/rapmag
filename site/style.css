@@ -147,3 +147,4 @@ button{font:inherit;cursor:pointer}
 .brand.sm img{max-height:56px;max-width:180px}
 .mast{background:#000}.mast .menu{border-color:#222}
 .mast .brand img{max-height:clamp(140px,24vw,300px);max-width:min(100%,820px)}
+.mast .menu{justify-content:center;position:relative}.mast .menu .sbtn{position:absolute;right:0;top:50%;transform:translateY(-50%);margin:0}@media(max-width:600px){.mast .menu{justify-content:flex-start;padding-right:44px}}
