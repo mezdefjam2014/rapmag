@@ -9,7 +9,7 @@ ALLOWED_ORIGINS = "http://localhost:8780,http://127.0.0.1:8780,https://mezdefjam
 [[d1_databases]]
 binding = "DB"
 database_name = "rapmag-db"
-database_id = "local-dev"   # replaced with the real id after `wrangler d1 create rapmag-db`
+database_id = "412569b9-6c7f-4c20-9815-3b98f88438fb"
 
 [[r2_buckets]]
 binding = "IMAGES"
