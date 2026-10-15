@@ -9,7 +9,15 @@ const img=u=>!u?'':/^https?:/.test(u)?u:API+u;
 async function api(p,o){o=o||{};const r=await fetch(API+p,{...o,headers:{...(o.body instanceof FormData?{}:{'Content-Type':'application/json'}),Authorization:'Bearer '+TOKEN,...(o.headers||{})}});const d=await r.json().catch(()=>({}));if(r.status===401&&p!=='/api/admin/login'){logout();throw new Error('Logged out')}if(!r.ok)throw new Error(d.error||('Error '+r.status));return d}
 function logout(){TOKEN='';try{localStorage.removeItem('rm_tok')}catch(e){}login()}
 const up=t=>{const u=$('#up');u.style.display=t?'block':'none';u.textContent=t||''};
-async function upload(f){if(!/^(image|audio)\//.test(f.type))throw new Error('Images or audio only');up('Uploading '+f.name+'…');const fd=new FormData();fd.append('file',f);try{return await api('/api/admin/upload',{method:'POST',body:fd})}finally{up('')}}
+/* photos: very large ones are shrunk to 2000px before upload, and an 800px copy is made for the story cards (fast home page) */
+const canv=(img,w)=>{const s=Math.min(1,w/img.naturalWidth),c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c};
+const blob=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
+async function prep(f){if(!/^image\/(jpeg|png|webp)$/.test(f.type))return{main:f};const u=URL.createObjectURL(f),img=new Image();img.src=u;try{await img.decode()}catch(e){return{main:f}}finally{setTimeout(()=>URL.revokeObjectURL(u),5000)}
+ let main=f;if(img.naturalWidth>2000||f.size>1.5e6){const b=await blob(canv(img,2000),'image/webp',.86);if(b&&b.size<f.size)main=new File([b],f.name.replace(/\.[^.]+$/,'')+'.webp',{type:'image/webp'})}
+ const t=img.naturalWidth>800?await blob(canv(img,800),'image/webp',.82):null;return{main,thumb:t}}
+async function upload(f){if(!/^(image|audio)\//.test(f.type))throw new Error('Images or audio only');up('Uploading '+f.name+'…');
+ try{const {main,thumb}=/^image\//.test(f.type)?await prep(f):{main:f},fd=new FormData();fd.append('file',main);const d=await api('/api/admin/upload',{method:'POST',body:fd});
+  if(thumb){const t=new FormData();t.append('file',new File([thumb],'thumb.webp',{type:'image/webp'}));t.append('thumb_of',d.key);await api('/api/admin/upload',{method:'POST',body:t}).catch(()=>{})}return d}finally{up('')}}
 const pick=(acc,multi)=>new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept=acc||'image/*';i.multiple=multi!==false;i.onchange=()=>res([...i.files]);i.click()});
 /* own confirm box: the in-app browser silently blocks window.confirm, which made every delete do nothing */
 const confirmBox=(t,yes)=>new Promise(res=>{const m=document.createElement('div');m.className='modal';m.style.zIndex=200;m.innerHTML=`<div class="pn" style="width:min(460px,92vw)"><div style="font:500 15px/1.55 Inter,sans-serif;white-space:pre-line">${esc(t)}</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px"><button class="b" data-n>CANCEL</button><button class="b r" data-y>${esc(yes||'DELETE')}</button></div></div>`;document.body.appendChild(m);

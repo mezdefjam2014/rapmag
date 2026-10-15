@@ -21,8 +21,9 @@ export default {
     try {
       /* ---------- files ---------- */
       if (p.startsWith('/img/') && req.method === 'GET') {
-        const key = decodeURIComponent(p.slice(5)), range = req.headers.get('Range');
-        const obj = await env.IMAGES.get(key, range ? { range: req.headers } : undefined);
+        const key = decodeURIComponent(p.slice(5)), range = req.headers.get('Range'), w = url.searchParams.get('w');
+        /* ?w=800: small copy for story cards (made at upload), falls back to the original */
+        const obj = (w === '800' && key.startsWith('images/') && await env.IMAGES.get('thumbs/800/' + key.replace(/\.[a-z0-9]+$/, '') + '.webp')) || await env.IMAGES.get(key, range ? { range: req.headers } : undefined);
         if (!obj) return new Response('Not found', { status: 404, headers: cors });
         const h = new Headers(cors); obj.writeHttpMetadata(h); h.set('ETag', obj.httpEtag); h.set('Cache-Control', 'public, max-age=31536000, immutable'); h.set('Accept-Ranges', 'bytes');
         if (range && obj.range) { const o = obj.range.offset || 0, l = obj.range.length ?? obj.size - o; h.set('Content-Range', `bytes ${o}-${o + l - 1}/${obj.size}`); h.set('Content-Length', l); return new Response(obj.body, { status: 206, headers: h }) }
@@ -51,7 +52,7 @@ export default {
         return json({ post, related }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
       if (p === '/api/build') {
-        const posts = await all(`SELECT p.slug,p.title,p.dek,p.body,p.cover,p.cover_alt,p.category,p.tags,p.audio,p.published_at,p.updated_at,COALESCE(a.name,p.author) author,a.slug author_slug,a.verified author_verified ${FROM} WHERE ${LIVE} ORDER BY p.published_at DESC`);
+        const posts = await all(`SELECT p.id,p.featured,p.slug,p.title,p.dek,p.body,p.cover,p.cover_alt,p.category,p.tags,p.audio,p.published_at,p.updated_at,COALESCE(a.name,p.author) author,a.slug author_slug,a.verified author_verified ${FROM} WHERE ${LIVE} ORDER BY p.published_at DESC`);
         return json({ posts, authors: await all(`SELECT slug,name,role,beat,location,bio,photo,website,instagram,x,facebook,youtube,verified FROM authors WHERE active=1`), cats: await all(`SELECT slug,name FROM categories WHERE visible=1 ORDER BY sort,name`), settings: await settings(env) });
       }
       m = p.match(/^\/api\/view\/([a-z0-9-]+)$/);
@@ -77,7 +78,7 @@ export default {
         const post = await one('SELECT * FROM posts WHERE id=?', +m[1]); if (!post) return json({ ok: true });
         await DB.prepare('DELETE FROM posts WHERE id=?').bind(post.id).run();
         const keys = filesOf(post), removed = [], kept = [];
-        for (const k of keys) { if ((await usage(env, k)).length) kept.push(k); else { await env.IMAGES.delete(k); removed.push(k) } }
+        for (const k of keys) { if ((await usage(env, k)).length) kept.push(k); else { await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp'); removed.push(k) } }
         if (post.status === 'published') ctx.waitUntil(rebuild(env, 'deleted ' + post.slug));
         return json({ ok: true, removed: removed.length, kept: kept.length });
       }
@@ -153,6 +154,8 @@ export default {
       if (p === '/api/admin/upload' && req.method === 'POST') {
         const fd = await req.formData(), f = fd.get('file');
         if (!f || typeof f === 'string') return json({ error: 'No file' }, 400);
+        const of = String(fd.get('thumb_of') || '');
+        if (of) { if (!/^images\/[\w\/.-]+$/.test(of) || f.type !== 'image/webp' || f.size > 2e6) return json({ error: 'bad thumbnail' }, 400); await env.IMAGES.put('thumbs/800/' + of.replace(/\.[a-z0-9]+$/, '') + '.webp', f.stream(), { httpMetadata: { contentType: 'image/webp' } }); return json({ ok: true }) }
         const T = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/ogg': 'ogg' }, ext = T[f.type];
         if (!ext) return json({ error: 'Images (JPG, PNG, WEBP, GIF, AVIF) or audio (MP3, M4A, WAV, OGG) only' }, 400);
         const audio = f.type.startsWith('audio/'); if (f.size > (audio ? 80 : 15) * 1024 * 1024) return json({ error: audio ? 'Audio is over 80 MB' : 'Image is over 15 MB' }, 400);
@@ -164,7 +167,7 @@ export default {
         const l = await env.IMAGES.list({ prefix: 'images/', limit: 300, cursor: url.searchParams.get('cursor') || undefined });
         return json({ images: l.objects.sort((a, b) => b.uploaded - a.uploaded).map(o => ({ key: o.key, url: '/img/' + o.key, size: o.size, uploaded: o.uploaded })), cursor: l.truncated ? l.cursor : null });
       }
-      if (p.startsWith('/api/admin/images/') && req.method === 'DELETE') { await env.IMAGES.delete(decodeURIComponent(p.slice(18))); return json({ ok: true }) }
+      if (p.startsWith('/api/admin/images/') && req.method === 'DELETE') { const k = decodeURIComponent(p.slice(18)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp'); return json({ ok: true }) }
       /* social distribution */
       if (p === '/api/admin/social/test') return json({ ...(await socialTest(env)), instant: env.GH_TOKEN ? 'connected' : 'not connected' });
       if (p === '/api/admin/social/post' && req.method === 'POST') {

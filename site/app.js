@@ -34,7 +34,7 @@ function chrome(){const cat=qs.get('c'),here=page==='home'&&!cat&&qs.get('q')==n
  $('#si').onkeydown=e=>{if(e.key==='Enter')location.href='index.html?q='+encodeURIComponent(e.target.value.trim())};
  if(SET.adsense_id&&/^ca-pub-\d+$/.test(SET.adsense_id)&&!document.querySelector('script[data-ads]')){const s=document.createElement('script');s.async=true;s.crossOrigin='anonymous';s.dataset.ads=1;s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+SET.adsense_id;document.head.appendChild(s)}}
 function promo(){return SET.promo_image?`<aside class="promo"><span>${esc(SET.promo_label||'Featured partner')}</span>${SET.promo_link?`<a href="${esc(SET.promo_link)}" target="_blank" rel="sponsored noopener">`:'<div>'}<img src="${esc(img(SET.promo_image))}" alt="Advertisement">${SET.promo_link?'</a>':'</div>'}</aside>`:''}
-function card(p,lead){return`<article class="card rv${lead?' lead':''}${lead&&p.title.length>70?' long':''}"><a class="im" href="${link(p)}" aria-label="${esc(p.title)}">${p.cover?`<img src="${esc(img(p.cover))}" alt="${esc(p.cover_alt||p.title)}" loading="lazy">`:ph(p.title)}</a>
+function card(p,lead){return`<article class="card rv${lead?' lead':''}${lead&&p.title.length>70?' long':''}"><a class="im" href="${link(p)}" aria-label="${esc(p.title)}">${p.cover?`<img src="${esc(img(p.cover))}${/^\/img\/images\//.test(p.cover)?'?w=800':''}" alt="${esc(p.cover_alt||p.title)}" width="800" height="600" ${lead?'fetchpriority="high"':'loading="lazy"'} decoding="async">`:ph(p.title)}</a>
  <a class="c" href="index.html?c=${esc(p.category)}">${esc(CN[p.category]||p.category)}</a><h2><a href="${link(p)}">${esc(p.title)}</a></h2>${lead&&p.dek?`<p>${esc(p.dek)}</p>`:''}<div class="meta">${when(p.published_at)} · By ${by(p)}</div></article>`}
 function reveal(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -40px'});document.querySelectorAll('.rv:not(.in)').forEach(el=>io.observe(el))}
 function ld(o){const s=document.createElement('script');s.type='application/ld+json';s.textContent=JSON.stringify(o);document.head.appendChild(s)}
@@ -45,7 +45,7 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');let of
  const head=!cat&&q==null?'<h1 class="vh">RAPAECHELON - RAPMAG: Hip-Hop, Rap &amp; Entertainment News</h1>':cat?`<div class="sh"><h1>${esc(CN[cat]||cat)}</h1></div>`:`<div class="sh"><h1>${q?'Search: '+esc(q):'Search'}</h1></div>`;
  setMeta(cat?(CN[cat]||cat)+' News | RAPAECHELON - RAPMAG':q!=null?'Search | RAPAECHELON - RAPMAG':'RAPAECHELON - RAPMAG | Hip-Hop, Rap & Entertainment News',cat?'The latest '+String(CN[cat]||cat).toLowerCase()+' stories in hip-hop and rap from RAPAECHELON - RAPMAG.':'RAPAECHELON - RAPMAG: breaking hip-hop and rap news, new music and entertainment stories, updated daily.');
  main.innerHTML=`<div class="wrap shell">${!cat&&q==null?promo():''}${head}<section class="grid" id="g" aria-label="Published articles"></section><button class="more" id="mo" hidden>LOAD MORE STORIES</button></div>`;
- const load=async()=>{const d=await get('/api/posts?limit='+N+'&offset='+off+(cat?'&cat='+cat:'')+(q?'&q='+encodeURIComponent(q):''));
+ const load=async()=>{const B=window.RM_BOOT,d=!off&&!cat&&q==null&&B&&B.posts?B.posts:await get('/api/posts?limit='+N+'&offset='+off+(cat?'&cat='+cat:'')+(q?'&q='+encodeURIComponent(q):''));
   $('#g').insertAdjacentHTML('beforeend',d.posts.map((p,i)=>card(p,!cat&&q==null&&off===0&&i===0)).join(''));off+=d.posts.length;$('#mo').hidden=d.posts.length<N;
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
@@ -74,6 +74,6 @@ function fix(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,
 
 /* 404.html serves clean links the build has not made yet */
 const route=page==='auto'?(pathSlug('author')?'author':pathSlug('page')?'page':pathSlug('article')?'article':'home'):page;if(page==='auto')document.body.dataset.page=route;
-Promise.all([get('/api/settings').then(d=>SET=d.settings||{},()=>{}),get('/api/cats').then(d=>{if(d.cats&&d.cats.length){CATS=d.cats.map(c=>[c.slug,c.name]);CN=Object.fromEntries(CATS)}},()=>{})])
+const BOOT=window.RM_BOOT;Promise.all([BOOT?Promise.resolve(SET=BOOT.settings||{}):get('/api/settings').then(d=>SET=d.settings||{},()=>{}),(BOOT?Promise.resolve({cats:BOOT.cats}):get('/api/cats')).then(d=>{if(d.cats&&d.cats.length){CATS=d.cats.map(c=>[c.slug,c.name]);CN=Object.fromEntries(CATS)}},()=>{})])
  .then(()=>{chrome();return route==='home'?home():route==='author'?author():(document.body.dataset.page=route,article())}).catch(()=>{$('#main').innerHTML='<div class="wrap shell"><div class="empty">Could not reach the RAPMAG server.</div></div>'})
 })();

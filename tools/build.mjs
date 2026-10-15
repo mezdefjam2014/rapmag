@@ -27,6 +27,10 @@ function page(template, dir, { title, desc, image, type, ld, main }) {
   fs.mkdirSync(path.join(OUT, dir), { recursive: true }); fs.writeFileSync(path.join(OUT, dir, 'index.html'), h);
 }
 const posts = data.posts || [], articles = posts.filter(p => p.category !== 'page');
+/* home page starts instantly from data built into it (refreshed by every build) */
+{ const L = ['id', 'slug', 'title', 'dek', 'cover', 'cover_alt', 'category', 'featured', 'published_at', 'author', 'author_slug', 'author_verified'], top = articles.slice().sort((a, b) => (b.featured || 0) - (a.featured || 0)).slice(0, 12).map(p => Object.fromEntries(L.map(k => [k, p[k]])));
+  const boot = { settings: S, cats: data.cats || [], posts: { posts: top } }, f = path.join(OUT, 'index.html');
+  fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('<script src="config.js', `<script>window.RM_BOOT=${JSON.stringify(boot).replace(/</g, '\\u003c')}</script><script src="config.js`)) }
 for (const p of posts) {
   const isPage = p.category === 'page', dir = (isPage ? 'page/' : 'article/') + p.slug, desc = (p.dek || strip(p.body).slice(0, 160)).slice(0, 300);
   const ld = isPage ? null : { '@context': 'https://schema.org', '@type': 'NewsArticle', headline: p.title, description: desc, image: p.cover ? [img(p.cover)] : undefined, datePublished: iso(p.published_at), dateModified: iso(p.updated_at || p.published_at), author: { '@type': 'Person', name: p.author, url: p.author_slug ? SITE + '/author/' + p.author_slug + '/' : undefined }, publisher: { '@type': 'NewsMediaOrganization', name: 'RAPAECHELON - RAPMAG', logo: { '@type': 'ImageObject', url: SITE + '/logo.webp' } }, articleSection: CN[p.category] || p.category, keywords: p.tags || undefined, mainEntityOfPage: SITE + '/' + dir + '/' };
