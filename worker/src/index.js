@@ -181,7 +181,7 @@ export default {
 
 /* ---------- social ---------- */
 async function settings(env) { const r = await env.DB.prepare('SELECT k,v FROM settings').all(); return Object.fromEntries(r.results.map(x => [x.k, x.v])) }
-function siteUrl(S) { return (S.site_url || 'https://mezdefjam2014.github.io/rapmag').replace(/\/+$/, '') }
+function siteUrl(S) { return (S.site_url || 'https://www.rapaechelon.com').replace(/\/+$/, '') }
 function articleUrl(S, post) { return siteUrl(S) + '/article/' + post.slug + '/' }
 function tags(post, S) { return (S.social_hashtag ? ' #' + S.social_hashtag.replace(/^#/, '').replace(/\s+/g, '') : '') + (S.social_category === '1' && post.category ? ' #' + post.category.replace(/-/g, '') : '') }
 async function postFacebook(env, post, S) {

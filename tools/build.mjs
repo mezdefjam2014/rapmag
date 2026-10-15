@@ -48,4 +48,6 @@ fs.writeFileSync(path.join(OUT, 'feed.xml'), `<?xml version="1.0" encoding="UTF-
 fs.writeFileSync(path.join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: ${BASE}admin.html\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/news-sitemap.xml\n`);
 if (/^ca-pub-\d+$/.test(S.adsense_id || '')) fs.writeFileSync(path.join(OUT, 'ads.txt'), `google.com, ${S.adsense_id.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n`);
 for (const f of ['index.html', 'article.html', 'page.html', 'author.html', '404.html']) { const p = path.join(OUT, f); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('</head>', `<link rel="alternate" type="application/rss+xml" title="RAPAECHELON - RAPMAG" href="${SITE}/feed.xml"></head>`)) }
+/* custom domain: GitHub Pages reads the CNAME file */
+const host = new URL(SITE).hostname; if (!host.endsWith('github.io')) fs.writeFileSync(path.join(OUT, 'CNAME'), host + '\n');
 console.log(`built ${posts.length} posts, ${(data.authors || []).length} authors, ${recent.length} in news sitemap -> ${SITE}`);
