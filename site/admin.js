@@ -11,7 +11,7 @@ async function upload(f){if(!/^image\//.test(f.type))throw new Error('Images onl
 const pick=()=>new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.multiple=true;i.onchange=()=>res([...i.files]);i.click()});
 
 /* ---------- login ---------- */
-function login(){app.innerHTML=`<div class="login"><a class="logo"><b>RAPAECHELON</b><i>RAPMAG</i></a><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
+function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
  const go=async()=>{$('#ms').textContent='Checking…';try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('#pw').value})});TOKEN=d.token;try{localStorage.setItem('rm_tok',TOKEN)}catch(e){}list()}catch(e){$('#ms').textContent=e.message}};
  $('#go').onclick=go;$('#pw').onkeydown=e=>{if(e.key==='Enter')go()};$('#pw').focus()}
 
@@ -80,7 +80,7 @@ async function settings(){let S={};try{S=(await (await fetch(API+'/api/settings'
  const F=[['tagline','FOOTER TAGLINE','Music, entertainment, culture and breaking stories.'],['promo_label','BANNER LABEL','Featured partner'],['promo_link','BANNER LINK','https://www.youtube.com/@TheRapMag'],['youtube','YOUTUBE LINK','https://www.youtube.com/@…'],['instagram','INSTAGRAM LINK','https://instagram.com/…'],['x','X / TWITTER LINK','https://x.com/…']];
  const pic=(k,t,h)=>`<label>${t}</label><div class="cov" data-k="${k}" style="aspect-ratio:${h}">${S[k]?`<img src="${esc(img(S[k]))}" style="object-fit:contain;background:#000">`:'CLICK OR DROP AN IMAGE'}</div><button class="b" data-x="${k}" style="margin-top:6px">REMOVE</button>`;
  app.innerHTML=`<div class="ah"><button class="b" id="bk">&larr; ARTICLES</button><h1 style="font-size:28px">SITE SETTINGS</h1><button class="b r" id="sv">SAVE</button></div>
- <div class="ed"><div class="pn">${pic('logo','LOGO (shown big in the black header; leave empty for the RAPAECHELON wordmark)','4/1')}${pic('promo_image','FEATURED PARTNER BANNER (top of the home page)','6/1')}</div>
+ <div class="ed"><div class="pn">${pic('logo','LOGO (shown big in the black header; leave empty to use the RAPMAG logo)','4/1')}${pic('promo_image','FEATURED PARTNER BANNER (top of the home page)','6/1')}</div>
  <div class="pn">${F.map(([k,t,ph])=>`<label>${t}</label><input type="text" data-f="${k}" value="${esc(S[k]||'')}" placeholder="${esc(ph)}">`).join('')}<div class="st" id="ms"></div></div></div>`;
  $('#bk').onclick=list;
  const setPic=(k,u)=>{S[k]=u||'';const el=app.querySelector('.cov[data-k="'+k+'"]');el.innerHTML=u?`<img src="${esc(img(u))}" style="object-fit:contain;background:#000">`:'CLICK OR DROP AN IMAGE'};

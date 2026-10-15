@@ -141,3 +141,8 @@ button{font:inherit;cursor:pointer}
 .social{display:flex;gap:14px;margin-top:18px}.social a{font:800 11px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#fff;border:1px solid #333;padding:9px 12px}.social a:hover{border-color:var(--red);background:var(--red)}
 @media(max-width:860px){.grid{grid-template-columns:1fr;gap:40px}.card.lead{grid-template-columns:1fr}.card.lead .im{grid-row:auto}.st-cols{grid-template-columns:1fr}.share{flex-direction:row;position:static}.foot .wrap{grid-template-columns:1fr}}
 .card.lead .c,.card.lead .meta{justify-self:start}
+
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.brand img{max-height:clamp(90px,14vw,160px);width:auto;height:auto;max-width:min(100%,520px)}
+.brand.sm img{max-height:56px;max-width:180px}
+.mast{background:#000}.mast .menu{border-color:#222}
