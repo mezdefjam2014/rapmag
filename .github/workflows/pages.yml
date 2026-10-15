@@ -31,3 +31,6 @@ jobs:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Tell search engines about new stories (IndexNow)
+        run: node tools/indexnow.mjs
+        continue-on-error: true

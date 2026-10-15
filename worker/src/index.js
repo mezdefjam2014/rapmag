@@ -10,7 +10,7 @@ const LIST = `p.id,p.slug,p.title,p.dek,p.cover,p.cover_alt,p.category,p.tags,p.
 const FROM = `FROM posts p LEFT JOIN authors a ON a.id=p.author_id`;
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)) },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)) },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), p = url.pathname, origin = req.headers.get('Origin') || '';
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim());
@@ -78,6 +78,7 @@ export default {
         await DB.prepare('DELETE FROM posts WHERE id=?').bind(post.id).run();
         const keys = filesOf(post), removed = [], kept = [];
         for (const k of keys) { if ((await usage(env, k)).length) kept.push(k); else { await env.IMAGES.delete(k); removed.push(k) } }
+        if (post.status === 'published') ctx.waitUntil(rebuild(env, 'deleted ' + post.slug));
         return json({ ok: true, removed: removed.length, kept: kept.length });
       }
       if (p === '/api/admin/link-search' && req.method === 'GET') {
@@ -113,6 +114,7 @@ export default {
         if (id) await DB.prepare(`UPDATE posts SET ${cols.map(c => c + '=?').join(',')},published_at=?,updated_at=datetime('now') WHERE id=?`).bind(...cols.map(c => f[c]), pub, id).run();
         else id = (await DB.prepare(`INSERT INTO posts (${cols.join(',')},published_at) VALUES (${cols.map(() => '?').join(',')},?) RETURNING id`).bind(...cols.map(c => f[c]), pub).first()).id;
         if (status === 'published') ctx.waitUntil(autoSocial(env));
+        if (status === 'published' || (prev && prev.status === 'published')) ctx.waitUntil(rebuild(env, 'saved ' + slug));
         return json({ post: await one('SELECT * FROM posts WHERE id=?', id) });
       }
       if (p === '/api/admin/related' && req.method === 'GET') {
@@ -164,7 +166,7 @@ export default {
       }
       if (p.startsWith('/api/admin/images/') && req.method === 'DELETE') { await env.IMAGES.delete(decodeURIComponent(p.slice(18))); return json({ ok: true }) }
       /* social distribution */
-      if (p === '/api/admin/social/test') return json(await socialTest(env));
+      if (p === '/api/admin/social/test') return json({ ...(await socialTest(env)), instant: env.GH_TOKEN ? 'connected' : 'not connected' });
       if (p === '/api/admin/social/post' && req.method === 'POST') {
         const post = await one(`SELECT p.* FROM posts p WHERE p.id=? AND ${LIVE}`, +body.id); if (!post) return json({ error: 'Only live articles can be posted' }, 400);
         const S = await settings(env), out = {};
@@ -219,6 +221,22 @@ async function oauth1(method, u, env) {
   const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(enc(env.X_API_SECRET) + '&' + enc(env.X_ACCESS_SECRET)), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
   o.oauth_signature = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(base)))));
   return 'OAuth ' + Object.keys(o).sort().map(x => enc(x) + '="' + enc(o[x]) + '"').join(', ');
+}
+
+/* ---------- instant Google pages: start the GitHub Pages build when a story goes live, changes or is removed ---------- */
+async function rebuild(env, why) {
+  if (!env.GH_TOKEN) return 'no GitHub key';
+  const last = await env.DB.prepare("SELECT v FROM settings WHERE k='last_rebuild'").first();
+  if (last && Date.now() - Date.parse(last.v) < 45000) return 'just started';   /* one build covers saves made close together */
+  await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('last_rebuild',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(new Date().toISOString()).run();
+  const r = await fetch('https://api.github.com/repos/' + (env.GH_REPO || 'mezdefjam2014/rapmag') + '/actions/workflows/pages.yml/dispatches', { method: 'POST', headers: { Authorization: 'Bearer ' + env.GH_TOKEN, Accept: 'application/vnd.github+json', 'User-Agent': 'rapmag-api', 'X-GitHub-Api-Version': '2022-11-28' }, body: JSON.stringify({ ref: 'main' }) });
+  return r.ok ? 'started (' + why + ')' : 'GitHub said ' + r.status;
+}
+/* scheduled stories: when one has gone live since the last build, build again */
+async function rebuildIfNewlyLive(env) {
+  const last = await env.DB.prepare("SELECT v FROM settings WHERE k='last_rebuild'").first(), since = last ? last.v.slice(0, 19).replace('T', ' ') : '1970-01-01';
+  const n = await env.DB.prepare(`SELECT COUNT(*) n FROM posts p WHERE ${LIVE} AND p.published_at > ?`).bind(since).first();
+  if (n.n) await rebuild(env, 'scheduled story went live');
 }
 
 /* ---------- storage clean-up ---------- */
