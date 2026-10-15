@@ -21,7 +21,7 @@ function chrome(){const cat=qs.get('c'),here=page==='home'&&!cat&&qs.get('q')==n
  <div class="social">${SET.youtube?`<a href="${esc(SET.youtube)}" target="_blank" rel="noopener">YouTube</a>`:''}${SET.instagram?`<a href="${esc(SET.instagram)}" target="_blank" rel="noopener">Instagram</a>`:''}${SET.x?`<a href="${esc(SET.x)}" target="_blank" rel="noopener">X</a>`:''}</div></div>
  <div><h5>SECTIONS</h5><ul><li><a href="index.html">Home</a></li>${CATS.map(([k,n])=>`<li><a href="index.html?c=${k}">${n}</a></li>`).join('')}</ul></div>
  <div><h5>INFORMATION</h5><ul><li><a href="index.html?q=">Search</a></li><li><a href="page.html?s=about">About Rapaechelon</a></li><li><a href="page.html?s=editorial-standards">Editorial Standards</a></li><li><a href="page.html?s=corrections-policy">Corrections Policy</a></li></ul></div></div>
- <div class="wrap copy">© ${new Date().getFullYear()} RAPAECHELON - RAPMAG</div></footer>`);
+ <div class="wrap copy">© ${new Date().getFullYear()} RAPAECHELON - RAPMAG${here?'<a class="staff" href="admin.html" aria-label="Staff" title="Staff"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></a>':''}</div></footer>`);
  $('#sb').onclick=()=>{$('#sr').classList.toggle('on');$('#si').focus()};
  $('#si').onkeydown=e=>{if(e.key==='Enter')location.href='index.html?q='+encodeURIComponent(e.target.value.trim())}}
 function promo(){return SET.promo_image?`<aside class="promo"><span>${esc(SET.promo_label||'Featured partner')}</span>${SET.promo_link?`<a href="${esc(SET.promo_link)}" target="_blank" rel="sponsored noopener">`:'<div>'}<img src="${esc(img(SET.promo_image))}" alt="Advertisement">${SET.promo_link?'</a>':'</div>'}</aside>`:''}
