@@ -199,3 +199,13 @@ button{font:inherit;cursor:pointer}
 /* home lead story: excerpt shows on desktop only */
 @media(max-width:860px){.card.lead{grid-template-columns:1fr;gap:0;padding-bottom:36px}.card.lead .im{grid-row:auto;aspect-ratio:16/10;margin-bottom:16px}.card.lead h2,.card.lead.long h2{font-size:clamp(30px,8.5vw,42px);line-height:1}}
 @media(max-width:760px){.card.lead .ldek{display:none}}
+
+/* mobile: top story in Breaking gets the black alert box (headline first, then photo) */
+@media(max-width:860px){
+.card.lead.brk{background:#000;padding-bottom:0}
+.card.lead.brk .c{order:1;margin:16px 14px 0;justify-self:start}.card.lead.brk .c::after{content:'  \00B7  JUST IN';color:#ff8a90}
+.card.lead.brk h2{order:2;padding:10px 14px 14px;margin:0}.card.lead.brk h2 a{color:#fff}
+.card.lead.brk .im{order:3;margin:0}
+.card.lead.brk .ldek{order:4;color:#ccc;padding:0 14px}
+.card.lead.brk .meta{order:5;padding:12px 14px;margin:0;color:#bbb}.card.lead.brk .meta a{color:#fff}
+}
