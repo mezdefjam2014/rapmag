@@ -45,7 +45,7 @@ const fit=(s,base,n)=>Math.round(base*Math.max(.42,Math.min(1,Math.sqrt((n||12)/
 /* the masthead: always at the top, always big. A logo uploaded in the Maker replaces the built one. */
 /* the logo at the top: size and position can be moved per page (mh_s %, mh_x / mh_y px) */
 let CURV={};
-const MH=(d,top,w)=>{w=w||860;const l=(d&&d.logo&&d.logo.u)||'logo.webp',sc=(+CURV.mh_s||100)/100,ww=Math.round(w*sc),x=+CURV.mh_x||0,y=+CURV.mh_y||0;
+const MH=(d,top,w)=>{w=w||860;const l=(d&&d.logo&&d.logo.u)||'logo-mag.webp',sc=(+CURV.mh_s||100)/100,ww=Math.round(w*sc),x=+CURV.mh_x||0,y=+CURV.mh_y||0;
  return `<div class="mg-mh" data-slot="mh" style="top:${top+y}px;width:${ww}px;margin-left:${-ww/2+x}px"><img src="${esc(abs(l))}" alt="RAPMAG" style="width:100%;height:auto"></div>`};
 const issue=(v,top)=>v.issue?`<div class="mg-iss" style="top:${top}px">${tx(v,'issue')}</div>`:'';
 const foot=(v,t)=>`<div class="mg-handle"${t?` style="${t}"`:''}>${v.handle?tx(v,'handle'):'@RAPAECHELON · RAPAECHELON.COM'}</div>`;
