@@ -11,7 +11,7 @@ const when=d=>{if(!d)return'';const t=new Date(d.replace(' ','T')+'Z');return t.
 const rt=h=>Math.max(1,Math.round(String(h||'').replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length/230))+' min read';
 const link=p=>{const k=p.category==='page'?'page':'article';return PRETTY?k+'/'+p.slug+'/':k+'.html?s='+encodeURIComponent(p.slug)};
 const alink=s=>PRETTY?'author/'+s+'/':'author.html?s='+encodeURIComponent(s);
-const check='<svg class="vf" viewBox="0 0 24 24" aria-label="Verified"><path d="M12 1l2.6 2.2 3.4-.4.9 3.3 3 1.7-1.2 3.2 1.2 3.2-3 1.7-.9 3.3-3.4-.4L12 23l-2.6-2.2-3.4.4-.9-3.3-3-1.7L3.3 13 2.1 9.8l3-1.7.9-3.3 3.4.4z"/><path d="M7.5 12.2l3 3 6-6.2" fill="none" stroke="#fff" stroke-width="2.2"/></svg>';
+const check='<svg class="vf" viewBox="0 0 24 24" aria-label="Verified"><circle cx="12" cy="12" r="11"/><path d="M7 12.4l3.3 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const by=p=>p.author_slug?`<a href="${alink(p.author_slug)}">${esc(p.author)}</a>${p.author_verified?check:''}`:esc(p.author);
 const ph=t=>'<div class="ph">'+esc((t||'RAPMAG').split(' ').slice(0,2).join(' '))+'</div>';
 const qs=new URLSearchParams(location.search),page=document.body.dataset.page;
