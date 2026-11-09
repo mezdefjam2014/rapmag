@@ -32,7 +32,7 @@ async function bgCut(src){const m=document.createElement('div');m.className='mod
   if(!ok){m.remove();return null}st('Uploading…');const name=(src.name||'photo').replace(/\.[^.]+$/,'')+'-cutout.png';const r=await upload(new File([blob],name,{type:'image/png'}));m.remove();ms('Background removed.');return r.url}
  catch(e){st('Could not remove the background: '+(e.message||e));const a=m.querySelector('.bgc-act');a.hidden=false;a.querySelector('#bgok').remove();await new Promise(r=>m.querySelector('#bgno').onclick=r);m.remove();return null}}
 
-const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=8';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
+const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=9';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
 
 async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(null,'',location.pathname+location.search+'#mag-'+id);pg.innerHTML='<div class="st">Loading…</div>';
  await magLib();let M;try{M=(await api('/api/admin/mags/'+id)).mag}catch(e){pg.innerHTML='<div class="st">'+esc(e.message)+'</div>';return}
@@ -70,7 +70,14 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
 
  /* ---- canvas: the page at working size; click a slot to edit it, drag the free boxes ---- */
  let k0=1;const drawCanvas=()=>{const w=Math.min(CV.parentElement.clientWidth-20,640),k=w/MAG.W;
-  k0=k;CV.innerHTML=`<div class="mk-tip">Drag anything on the page to move it. Hold <b>Shift</b> and scroll on it to make it bigger or smaller.</div><div class="mk-stage" style="width:${w}px;height:${Math.round(MAG.H*k)}px"><div style="transform:scale(${k});transform-origin:0 0;width:${MAG.W}px;height:${MAG.H}px">${MAG.render(page(),D,{edit:1})}</div></div>`;
+  k0=k;CV.innerHTML=`<div class="mk-tip">Drag anything on the page to move it. Hold <b>Shift</b> and scroll on it to make it bigger or smaller. Drop photos from your computer right onto any photo spot.</div><div class="mk-stage" style="width:${w}px;height:${Math.round(MAG.H*k)}px"><div style="transform:scale(${k});transform-origin:0 0;width:${MAG.W}px;height:${MAG.H}px">${MAG.render(page(),D,{edit:1})}</div></div>`;
+  /* drag a photo from your computer straight onto any photo spot on the page */
+  {const st=CV.querySelector('.mk-stage');const slotAt=e=>{const T=(MAG.BY[page().tpl]||{slots:[]}).slots;for(const el of document.elementsFromPoint(e.clientX,e.clientY)){if(!st.contains(el))continue;const x=el.closest('.mg-x');if(x&&!x.classList.contains('txt'))return {x:+x.dataset.x,el:x};const d=el.closest('[data-slot]');if(d){const t=T.find(q=>q[0]===d.dataset.slot);if(t&&(t[1]==='img'||t[1]==='cut'))return {k:d.dataset.slot,el:d}}}return null};
+   let hi=null;const clr=()=>{if(hi){hi.classList.remove('mk-drop');hi=null}};
+   st.ondragover=e=>{if(![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();const s=slotAt(e);if((s&&s.el)!==hi){clr();if(s){hi=s.el;hi.classList.add('mk-drop')}}};
+   st.ondragleave=e=>{if(!st.contains(e.relatedTarget))clr()};
+   st.ondrop=async e=>{e.preventDefault();const s=slotAt(e);clr();const fl=[...e.dataTransfer.files].find(f=>/^image\//.test(f.type));if(!fl)return;if(!s){ms('Drop the photo on a photo spot.');return}
+    try{const r=await upload(fl);const pg=page(),v=pg.v||(pg.v={});change(()=>{if(s.k)v[s.k]={...(v[s.k]&&typeof v[s.k]==='object'?v[s.k]:{x:50,y:50,z:1}),u:r.url};else pg.x[s.x].u=r.url})}catch(er){ms(er.message)}}}
   CV.querySelectorAll('[data-slot]').forEach(el=>el.onclick=e=>{e.stopPropagation();tab='content';drawSide();const f=SD.querySelector(`[data-k="${el.dataset.slot}"]`);if(f){f.scrollIntoView({block:'center',behavior:'smooth'});f.classList.add('flash');setTimeout(()=>f.classList.remove('flash'),900)}});
   CV.querySelectorAll('[data-mv]').forEach(el=>{if(el.closest('.mg-x'))return;el.classList.add('mk-mv');
    el.onpointerdown=e=>{if(e.button)return;e.preventDefault();e.stopPropagation();const v=page().v||(page().v={}),k=el.dataset.mv,M=v._mv=v._mv||{},o=M[k]||{x:0,y:0,s:1},sx=e.clientX,sy=e.clientY,ox=o.x||0,oy=o.y||0;let moved=0;el.setPointerCapture(e.pointerId);
@@ -90,7 +97,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
 
  /* ---- side panel ---- */
  const imgCtl=(k,o,lab,cutout)=>`<div class="mk-f" data-k="${k}"><label>${esc(lab)}</label>${o&&o.u?`<div class="mk-img"><img src="${esc(MAG.abs(o.u))}" alt=""><div><button class="b" data-up="${k}">REPLACE</button><button class="b r" data-cut="${k}">✂ REMOVE BACKGROUND</button><button class="b d" data-rmimg="${k}">REMOVE</button></div></div>
-  <div class="mk-sl"><span>LEFT ↔ RIGHT</span><input type="range" min="0" max="100" value="${o.x??50}" data-im="${k}" data-ax="x"></div>${cutout?'':`<div class="mk-sl"><span>UP ↕ DOWN</span><input type="range" min="0" max="100" value="${o.y??50}" data-im="${k}" data-ax="y"></div>`}<div class="mk-sl"><span>ZOOM</span><input type="range" min="1" max="${cutout?1.6:3}" step=".02" value="${o.z??1}" data-im="${k}" data-ax="z"></div>`
+  <div class="mk-sl"><span>LEFT ↔ RIGHT</span><input type="range" min="0" max="100" value="${o.x??50}" data-im="${k}" data-ax="x"></div>${`<div class="mk-sl"><span>UP ↕ DOWN</span><input type="range" min="0" max="100" value="${o.y??50}" data-im="${k}" data-ax="y"></div>`}<div class="mk-sl"><span>ZOOM</span><input type="range" min="1" max="${cutout?1.6:3}" step=".02" value="${o.z??1}" data-im="${k}" data-ax="z"></div>`
   :`<button class="b" data-up="${k}">+ UPLOAD PHOTO</button><button class="b r" data-upcut="${k}">+ UPLOAD &amp; REMOVE BACKGROUND</button>${cutout?'<div class="hint">Upload any photo and click REMOVE BACKGROUND, or use a PNG that is already cut out. The person then stands in front of the logo.</div>':''}`}</div>`;
  const drawSide=()=>{pg.querySelectorAll('.mk-tabs [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));const p=page(),t=tpl(),v=p.v||(p.v={});
   if(tab==='content'){SD.innerHTML=`<div class="mk-tn">${esc(t.name)} <small>${esc((MAG.THEMES[p.theme]||{}).name||'')}</small></div>`+t.slots.map(([k,ty,lab])=>{
@@ -114,6 +121,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
   bindSide()};
  const bindSide=()=>{const p=page(),v=p.v;
   SD.querySelectorAll('[data-v]').forEach(f=>f.oninput=()=>change(()=>{v[f.dataset.v]=f.value},'v'+sel+f.dataset.v,1));
+  SD.querySelectorAll('[data-up]').forEach(b=>{const f=b.closest('.mk-f')||b.parentElement;f.ondragover=e=>{e.preventDefault();f.classList.add('mk-drop')};f.ondragleave=()=>f.classList.remove('mk-drop');f.ondrop=async e=>{e.preventDefault();f.classList.remove('mk-drop');const fl=[...e.dataTransfer.files].find(x=>/^image\//.test(x.type));if(!fl)return;const k=b.dataset.up;try{const r=await upload(fl);change(()=>{v[k]={...(v[k]&&typeof v[k]==='object'?v[k]:{x:50,y:50,z:1}),u:r.url}})}catch(er){ms(er.message)}}});
   SD.querySelectorAll('[data-up]').forEach(b=>b.onclick=async()=>{const k=b.dataset.up,[fl]=await pick('image/*',false);if(!fl)return;try{const r=await upload(fl);change(()=>{v[k]={u:r.url,x:50,y:50,z:1}})}catch(e){ms(e.message)}});
   SD.querySelectorAll('[data-cut]').forEach(b=>b.onclick=async()=>{const k=b.dataset.cut,o=v[k];const u=await bgCut(MAG.abs(o.u));if(u)change(()=>{v[k]={...o,u}})});
   SD.querySelectorAll('[data-upcut]').forEach(b=>b.onclick=async()=>{const k=b.dataset.upcut,[fl]=await pick('image/*',false);if(!fl)return;const u=await bgCut(fl);if(u)change(()=>{v[k]={u,x:50,y:50,z:1}})});
