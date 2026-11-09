@@ -39,6 +39,23 @@ export default {
         sql += ' ORDER BY p.featured DESC, p.published_at DESC LIMIT ? OFFSET ?'; args.push(lim, off);
         return json({ posts: await all(sql, ...args) }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
+      /* article likes: GET /api/likes?ids=1,2,3 -> counts + which ones this visitor liked; POST /api/likes/:id {on} */
+      if (p === '/api/likes' && req.method === 'GET') {
+        const ids = (url.searchParams.get('ids') || '').split(',').map(Number).filter(n => n > 0).slice(0, 60);
+        if (!ids.length) return json({ likes: {}, mine: [] });
+        await likeTables(env); const who = await visitor(req, env), q = ids.map(() => '?').join(',');
+        const [posts, real, ex, mine] = await Promise.all([all(`SELECT p.id,p.views,p.published_at FROM posts p WHERE p.id IN (${q}) AND ${LIVE}`, ...ids), all(`SELECT post_id id, COUNT(*) n FROM post_likes WHERE post_id IN (${q}) GROUP BY post_id`, ...ids), all(`SELECT post_id id, bonus, auto FROM post_like_extra WHERE post_id IN (${q})`, ...ids), all(`SELECT post_id id FROM post_likes WHERE who=? AND post_id IN (${q})`, who, ...ids)]);
+        const R = Object.fromEntries(real.map(r => [r.id, r.n])), E = Object.fromEntries(ex.map(r => [r.id, r]));
+        return json({ likes: Object.fromEntries(posts.map(x => [x.id, articleLikes(x, R[x.id] || 0, E[x.id])])), mine: mine.map(r => r.id) }, 200, { 'Cache-Control': 'no-store' });
+      }
+      const lm = p.match(/^\/api\/likes\/(\d+)$/);
+      if (lm && req.method === 'POST') {
+        const { on } = await req.json().catch(() => ({})), id = +lm[1];
+        if (!(await one(`SELECT p.id FROM posts p WHERE p.id=? AND ${LIVE}`, id))) return json({ error: 'not found' }, 404);
+        await likeTables(env); const who = await visitor(req, env);
+        await DB.prepare(on ? 'INSERT OR IGNORE INTO post_likes (post_id,who) VALUES (?,?)' : 'DELETE FROM post_likes WHERE post_id=? AND who=?').bind(id, who).run();
+        return json({ ok: true });
+      }
       /* Indie Charts: top 20 ranked by plays (one per song per visitor per day) plus the editor's added plays */
       if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'public, max-age=30' }) }
       /* likes: one per visitor per song, tap again to take it back */
@@ -164,6 +181,15 @@ export default {
       }
       m = p.match(/^\/api\/admin\/categories\/([a-z0-9-]+)$/);
       if (m && req.method === 'DELETE') { const n = await one('SELECT COUNT(*) n FROM posts WHERE category=?', m[1]); if (n.n) return json({ error: 'This category still has ' + n.n + ' article(s). Move them first, or hide the category.' }, 409); await DB.prepare('DELETE FROM categories WHERE slug=?').bind(m[1]).run(); return json({ ok: true }) }
+      /* article likes in the editor: added likes + auto on/off */
+      m = p.match(/^\/api\/admin\/likes\/(\d+)$/);
+      if (m) {
+        const id = +m[1]; await likeTables(env);
+        if (req.method === 'POST') { await DB.prepare('INSERT INTO post_like_extra (post_id,bonus,auto) VALUES (?,?,?) ON CONFLICT(post_id) DO UPDATE SET bonus=excluded.bonus, auto=excluded.auto').bind(id, Math.max(0, Math.min(1e9, Math.round(+body.bonus || 0))), body.auto === 0 ? 0 : 1).run() }
+        const x = await one('SELECT id,views,published_at FROM posts WHERE id=?', id); if (!x) return json({ error: 'not found' }, 404);
+        const r = await one('SELECT COUNT(*) n FROM post_likes WHERE post_id=?', id), e = await one('SELECT bonus,auto FROM post_like_extra WHERE post_id=?', id), ae = { bonus: 0, auto: 1, ...(e || {}) };
+        return json({ real: r.n, bonus: ae.bonus, auto: ae.auto, autoNow: articleLikes(x, 0, { bonus: 0, auto: ae.auto }), autoTarget: ae.auto ? articleTarget(x) : 0, total: articleLikes(x, r.n, ae) });
+      }
       /* Indie Charts editor: songs, added plays, locked spots, reset */
       if (p === '/api/admin/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items, cfg: c.cfg }) }
       if (p === '/api/admin/indie' && req.method === 'POST') {
@@ -219,6 +245,17 @@ export default {
     } catch (e) { return json({ error: String(e && e.message || e) }, 500) }
   }
 };
+
+/* ---------- article likes ---------- */
+async function likeTables(env) { await env.DB.batch([env.DB.prepare('CREATE TABLE IF NOT EXISTS post_likes (post_id INTEGER NOT NULL, who TEXT NOT NULL, PRIMARY KEY (post_id, who))'), env.DB.prepare('CREATE TABLE IF NOT EXISTS post_like_extra (post_id INTEGER PRIMARY KEY, bonus INTEGER NOT NULL DEFAULT 0, auto INTEGER NOT NULL DEFAULT 1)')]) }
+function seedOf(n) { let h = Math.imul((n | 0) ^ 0x9e3779b9, 2654435761); h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; return h >>> 0 }
+/* every article gets its own final total (more for stories people read more) and fills in like real readers: quick the first day, slower after */
+function articleTarget(x) { return 90 + seedOf(x.id) % 760 + Math.floor((x.views || 0) * (0.12 + (seedOf(x.id + 7) % 80) / 1000)) }
+function articleLikes(x, real, e) {
+  const ex = e || { bonus: 0, auto: 1 }; let auto = 0;
+  if (ex.auto !== 0) { const t = (Date.now() - Date.parse(String(x.published_at).replace(' ', 'T') + 'Z')) / 864e5, tau = 0.6 + (seedOf(x.id + 3) % 140) / 100; if (t > 0) auto = Math.floor(articleTarget(x) * (1 - Math.exp(-t / tau))) }
+  return real + (ex.bonus || 0) + auto;
+}
 
 /* ---------- Indie Charts ---------- */
 const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/(audio|images)\//.test(String(u || '')) ? String(u) : '';

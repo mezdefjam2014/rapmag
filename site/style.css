@@ -324,3 +324,11 @@ body.has-np{padding-bottom:80px}
 @keyframes crbeat{0%{transform:scale(1)}30%{transform:scale(1.45)}55%{transform:scale(.9)}100%{transform:scale(1)}}
 .cr-pop.lk{color:#e01b24;top:auto;bottom:0}
 @media(max-width:600px){.cr-like{padding:2px 8px 2px 5px;font-size:11px;margin-top:4px}.body .chart-row .cr-like img{width:15px;height:15px}}
+/* article likes */
+.alc,.alk{display:inline-flex;align-items:center;gap:4px;margin-left:8px;vertical-align:middle;font:800 12px Inter,sans-serif;color:inherit;font-variant-numeric:tabular-nums;opacity:0;transition:opacity .3s}
+.alc.in,.alk.in{opacity:1}
+.alc img,.alk img{width:14px;height:14px;margin:0;display:inline-block}
+.alk{background:none;border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 7px;cursor:pointer}
+.alk img{filter:grayscale(1) opacity(.5);transition:filter .2s}.alk:hover img{filter:grayscale(.3)}
+.alk.on{border-color:#e01b24;background:#fff1f1;color:#111}.alk.on img{filter:none}
+.alk.beat img{animation:crbeat .6s ease-out}
