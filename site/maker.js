@@ -32,7 +32,7 @@ async function bgCut(src){const m=document.createElement('div');m.className='mod
   if(!ok){m.remove();return null}st('Uploading…');const name=(src.name||'photo').replace(/\.[^.]+$/,'')+'-cutout.png';const r=await upload(new File([blob],name,{type:'image/png'}));m.remove();ms('Background removed.');return r.url}
  catch(e){st('Could not remove the background: '+(e.message||e));const a=m.querySelector('.bgc-act');a.hidden=false;a.querySelector('#bgok').remove();await new Promise(r=>m.querySelector('#bgno').onclick=r);m.remove();return null}}
 
-const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=3';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
+const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=5';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
 
 async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(null,'',location.pathname+location.search+'#mag-'+id);pg.innerHTML='<div class="st">Loading…</div>';
  await magLib();let M;try{M=(await api('/api/admin/mags/'+id)).mag}catch(e){pg.innerHTML='<div class="st">'+esc(e.message)+'</div>';return}
@@ -69,9 +69,14 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
   P.querySelector('#mkadd').onclick=async()=>{const c=await picker(page().theme||'red',sel===0&&D.pages.length===1?'feature':'feature');if(c)change(()=>{D.pages.splice(sel+1,0,{tpl:c.tpl,theme:c.theme,v:{}});sel=sel+1})}};
 
  /* ---- canvas: the page at working size; click a slot to edit it, drag the free boxes ---- */
- const drawCanvas=()=>{const w=Math.min(CV.parentElement.clientWidth-20,640),k=w/MAG.W;
-  CV.innerHTML=`<div class="mk-stage" style="width:${w}px;height:${Math.round(MAG.H*k)}px"><div style="transform:scale(${k});transform-origin:0 0;width:${MAG.W}px;height:${MAG.H}px">${MAG.render(page(),D,{edit:1})}</div></div>`;
+ let k0=1;const drawCanvas=()=>{const w=Math.min(CV.parentElement.clientWidth-20,640),k=w/MAG.W;
+  k0=k;CV.innerHTML=`<div class="mk-tip">Drag anything on the page to move it. Hold <b>Shift</b> and scroll on it to make it bigger or smaller.</div><div class="mk-stage" style="width:${w}px;height:${Math.round(MAG.H*k)}px"><div style="transform:scale(${k});transform-origin:0 0;width:${MAG.W}px;height:${MAG.H}px">${MAG.render(page(),D,{edit:1})}</div></div>`;
   CV.querySelectorAll('[data-slot]').forEach(el=>el.onclick=e=>{e.stopPropagation();tab='content';drawSide();const f=SD.querySelector(`[data-k="${el.dataset.slot}"]`);if(f){f.scrollIntoView({block:'center',behavior:'smooth'});f.classList.add('flash');setTimeout(()=>f.classList.remove('flash'),900)}});
+  CV.querySelectorAll('[data-mv]').forEach(el=>{if(el.closest('.mg-x'))return;el.classList.add('mk-mv');
+   el.onpointerdown=e=>{if(e.button)return;e.preventDefault();e.stopPropagation();const v=page().v||(page().v={}),k=el.dataset.mv,M=v._mv=v._mv||{},o=M[k]||{x:0,y:0,s:1},sx=e.clientX,sy=e.clientY,ox=o.x||0,oy=o.y||0;let moved=0;el.setPointerCapture(e.pointerId);
+    el.onpointermove=ev=>{const dx=(ev.clientX-sx)/k0,dy=(ev.clientY-sy)/k0;if(!moved&&Math.abs(dx)+Math.abs(dy)<6)return;if(!moved){undo.push(snap());redo.length=0;moved=1}o.x=Math.round(ox+dx);o.y=Math.round(oy+dy);M[k]=o;el.style.translate=o.x+'px '+o.y+'px'};
+    el.onpointerup=()=>{el.onpointermove=null;el.onpointerup=null;if(moved){dirty=1;queue();drawPages(true)}else{const sl=el.querySelector('[data-slot]')||el.closest('[data-slot]')||el;const key=sl.dataset&&sl.dataset.slot||(k.startsWith('mg-name')?'name':k.startsWith('mg-tag')?'tag':'');if(key){tab='content';drawSide();const f=SD.querySelector(`[data-k="${key}"]`);if(f){f.scrollIntoView({block:'center',behavior:'smooth'});f.classList.add('flash');setTimeout(()=>f.classList.remove('flash'),900)}}}}};
+   el.onwheel=e=>{if(!e.shiftKey)return;e.preventDefault();const v=page().v||(page().v={}),k=el.dataset.mv,M=v._mv=v._mv||{},o=M[k]||{x:0,y:0,s:1};o.s=Math.max(.3,Math.min(3,Math.round(((o.s||1)*(e.deltaY<0?1.05:.95))*100)/100));M[k]=o;el.style.scale=o.s;dirty=1;queue();clearTimeout(el._wt);el._wt=setTimeout(()=>drawPages(true),400)}});
   CV.querySelectorAll('.mg-x').forEach(el=>{el.onpointerdown=e=>{e.preventDefault();const i=+el.dataset.x,x=page().x[i],sx=e.clientX,sy=e.clientY,ox=x.x,oy=x.y;let moved=0;el.setPointerCapture(e.pointerId);
    const mv=ev=>{const dx=(ev.clientX-sx)/(MAG.W*k)*100,dy=(ev.clientY-sy)/(MAG.H*k)*100;if(!moved&&Math.abs(dx)+Math.abs(dy)<.4)return;if(!moved){undo.push(snap());redo.length=0;moved=1}x.x=Math.round((ox+dx)*10)/10;x.y=Math.round((oy+dy)*10)/10;el.style.left=x.x+'%';el.style.top=x.y+'%'};
    const up=()=>{el.onpointermove=null;el.onpointerup=null;if(moved){dirty=1;queue();drawPages(true);if(tab==='extras')drawSide()}else{tab='extras';drawSide();const f=SD.querySelector(`[data-xi="${i}"]`);if(f)f.scrollIntoView({block:'center',behavior:'smooth'})}};el.onpointermove=mv;el.onpointerup=up}});
@@ -90,6 +95,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
  const drawSide=()=>{pg.querySelectorAll('.mk-tabs [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));const p=page(),t=tpl(),v=p.v||(p.v={});
   if(tab==='content'){SD.innerHTML=`<div class="mk-tn">${esc(t.name)} <small>${esc((MAG.THEMES[p.theme]||{}).name||'')}</small></div>`+t.slots.map(([k,ty,lab])=>{
     if(ty==='img')return imgCtl(k,v[k],lab);if(ty==='cut')return imgCtl(k,v[k],lab,1);
+    if(ty==='logo')return `<div class="mk-f" data-k="${k}"><label>${esc(lab)}</label>${[['mh_s','SIZE',40,140,100],['mh_x','LEFT ↔ RIGHT',-300,300,0],['mh_y','UP ↕ DOWN',-60,500,0]].map(([f,n,a,b,d])=>`<div class="mk-sl"><span>${n}</span><input type="range" min="${a}" max="${b}" value="${v[f]??d}" data-v="${f}"></div>`).join('')}<button class="b" data-mhreset>RESET LOGO</button></div>`;
     if(ty==='chart')return `<div class="mk-f" data-k="${k}"><label>${esc(lab)}</label><button class="b r" data-chart="${k}">${v[k]?'UPDATE FROM THE CHART':'PULL CHART'}</button>${v[k]?`<div class="hint">Saved ${esc(v[k].at||'')} · #1 ${esc((v[k].items[0]||{}).title||'')}</div>`:''}</div>`;
     if(ty==='body')return `<div class="mk-f" data-k="${k}"><label>${esc(lab)}</label><textarea data-v="${k}" rows="12" placeholder="Paste the article. Empty line = new paragraph.">${esc(v[k]||'')}</textarea><button class="b" data-import>IMPORT AN ARTICLE FROM THE SITE</button></div>`;
     if(ty==='para')return `<div class="mk-f" data-k="${k}"><label>${esc(lab)}</label><textarea data-v="${k}" rows="3">${esc(v[k]||'')}</textarea></div>`;
@@ -98,7 +104,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
     <label class="mk-lb">THEME (colors + type)</label><div class="mk-th">${Object.entries(MAG.THEMES).map(([k,T])=>`<button data-th="${k}" class="${p.theme===k?'on':''}" title="${esc(T.name)}"><i style="background:${T.bg}"></i><i style="background:${T.acc}"></i><i style="background:${T.ink}"></i><span>${esc(T.name)}</span></button>`).join('')}</div>
     <button class="b" id="mkall" style="width:100%;margin-top:8px">USE THIS THEME ON EVERY PAGE</button>
     <label class="mk-lb">MASTHEAD LOGO (whole issue)</label>${D.logo&&D.logo.u?`<div class="mk-img"><img src="${esc(MAG.abs(D.logo.u))}" alt="" style="background:#333"><div><button class="b" id="mklogo">REPLACE</button><button class="b d" id="mklogorm">USE SITE LOGO</button></div></div>`:`<button class="b" id="mklogo">+ UPLOAD YOUR LOGO (PNG)</button><div class="hint">Until you upload one, the RAPMAG logo from the website is used.</div>`}
-    <label class="mk-lb">START OVER</label><button class="b d" id="mkreset">CLEAR THIS PAGE</button>`}
+    <label class="mk-lb">MOVED ITEMS</label><button class="b" id="mkmvreset" style="width:100%">PUT EVERYTHING BACK IN PLACE</button><label class="mk-lb">START OVER</label><button class="b d" id="mkreset">CLEAR THIS PAGE</button>`}
   if(tab==='extras'){const X=p.x||[];SD.innerHTML=`<div class="hint" style="margin-top:0">Add your own text or photos anywhere. Drag them on the page to move them.</div><div class="mk-xb"><button class="b r" data-add="txt">+ TEXT</button><button class="b r" data-add="img">+ PHOTO</button><button class="b r" data-add="round">+ ROUND PHOTO</button></div>`+
    X.map((x,i)=>`<div class="mk-xf" data-xi="${i}"><div class="mk-xh"><b>${x.t==='img'?'PHOTO':'TEXT'} ${i+1}</b><button class="b d" data-xrm="${i}">REMOVE</button></div>
     ${x.t==='img'?(x.u?`<div class="mk-img"><img src="${esc(MAG.abs(x.u))}" alt=""><div><button class="b" data-xup="${i}">REPLACE</button><button class="b r" data-xcut="${i}">✂ REMOVE BACKGROUND</button></div></div>`:`<button class="b" data-xup="${i}">+ UPLOAD PHOTO</button>`)
@@ -112,6 +118,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
   SD.querySelectorAll('[data-cut]').forEach(b=>b.onclick=async()=>{const k=b.dataset.cut,o=v[k];const u=await bgCut(MAG.abs(o.u));if(u)change(()=>{v[k]={...o,u}})});
   SD.querySelectorAll('[data-upcut]').forEach(b=>b.onclick=async()=>{const k=b.dataset.upcut,[fl]=await pick('image/*',false);if(!fl)return;const u=await bgCut(fl);if(u)change(()=>{v[k]={u,x:50,y:50,z:1}})});
   SD.querySelectorAll('[data-xcut]').forEach(b=>b.onclick=async()=>{const x=p.x[+b.dataset.xcut];const u=await bgCut(MAG.abs(x.u));if(u)change(()=>{x.u=u})});
+  const mr=SD.querySelector('[data-mhreset]');if(mr)mr.onclick=()=>change(()=>{delete v.mh_s;delete v.mh_x;delete v.mh_y});
   SD.querySelectorAll('[data-rmimg]').forEach(b=>b.onclick=()=>change(()=>{delete v[b.dataset.rmimg]}));
   SD.querySelectorAll('[data-im]').forEach(r=>r.oninput=()=>change(()=>{v[r.dataset.im][r.dataset.ax]=+r.value},'im'+sel+r.dataset.im+r.dataset.ax,1));
   SD.querySelectorAll('[data-chart]').forEach(b=>b.onclick=async()=>{try{const d=await fetch(API+'/api/indie').then(r=>r.json());change(()=>{v[b.dataset.chart]={at:new Date().toLocaleDateString(),items:d.items.slice(0,20).map(x=>({title:x.title,artist:x.artist,plays:x.plays}))}});ms('Chart pulled. It stays as it is now, even when the chart changes.')}catch(e){ms('Could not load the chart.')}});
@@ -122,6 +129,7 @@ async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(
   if(q('#mkall'))q('#mkall').onclick=()=>change(()=>{D.pages.forEach(x=>x.theme=p.theme)});
   if(q('#mklogo'))q('#mklogo').onclick=async()=>{const [fl]=await pick('image/*',false);if(!fl)return;try{const r=await upload(fl);change(()=>{D.logo={u:r.url}})}catch(e){ms(e.message)}};
   if(q('#mklogorm'))q('#mklogorm').onclick=()=>change(()=>{delete D.logo});
+  if(q('#mkmvreset'))q('#mkmvreset').onclick=()=>change(()=>{delete p.v._mv});
   if(q('#mkreset'))q('#mkreset').onclick=async()=>{if(await confirmBox('Clear every word and photo on this page? (UNDO brings it back.)','CLEAR PAGE'))change(()=>{p.v={};p.x=[]})};
   SD.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>change(()=>{p.x=p.x||[];const a=b.dataset.add;p.x.push(a==='txt'?{t:'txt',text:'NEW TEXT',x:10,y:45,w:60,size:60,color:'#ffffff',font:'head'}:{t:'img',x:35,y:35,w:30,h:a==='round'?23:25,round:a==='round'})}));
   SD.querySelectorAll('[data-xrm]').forEach(b=>b.onclick=()=>change(()=>{p.x.splice(+b.dataset.xrm,1)}));

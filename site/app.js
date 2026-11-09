@@ -52,7 +52,7 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
 /* ---------- Indie Charts: top 20 ranked by plays; a play counts after 10 seconds of listening ---------- */
 /* digital magazine: newest issue on top, archive of past covers underneath; ?c=magazine&m=slug opens the flip-book */
 async function magazine(){const main=$('#main'),slug=qs.get('m');
- const lib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=3';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+ const lib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=5';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
  const href=m=>'index.html?c=magazine&m='+encodeURIComponent(m.slug);
  main.innerHTML=`<div class="wrap shell mgz"><div class="empty">Loading the magazine…</div></div>`;
  let list;try{[list]=await Promise.all([get('/api/mags'),lib()])}catch(e){main.querySelector('.mgz').innerHTML='<div class="empty">The magazine is coming soon.</div>';return}

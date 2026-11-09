@@ -17,7 +17,17 @@ const THEMES={
  purple:{name:'Purple Haze',bg:'#1b0b2e',bg2:'#2a1146',ink:'#ffffff',mut:'#cdb8ef',acc:'#a64dff',acc2:'#ffcf3f',hf:'Anton',sf:'Playfair Display',bf:'Source Serif 4',mag:'#ffffff',magInk:'#1b0b2e'},
  sunset:{name:'Sunset',bg:'#f2552c',bg2:'#d63f1e',ink:'#ffffff',mut:'#ffe0d2',acc:'#1a0d08',acc2:'#ffd23f',hf:'Anton',sf:'Playfair Display',bf:'Source Serif 4',mag:'#ffffff',magInk:'#1a0d08'},
  ice:{name:'Ice',bg:'#eaf6f8',bg2:'#ffffff',ink:'#06232b',mut:'#4f6b72',acc:'#00a3b4',acc2:'#06232b',hf:'Anton',sf:'Playfair Display',bf:'Source Serif 4',mag:'#06232b',magInk:'#eaf6f8'},
- concrete:{name:'Concrete',bg:'#2b2c2e',bg2:'#3a3b3e',ink:'#f2f2f2',mut:'#b4b5b8',acc:'#ffb000',acc2:'#ffffff',hf:'Anton',sf:'Archivo Black',bf:'Inter',mag:'#f2f2f2',magInk:'#2b2c2e'}
+ concrete:{name:'Concrete',bg:'#2b2c2e',bg2:'#3a3b3e',ink:'#f2f2f2',mut:'#b4b5b8',acc:'#ffb000',acc2:'#ffffff',hf:'Anton',sf:'Archivo Black',bf:'Inter',mag:'#f2f2f2',magInk:'#2b2c2e'},
+ emerald:{name:'Emerald',bg:'#04281f',bg2:'#073a2d',ink:'#f2fff9',mut:'#9fd4bf',acc:'#18c37e',acc2:'#ffd23f',hf:'Bebas Neue',sf:'DM Serif Display',bf:'Source Serif 4',mag:'#f2fff9',magInk:'#04281f'},
+ pink:{name:'Pink Money',bg:'#ffe3ee',bg2:'#ffffff',ink:'#2a0614',mut:'#8a4a63',acc:'#ff2f86',acc2:'#2a0614',hf:'Anton',sf:'DM Serif Display',bf:'Source Serif 4',mag:'#2a0614',magInk:'#ffe3ee'},
+ mono:{name:'Black & White',bg:'#ffffff',bg2:'#f2f2f2',ink:'#000000',mut:'#555555',acc:'#000000',acc2:'#000000',hf:'Oswald',sf:'Playfair Display',bf:'Source Serif 4',mag:'#000000',magInk:'#ffffff'},
+ royal:{name:'Royal',bg:'#14093a',bg2:'#1f0f55',ink:'#fff8e6',mut:'#c6b9f0',acc:'#e6b422',acc2:'#ffffff',hf:'Bebas Neue',sf:'Playfair Display',bf:'Source Serif 4',mag:'#fff8e6',magInk:'#14093a'},
+ desert:{name:'Desert',bg:'#e9d8bd',bg2:'#f6ecdc',ink:'#2d1d0c',mut:'#7a6143',acc:'#b5481d',acc2:'#2d1d0c',hf:'Oswald',sf:'DM Serif Display',bf:'Source Serif 4',mag:'#2d1d0c',magInk:'#e9d8bd'},
+ neon:{name:'Neon Blue',bg:'#050816',bg2:'#0c1230',ink:'#e8f4ff',mut:'#8aa6c8',acc:'#00d1ff',acc2:'#ff2fd1',hf:'Bebas Neue',sf:'Archivo Black',bf:'Inter',mag:'#e8f4ff',magInk:'#050816'},
+ wine:{name:'Wine',bg:'#2a0a14',bg2:'#3d1020',ink:'#fbe9ee',mut:'#d7a3b2',acc:'#c9184a',acc2:'#f4c95d',hf:'Oswald',sf:'Playfair Display',bf:'Source Serif 4',mag:'#fbe9ee',magInk:'#2a0a14'},
+ olive:{name:'Army',bg:'#2f3420',bg2:'#3c422a',ink:'#f1f0e4',mut:'#b9b99a',acc:'#e85d04',acc2:'#f1f0e4',hf:'Bebas Neue',sf:'Archivo Black',bf:'Inter',mag:'#f1f0e4',magInk:'#2f3420'},
+ silver:{name:'Silver',bg:'#d9dde2',bg2:'#eef0f3',ink:'#111317',mut:'#5b616b',acc:'#3a57e8',acc2:'#111317',hf:'Oswald',sf:'DM Serif Display',bf:'Inter',mag:'#111317',magInk:'#d9dde2'},
+ fire:{name:'Fire',bg:'#ffcc00',bg2:'#ffe066',ink:'#120c00',mut:'#5e4a00',acc:'#e0242f',acc2:'#120c00',hf:'Anton',sf:'Archivo Black',bf:'Inter',mag:'#120c00',magInk:'#ffcc00'}
 };
 const vars=t=>{const T=THEMES[t]||THEMES.red;return `--bg:${T.bg};--bg2:${T.bg2};--ink:${T.ink};--mut:${T.mut};--acc:${T.acc};--acc2:${T.acc2};--hf:'${T.hf}';--sf:'${T.sf}';--bf:'${T.bf}';--mag:${T.mag};--magInk:${T.magInk}`};
 
@@ -33,8 +43,10 @@ const cut=(v,k,st)=>{const o=v[k],u=o&&o.u;if(!u)return EDIT?`<div class="mg-ph 
  return `<img class="mg-cut" data-slot="${k}" src="${esc(abs(u))}" alt="" style="${st};transform:scale(${o.z??1});transform-origin:50% 100%;object-position:${o.x??50}% 100%" draggable="false">`};
 const fit=(s,base,n)=>Math.round(base*Math.max(.42,Math.min(1,Math.sqrt((n||12)/Math.max(1,String(s||'').length)))));
 /* the masthead: always at the top, always big. A logo uploaded in the Maker replaces the built one. */
-const MH=(d,top,w)=>{w=w||860;const l=(d&&d.logo&&d.logo.u)||'logo.webp';
- return `<div class="mg-mh" style="top:${top}px;width:${w}px;margin-left:-${w/2}px"><img src="${esc(abs(l))}" alt="RAPMAG" style="width:100%;height:auto"></div>`};
+/* the logo at the top: size and position can be moved per page (mh_s %, mh_x / mh_y px) */
+let CURV={};
+const MH=(d,top,w)=>{w=w||860;const l=(d&&d.logo&&d.logo.u)||'logo.webp',sc=(+CURV.mh_s||100)/100,ww=Math.round(w*sc),x=+CURV.mh_x||0,y=+CURV.mh_y||0;
+ return `<div class="mg-mh" data-slot="mh" style="top:${top+y}px;width:${ww}px;margin-left:${-ww/2+x}px"><img src="${esc(abs(l))}" alt="RAPMAG" style="width:100%;height:auto"></div>`};
 const issue=(v,top)=>v.issue?`<div class="mg-iss" style="top:${top}px">${tx(v,'issue')}</div>`:'';
 const foot=(v,t)=>`<div class="mg-handle"${t?` style="${t}"`:''}>${v.handle?tx(v,'handle'):'@RAPAECHELON · RAPAECHELON.COM'}</div>`;
 const circ=(v,i,st,box)=>`<div class="mg-circ${box?' box':''}" style="${st}">${im(v,'p'+i,'cimg')}${v['p'+i+'n']?`<b>${tx(v,'p'+i+'n')}</b>`:EDIT?'<b>NAME</b>':''}</div>`;
@@ -94,6 +106,7 @@ cov('c-collage','Collage',['issue','bg','star','name','tag','p1','p1n','p2','p2n
  ${[1,2,3].map(i=>`<div class="mg-tile" style="right:40px;top:${360+(i-1)*250}px">${im(v,'p'+i,'full')}<b>${tx(v,'p'+i+'n')||(EDIT?'NAME':'')}</b></div>`).join('')}
  <div class="mg-name block" style="left:40px;width:640px;text-align:left;top:1060px;font-size:${fit(v.name,104,10)}px">${tx(v,'name')}</div><div class="mg-tag" style="left:40px;width:640px;text-align:left;top:${1066+fit(v.name,104,10)}px">${tx(v,'tag')}</div>${line(v,1,'right:40px;top:1120px;width:250px','right')}${foot(v)}`);
 /* extra slot names used by some covers */
+C.forEach(c=>c.slots.unshift(['mh','logo','Logo at the top']));
 C.find(c=>c.id==='c-duo').slots.splice(3,0,['star2','cut','Second cover star (cut-out PNG)'],['name2','text','Second name','GMB FAME']);
 C.find(c=>c.id==='c-chart').slots.push(['chart','chart','Indie Charts (pulled from your chart)']);
 
@@ -126,6 +139,25 @@ pg('p-ad','ad','Full Page Ad',['img1'],(v)=>`${im(v,'img1','full')}${v.link?`<a 
 pg('p-twophoto','photo','Two Photos + Text',['kicker','title','img1','img2','body','pg'],(v)=>`${im(v,'img1','','position:absolute;left:0;top:0;width:50%;height:560px')}${im(v,'img2','','position:absolute;right:0;top:0;width:50%;height:560px')}<div class="mg-pad" style="position:absolute;top:580px;left:0;right:0">${head(v,'',72)}<div class="mg-body cols2" style="height:430px">${paras(v.body)}</div></div>${pnum(v)}`);
 pg('p-back','back','Back Cover',['title','dek','img1'],(v,d)=>`${im(v,'img1','full')}<div class="mg-shade"></div>${MH(d,80,700)}<div class="mg-pad" style="position:absolute;left:0;right:0;bottom:120px;text-align:center"><div class="mg-kick">NEXT ISSUE</div><h2 class="mg-h" style="font-size:${fit(v.title,110,14)}px">${tx(v,'title')}</h2><div class="mg-dek">${tx(v,'dek')}</div></div>${foot(v)}`,[['handle','text','Bottom line','@RAPAECHELON']]);
 
+pg('p-bighead','feature','Giant Headline + 3 Columns',['kicker','title','dek','by','body','pg'],(v)=>`<div class="mg-pad"><div class="mg-kick">${tx(v,'kicker')}</div><h2 class="mg-h" style="font-size:${fit(v.title,190,10)}px;border-bottom:8px solid var(--acc);padding-bottom:20px">${tx(v,'title')}</h2><div class="mg-dek">${tx(v,'dek')}</div><div class="mg-by" style="margin-bottom:20px">${tx(v,'by')}</div><div class="mg-body cols3" style="height:${560-Math.min(200,String(v.title||'').length*3)}px">${paras(v.body)}</div></div>${pnum(v)}`);
+pg('p-sidebar','feature','Story + Fact Box',['kicker','title','img1','body','pg'],(v)=>`<div class="mg-pad">${head(v,'',80)}</div><div class="mg-body" style="position:absolute;left:60px;top:${280}px;width:560px;height:930px">${paras(v.body)}</div><div class="mg-side" style="position:absolute;right:50px;top:280px;width:290px">${im(v,'img1','','height:290px;position:relative;margin-bottom:16px')}<h4>${tx(v,'fh')||'FAST FACTS'}</h4>${[1,2,3,4,5].map(i=>v['f'+i]?`<p>${tx(v,'f'+i)}</p>`:EDIT?'<p>Fact</p>':'').join('')}</div>${pnum(v)}`,
+ [['fh','text','Fact box title','FAST FACTS'],...[1,2,3,4,5].map(i=>['f'+i,'text','Fact '+i,''])]);
+pg('p-grid4','photo','Four Photo Grid',['kicker','title','pg'],(v)=>`<div class="mg-pad" style="padding-bottom:0">${head(v,'',70)}</div><div class="mg-grid4">${[1,2,3,4].map(i=>`<div>${im(v,'g'+i,'full')}${v['g'+i+'c']?`<span>${tx(v,'g'+i+'c')}</span>`:''}</div>`).join('')}</div>${pnum(v)}`,
+ [1,2,3,4].flatMap(i=>[['g'+i,'img','Photo '+i],['g'+i+'c','text','Photo '+i+' caption','']]));
+pg('p-quoteover','feature','Photo + Quote Overlay',['quote','by','img1','pg'],(v)=>`${im(v,'img1','full')}<div class="mg-shade b"></div><div style="position:absolute;left:60px;right:60px;bottom:90px;z-index:3"><div class="mg-bq" style="font-size:${fit(v.quote,80,40)}px">${tx(v,'quote')}</div><div class="mg-by">${tx(v,'by')}</div></div>${pnum(v)}`);
+pg('p-top5','news','Top 5 List',['kicker','title','pg'],(v)=>`<div class="mg-pad">${head(v,'',100)}<div class="mg-top5">${[1,2,3,4,5].map(i=>`<div><em>${i}</em><div>${im(v,'t'+i+'i','','width:150px;height:150px;position:relative;flex:none')}</div><span><b>${tx(v,'t'+i+'t')||(EDIT?'Item title':'')}</b><p>${tx(v,'t'+i+'p')}</p></span></div>`).join('')}</div></div>${pnum(v)}`,
+ [1,2,3,4,5].flatMap(i=>[['t'+i+'i','img','#'+i+' photo'],['t'+i+'t','text','#'+i+' title',''],['t'+i+'p','para','#'+i+' text','']]));
+pg('p-qatop','interview','Interview, Photo on Top',['kicker','title','dek','img1','body','pg'],(v)=>`${im(v,'img1','','position:absolute;left:0;top:0;width:100%;height:470px')}<div class="mg-pad" style="position:absolute;top:470px;left:0;right:0;padding-top:34px">${head(v,'',70)}<div class="mg-dek sm">${tx(v,'dek')}</div><div class="mg-body qa cols3" style="height:430px">${qa(v.body)}</div></div>${pnum(v)}`);
+pg('p-events','news','Shows & Events',['kicker','title','img1','pg'],(v)=>`${im(v,'img1','','position:absolute;left:0;top:0;width:100%;height:330px')}<div class="mg-pad" style="position:absolute;top:330px;left:0;right:0;padding-top:34px">${head(v,'',90)}<div class="mg-ev">${[1,2,3,4,5,6].map(i=>v['e'+i+'t']||EDIT?`<div><em>${tx(v,'e'+i+'d')||(EDIT?'DEC 01':'')}</em><b>${tx(v,'e'+i+'t')||(EDIT?'Event':'')}</b><small>${tx(v,'e'+i+'p')}</small></div>`:'').join('')}</div></div>${pnum(v)}`,
+ [1,2,3,4,5,6].flatMap(i=>[['e'+i+'d','text','Event '+i+' date',''],['e'+i+'t','text','Event '+i+' name',''],['e'+i+'p','text','Event '+i+' place','']]));
+pg('p-review','spotlight','Album / Song Review',['kicker','title','dek','img1','body','pg'],(v)=>`<div class="mg-pad"><div style="display:flex;gap:40px;align-items:flex-end">${im(v,'img1','','width:400px;height:400px;position:relative;flex:none;box-shadow:0 20px 50px rgba(0,0,0,.4)')}<div><div class="mg-kick">${tx(v,'kicker')||'REVIEW'}</div><h2 class="mg-h" style="font-size:${fit(v.title,90,14)}px">${tx(v,'title')}</h2><div class="mg-stars">${'★'.repeat(Math.max(0,Math.min(5,+v.stars||0)))}<i>${'★'.repeat(5-Math.max(0,Math.min(5,+v.stars||0)))}</i></div><div class="mg-dek sm">${tx(v,'dek')}</div></div></div><div class="mg-body cols2" style="height:620px;margin-top:40px">${paras(v.body)}</div></div>${pnum(v)}`,
+ [['stars','text','Stars (0 to 5)','4']]);
+pg('p-letter','contents',"Editor's Letter",['kicker','title','img1','body','pg'],(v)=>`<div class="mg-pad"><div class="mg-kick">${tx(v,'kicker')||'FROM THE EDITOR'}</div><h2 class="mg-h" style="font-size:${fit(v.title,110,14)}px">${tx(v,'title')}</h2><div class="mg-body letter" style="height:760px">${paras(v.body)}</div><div class="mg-sig">${im(v,'img1','','width:120px;height:120px;border-radius:50%;position:relative;flex:none')}<div><b>${tx(v,'sig')||(EDIT?'Name':'')}</b><small>${tx(v,'role')}</small></div></div></div>${pnum(v)}`,
+ [['sig','text','Signed by',''],['role','text','Title','Editor in Chief']]);
+pg('p-ad2','ad','Two Half-Page Ads',[],(v)=>`${[1,2].map(i=>`<div style="position:absolute;left:0;right:0;top:${i===1?0:647}px;height:647px;border-bottom:${i===1?'6px solid var(--bg)':'0'}">${im(v,'a'+i,'full')}${v['a'+i+'l']?`<a class="mg-adl" style="bottom:30px;font-size:20px" href="${esc(v['a'+i+'l'])}" target="_blank" rel="noopener">${tx(v,'a'+i+'b')||'LEARN MORE'}</a>`:''}</div>`).join('')}`,
+ [1,2].flatMap(i=>[['a'+i,'img','Ad '+i+' image'],['a'+i+'l','text','Ad '+i+' link (https://…)',''],['a'+i+'b','text','Ad '+i+' button','LEARN MORE']]));
+
+P.find(x=>x.id==='p-back').slots.unshift(['mh','logo','Logo at the top']);
 const ALL=[...C,...P],BY=Object.fromEntries(ALL.map(t=>[t.id,t]));
 const FAMS={cover:'Covers',contents:'Contents',feature:'Features',interview:'Interviews',spotlight:'Spotlights',chart:'Charts',photo:'Photo',news:'News',ad:'Ads',back:'Back Cover'};
 
@@ -138,9 +170,14 @@ const SAMPLE={issue:'SEASON 3 | ISSUE 9 | YEAR 2026',name:'POLO SHAK',name2:'GMB
 /* ---------- render one page ---------- */
 const extrasHTML=(ex)=>(ex||[]).map((x,i)=>x.t==='img'?`<div class="mg-x" data-x="${i}" style="left:${x.x}%;top:${x.y}%;width:${x.w}%;height:${x.h||20}%;${x.round?'border-radius:50%;overflow:hidden;':''}">${x.u?`<img src="${esc(abs(x.u))}" alt="" style="width:100%;height:100%;object-fit:cover" draggable="false">`:EDIT?'<div class="mg-ph" style="position:absolute;inset:0"><span>IMAGE</span></div>':''}</div>`
  :`<div class="mg-x txt" data-x="${i}" style="left:${x.x}%;top:${x.y}%;width:${x.w}%;font-size:${x.size||40}px;color:${esc(x.color||'var(--ink)')};${x.bg?'background:'+esc(x.bg)+';padding:.15em .35em;':''}font-family:${x.font==='serif'?'var(--sf)':x.font==='body'?'var(--bf)':'var(--hf)'};text-align:${x.align||'left'}">${esc(x.text||'').replace(/\n/g,'<br>')}</div>`).join('');
-function render(page,doc,opt){EDIT=!!(opt&&opt.edit);const t=BY[page.tpl]||P[0],v={...((opt&&opt.sample)?SAMPLE:{}),...(page.v||{})};
+/* every block on a page can be dragged and resized in the Maker: blocks get data-mv keys, moves live in v._mv {key:{x,y,s}} */
+const MOV=['mg-name','mg-tag','mg-line','mg-circ','mg-badge','mg-iss','mg-pill','mg-ribbon','mg-box','mg-chartbox','mg-tile','mg-giant','mg-handle','mg-cut','mg-cutph','mg-row','mg-kick','mg-h','mg-dek','mg-by','mg-quote','mg-bq','mg-cap','mg-body','mg-side','mg-soc','mg-stars','mg-sig','mg-band','mg-adl'];
+let RID=0;
+function render(page,doc,opt){EDIT=!!(opt&&opt.edit);const t=BY[page.tpl]||P[0],v={...((opt&&opt.sample)?SAMPLE:{}),...(page.v||{})};CURV=v;
  let h;try{h=t.html(v,doc||{})}catch(e){h=`<div class="mg-pad">Page error: ${esc(e.message)}</div>`}
- const r=`<div class="mg mg-pg${t.fam==='cover'?' cover':''}" style="${vars(page.theme)}">${h}${extrasHTML(page.x)}</div>`;EDIT=false;return r}
+ const n={};h=h.replace(/<(\w+)([^>]*?) class="(mg-[a-z0-9]+)/g,(m,tag,pre,c)=>{if(!MOV.includes(c))return m;n[c]=(n[c]||0);return `<${tag}${pre} data-mv="${c}-${n[c]++}" class="${c}`});
+ const id='mgr'+(++RID),M=v._mv||{};const css=Object.entries(M).map(([k,o])=>`.${id} [data-mv="${k}"]{translate:${o.x||0}px ${o.y||0}px;scale:${o.s||1}}`).join('');
+ const r=`<div class="mg mg-pg ${id}${t.fam==='cover'?' cover':''}" style="${vars(page.theme)}">${css?`<style>${css}</style>`:''}${h}${extrasHTML(page.x)}</div>`;EDIT=false;return r}
 
 /* ---------- styles + fonts ---------- */
 const CSS=`.mg{position:relative;width:${W}px;height:${H}px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--bf);line-height:1.45;text-align:left;box-sizing:border-box}
@@ -197,6 +234,13 @@ const CSS=`.mg{position:relative;width:${W}px;height:${H}px;overflow:hidden;back
 .mg .mg-three{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:20px}.mg .mg-three b{display:block;font:400 40px/1 var(--hf);margin:16px 0 8px;text-transform:uppercase}.mg .mg-three p{font-size:19px;color:var(--mut);max-height:420px;overflow:hidden}
 .mg .mg-stats{display:flex;gap:30px;margin-top:30px}.mg .mg-stats small{display:block;font:800 16px Inter,sans-serif;letter-spacing:.2em;color:var(--acc)}.mg .mg-stats b{font:800 28px Inter,sans-serif}
 .mg .mg-adl{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);background:var(--acc);color:#fff;font:900 26px Inter,sans-serif;letter-spacing:.14em;padding:18px 34px;text-decoration:none;z-index:5}
+.mg .mg-body.cols3{column-count:3;column-gap:34px;column-fill:auto;font-size:20px}
+.mg .mg-side{background:var(--bg2);padding:20px;border-top:8px solid var(--acc)}.mg .mg-side h4{font:400 34px var(--hf);margin-bottom:10px}.mg .mg-side p{font:700 19px/1.35 Inter,sans-serif;padding:10px 0;border-bottom:2px solid rgba(128,128,128,.25)}
+.mg .mg-grid4{position:absolute;left:30px;right:30px;top:260px;bottom:60px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px}.mg .mg-grid4>div{position:relative;overflow:hidden;background:var(--bg2)}.mg .mg-grid4 span{position:absolute;left:0;bottom:0;background:rgba(0,0,0,.65);color:#fff;font:700 17px Inter,sans-serif;padding:8px 12px;z-index:2}
+.mg .mg-top5>div{display:flex;gap:24px;align-items:center;padding:18px 0;border-bottom:2px solid rgba(128,128,128,.25)}.mg .mg-top5 em{font:400 110px/1 var(--hf);color:var(--acc);width:90px;font-style:normal;text-align:center}.mg .mg-top5 b{display:block;font:800 30px Inter,sans-serif}.mg .mg-top5 p{font-size:19px;color:var(--mut);max-height:84px;overflow:hidden}
+.mg .mg-ev>div{display:grid;grid-template-columns:200px 1fr;padding:16px 0;border-bottom:2px solid rgba(128,128,128,.25)}.mg .mg-ev em{grid-row:span 2;font:400 44px/1 var(--hf);color:var(--acc);font-style:normal}.mg .mg-ev b{font:800 28px Inter,sans-serif}.mg .mg-ev small{font:600 19px Inter,sans-serif;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.mg .mg-stars{font-size:52px;color:var(--acc);letter-spacing:.06em;margin-bottom:12px}.mg .mg-stars i{color:rgba(128,128,128,.35);font-style:normal}
+.mg .mg-body.letter{font-size:24px;line-height:1.65}.mg .mg-sig{display:flex;gap:20px;align-items:center;margin-top:30px}.mg .mg-sig b{display:block;font:italic 700 40px var(--sf)}.mg .mg-sig small{font:800 16px Inter,sans-serif;letter-spacing:.2em;color:var(--mut);text-transform:uppercase}
 .mg .mg-x{position:absolute;z-index:8;line-height:1.05}.mg .mg-x.txt{white-space:pre-wrap;text-shadow:0 2px 12px rgba(0,0,0,.35)}
 /* flip-book */
 .mgb{position:relative;user-select:none;-webkit-user-select:none;touch-action:pan-y;margin:0 auto}
@@ -208,7 +252,7 @@ const CSS=`.mg{position:relative;width:${W}px;height:${H}px;overflow:hidden;back
 .mgb-ui{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;font:800 13px Inter,sans-serif;letter-spacing:.12em}
 .mgb-ui button{background:#0c0c0e;color:#fff;border:0;padding:12px 18px;font:900 13px Inter,sans-serif;letter-spacing:.12em;cursor:pointer}.mgb-ui button:hover{background:#e0242f}.mgb-ui button[disabled]{opacity:.3;cursor:default}`;
 let styled=0;function style(){if(styled)return;styled=1;const s=document.createElement('style');s.textContent=CSS;document.head.appendChild(s);
- const f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,600&display=swap';document.head.appendChild(f)}
+ const f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,600&display=swap';document.head.appendChild(f)}
 
 /* a page shown at any size */
 function mini(page,doc,w,opt){style();const k=w/W;return `<div class="mg-mini" style="width:${w}px;height:${Math.round(H*k)}px;overflow:hidden;position:relative"><div style="transform:scale(${k});transform-origin:0 0;width:${W}px;height:${H}px">${render(page,doc,opt)}</div></div>`}
