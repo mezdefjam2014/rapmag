@@ -50,7 +50,7 @@ function yearbook(x,c,P,logo){const n=P.length;x.fillStyle='#efe8d8';x.fillRect(
  /* rows: 1-3 in one row, 4 = 2+2, 5 = 3+2, 6 = 3+3 ... */
  const rows=n<=3?[n]:n===4?[2,2]:[Math.ceil(n/2),Math.floor(n/2)],top=440,area=H-top-96,rh=area/rows.length;let k=0;
  rows.forEach((cnt,ri)=>{const cellW=(W-80)/Math.max(cnt,rows.length>1?3:cnt),S=Math.min(cellW-34,rh-150,n===1?520:n===2?400:330),tot=cnt*cellW,sx=(W-tot)/2;
-  for(let j=0;j<cnt;j++,k++){const p=P[k],cx=sx+j*cellW+cellW/2,cy=top+ri*rh+18+S/2,rot=((k%2?1:-1)*(1.6+(k%3)*.5))*Math.PI/180;
+  for(let j=0;j<cnt;j++,k++){const p=P[k],cx=sx+j*cellW+cellW/2,cy=top+ri*rh+Math.max(18,(rh-S-140)/2)+S/2,rot=((k%2?1:-1)*(1.6+(k%3)*.5))*Math.PI/180;
    x.save();x.translate(cx,cy);x.rotate(rot);x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=18;x.shadowOffsetY=8;x.fillStyle='#fff';x.fillRect(-S/2-12,-S/2-12,S+24,S+24);x.shadowColor='transparent';
    x.fillStyle='#222';x.fillRect(-S/2,-S/2,S,S);x.filter='grayscale(1) contrast(1.1)';cover(x,p.im,-S/2,-S/2,S,S);x.filter='none';
    /* tape */
