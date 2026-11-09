@@ -28,13 +28,13 @@ const localDT=s=>{if(!s)return'';const d=new Date(s.replace(' ','T')+'Z'),z=n=>S
 const isFuture=s=>s&&new Date(s.replace(' ','T')+'Z')>new Date();
 
 /* ---------- shell ---------- */
-function shell(on,title,extra){app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
+function shell(on,title,extra){if(on!=='new'&&location.hash!=='#'+on)history.pushState(null,'','#'+on);app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
  <div class="ah"><h1>${title}</h1>${extra||''}</div><div id="pg"></div>`;
  app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
 
 /* ---------- login ---------- */
 function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
- const go=async()=>{$('#ms').textContent='Checking…';try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('#pw').value})});TOKEN=d.token;try{localStorage.setItem('rm_tok',TOKEN)}catch(e){}await loadMeta();list()}catch(e){$('#ms').textContent=e.message}};
+ const go=async()=>{$('#ms').textContent='Checking…';try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('#pw').value})});TOKEN=d.token;try{localStorage.setItem('rm_tok',TOKEN)}catch(e){}await loadMeta();route()}catch(e){$('#ms').textContent=e.message}};
  $('#go').onclick=go;$('#pw').onkeydown=e=>{if(e.key==='Enter')go()};$('#pw').focus()}
 
 /* ---------- articles ---------- */
@@ -45,7 +45,7 @@ async function list(){const pg=shell('list','ARTICLES');pg.innerHTML=`<input typ
 
 const CHECKS=[['Headline','Between 30 and 110 characters',v=>v.title.length>=30&&v.title.length<=110],['Clean link','Short slug made of words',v=>{const s=v.slug||v.title.toLowerCase().replace(/[^a-z0-9]+/g,'-');return s.length>0&&s.length<=80}],['Excerpt / description','50 to 300 characters',v=>v.dek.length>=50&&v.dek.length<=300],['Featured image','Add a cover image',v=>!!v.cover],['Image alt text','Describe the cover image',v=>!v.cover||v.cover_alt.trim().length>=5],['Author','Pick an author',v=>!!+v.author_id],['Category','Pick a section',v=>!!v.category],['Article depth','At least 300 words',v=>wc(v.body)>=300],['Source / link','Link at least one source or story',v=>/<a\s/i.test(v.body)],['No SEO notes in the story','Remove writing like “keyword:” or “SEO”',v=>!/\b(seo|meta description|keywords?:)\b/i.test(v.body.replace(/<[^>]+>/g,' '))]];
 const wc=h=>String(h||'').replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length;
-async function edit(id){if(!CATS.length)await loadMeta();
+async function edit(id){{const h=id?'#edit-'+id:'#new';if(location.hash!==h)history.pushState(null,'',h)}if(!CATS.length)await loadMeta();
  let P={title:'',dek:'',body:'',cover:'',cover_alt:'',category:(CATS[0]||{}).slug||'breaking',tags:'',author_id:(AUTHORS[0]||{}).id||'',audio:'',status:'draft',featured:0,slug:'',published_at:null};
  if(id)P=(await api('/api/admin/posts/'+id)).post;
  const DK='rm_draft_'+(id||'new');let saved=null;try{saved=JSON.parse(localStorage.getItem(DK)||'null')}catch(e){}
@@ -208,7 +208,11 @@ async function library(onPick){const m=modal(`<h1 style="font-size:30px">MEDIA</
  m.querySelector('#ml').onclick=async e=>{const del=e.target.closest('[data-del]');if(del){e.stopPropagation();const k=del.dataset.del,u=(await api('/api/admin/images/usage?key='+encodeURIComponent(k))).used;if(await confirmBox(u.length?'This image is still used by:\n\n'+u.join('\n')+'\n\nDelete it from storage anyway? Those places will show a broken image.':'Delete this image from storage for good?')){await api('/api/admin/images/'+encodeURIComponent(k),{method:'DELETE'});load()}return}const t=e.target.closest('[data-u]');if(t&&onPick){onPick(t.dataset.u);m.remove()}};load()}
 function preview(v){const w=window.open('','_blank');if(!w)return;const b=v.body.replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,c)=>a+API+c+'"'),au=(AUTHORS.find(a=>a.id===+v.author_id)||{}).name||'';
  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview: ${esc(v.title)}</title><base href="${SITE}"><link rel="stylesheet" href="style.css?v=24"></head><body><div class="bar" style="display:block!important">PREVIEW · NOT PUBLISHED YET</div><article class="wrap story"><header class="st-head"><span class="c">${esc(catName(v.category))}</span><h1>${esc(v.title)}</h1><p class="dek">${esc(v.dek)}</p><div class="meta">By ${esc(au)}</div></header>${v.cover?`<figure class="st-cover"><img src="${esc(img(v.cover))}" alt="${esc(v.cover_alt)}"></figure>`:''}<div class="st-cols"><div>${v.audio?`<div class="listen"><span>LISTEN TO THIS STORY</span><audio controls src="${esc(img(v.audio))}"></audio></div>`:''}<div class="body">${b}</div></div></div></article></body></html>`);w.document.close()}
-TOKEN?loadMeta().then(list).catch(()=>login()):login();
+/* every tab has its own address (admin.html#indie, #edit-12 ...), so reloading stays on the same tab */
+function route(){const h=location.hash.slice(1),m=h.match(/^edit-(\d+)$/);if(m)return edit(+m[1]);if(h==='new')return edit(null);
+ return ({authors,cats,media:()=>library(),indie,dist,settings}[h]||list)()}
+window.onpopstate=()=>{if(TOKEN)route()};
+TOKEN?loadMeta().then(route).catch(()=>login()):login();
 
 /* New Music Friday chart: one song row (YouTube link, title, artist, chart move). Rank = order in the story; cover comes from YouTube. */
 function songForm(done){let aud='';const f=(id,l,ph)=>`<label>${l}</label><input type="text" id="${id}" placeholder="${ph}">`;
