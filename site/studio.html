@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=3"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=4"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -50,8 +50,15 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 .ap-l{text-align:left}.ap-l button{display:flex;gap:12px;align-items:center;width:100%;background:#1c1c1c;border:1px solid #2a2a2a;color:#fff;padding:10px;margin-bottom:8px;cursor:pointer;text-align:left}.ap-l img{width:90px;height:60px;object-fit:cover;background:#333;flex:none}.ap-l b{font:700 14px Inter}.ap-l small{display:block;color:#999;font:12px Inter;margin-top:3px}
 .ap-pn input{width:100%;background:#0b0b0b;border:1px solid #333;color:#fff;padding:11px;font:600 14px Inter;margin-bottom:12px}
 .cover.has::after{display:none}
+.go.gr2{background:#2b2b2b}.trim{flex-basis:100%;background:#0b0b0b;border:1px solid #333;padding:12px}.tr-pl video,.tr-pl audio{width:100%;max-height:300px;background:#000;display:block}
+.tr-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font:800 12px Inter;letter-spacing:.1em;color:#bbb}.tr-row b{color:#fff;min-width:56px;display:inline-block}.tr-row input[type=range]{flex:1;min-width:140px;accent-color:#e11d2a}
+.tr-btn{background:#222;color:#fff;border:1px solid #333;font:800 11px Inter;letter-spacing:.1em;padding:9px 12px;cursor:pointer}.tr-btn.r{background:#e11d2a;border-color:#e11d2a}.tr-lp{display:flex;gap:6px;align-items:center}.tr-len{color:#888;font-weight:600;letter-spacing:0}
+.pv{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:90;display:grid;place-items:center}.pv-pn{display:flex;flex-direction:column;align-items:center;gap:14px}.pv-fr{overflow:hidden;position:relative;box-shadow:0 0 0 1px #333}.pv-act{display:flex;gap:10px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#e11d2a;color:#fff;font:700 14px Inter;padding:14px 22px;z-index:200;max-width:90vw}
+.cs{background:#141414;border:1px solid #2a2a2a;padding:14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px}.cs-h{flex-basis:100%;display:flex;justify-content:space-between;align-items:center}.cs-h b{font:400 24px Anton;letter-spacing:.04em}.cs-b{flex-basis:100%;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cs-b .up{background:#e11d2a;font:800 12px Inter;letter-spacing:.12em;padding:12px 16px;cursor:pointer}.cs-b small{color:#999}
+.rb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}.rb-grid video,.rb-grid img{width:100%;max-height:200px}.rb-grid a{color:#fff;font:700 11px Inter;display:block;margin-top:4px}
 </style></head><body>
-<h1>RAPAECHELON <span>STUDIO</span></h1><div class="tabs"><button data-tab="drop" class="on">THE DROP</button><button data-tab="news">NEWS</button></div><div id="t-drop">
+<h1>RAPAECHELON <span>STUDIO</span></h1><div class="tabs"><button data-tab="drop" class="on">THE DROP</button><button data-tab="news">NEWS</button><button data-tab="car">CAROUSEL</button></div><div id="t-drop">
 <p class="sub">New Drops for artists: pick a design, add the song, cover and cut-out, and render a 9:16 video (1080×1920) for Reels and Stories. The wave moves to the real song.</p>
 <div class="ctl"><div class="cur">EDITING: <b id="cn"></b> <span>(click any design below to pick it)</span></div><label class="up">+ TRY YOUR OWN ARTIST CUT-OUT (PNG)<input type="file" id="af" accept="image/*" hidden></label>
 <div class="seg"><button data-b="full" class="on">FULL BODY</button><button data-b="half">HALF BODY</button></div>
@@ -63,9 +70,8 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <input id="ds" class="tx" placeholder="Song name"><input id="da" class="tx" placeholder="Artist name">
 <label class="up gr">+ COVER ART<input type="file" id="dc" accept="image/*" hidden></label>
 <label class="up">+ SONG (MP3 / OGG / WAV) OR VIDEO (MP4)<input type="file" id="dm" accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a" hidden></label>
-<div class="sl"><span>START AT (SEC)</span><input id="dst" class="tx" type="number" min="0" value="0" style="min-width:70px;width:80px;flex:0"></div>
-<div class="sl"><span>LENGTH</span><select id="dl" class="tx" style="min-width:90px;flex:0"><option>15</option><option selected>30</option><option>60</option></select></div>
-<button id="drender" class="go">RENDER VIDEO</button><small id="dmn">Nothing is uploaded. Your song and video only stay in this tab while the video is made.</small></div>
+<button id="dclr" class="rs">CLEAR</button><div class="trim" id="dtrim" hidden></div>
+<button id="dprev" class="go gr2">👁 PREVIEW</button><button id="drender" class="go">RENDER VIDEO</button><small id="dmn">Nothing is uploaded. Your song and video only stay in this tab while the video is made.</small></div>
 <div class="grid" id="g"></div>
 <div class="note"><h3>HOW THE DROP WOULD WORK</h3>
 <b>1.</b> Pick a template, type the artist and song name, drop in the cut-out photo (with the background remover you already have) and the cover art.<br>
@@ -83,10 +89,15 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <div class="sl"><span>ZOOM</span><input type="range" id="nz" min="100" max="250" value="100"></div>
 <button id="nr" class="rs">RESET</button><small>Your photo or video stays on this computer. The controls only change the design you picked. The title and caption show on every design so you can compare.</small></div>
 <div class="ctl mk"><div class="cur">MAKE IT <span>(uses the design you picked)</span></div>
-<div class="sl"><span>START AT (SEC)</span><input id="nst" class="tx" type="number" min="0" value="0" style="min-width:70px;width:80px;flex:0"></div>
-<div class="sl"><span>LENGTH</span><select id="nl" class="tx" style="min-width:90px;flex:0"><option>15</option><option selected>30</option><option>60</option></select></div>
-<button id="nrender" class="go">RENDER</button><small>A photo saves as a picture. A video renders as a video, kept under 25 MB.</small></div>
+<button id="nclr" class="rs">CLEAR PHOTO / VIDEO</button><div class="trim" id="ntrim" hidden></div>
+<button id="nprev" class="go gr2">👁 PREVIEW</button><button id="nrender" class="go">RENDER</button><small>A photo saves as a picture. A video renders as a video, kept under 25 MB.</small></div>
 <div class="grid" id="ng"></div></div>
+<div id="t-car" hidden>
+<p class="sub">A carousel post: a cover slide, then 2 to 10 slides (for example "The best 5 beats Tupac had"). Each slide gets its own picture or video, its own sound, and its own START and END. It uses the News design and size you pick. Everything renders in a row and downloads together.</p>
+<div class="ctl"><div class="cur">DESIGN</div><select id="cdes" class="tx"></select><small>Story or Post size comes from the NEWS tab switch.</small></div>
+<div id="cslides"></div>
+<div class="ctl mk"><button id="cadd" class="rs">+ ADD SLIDE</button><button id="cprev" class="go gr2">👁 PREVIEW SLIDES</button><button id="crender" class="go">RENDER ALL + DOWNLOAD</button></div>
+</div>
 <script>
 const W=(n,h,col)=>`<div class="wave" style="${h};color:${col||'#fff'}">${Array.from({length:n},(_,i)=>`<i style="height:${60+Math.round(Math.abs(Math.sin(i*1.3))*200)}px;animation-delay:${(i%7)*-.13}s"></i>`).join('')}</div>`;
 const SIL='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#777"/><stop offset="1" stop-color="#2a2a2a"/></linearGradient></defs><g fill="url(#g)"><ellipse cx="300" cy="150" rx="110" ry="135"/><path d="M300 290c-170 0-250 90-260 250l-20 460h560l-20-460c-10-160-90-250-260-250z"/></g></svg>');
@@ -134,11 +145,13 @@ const sync=()=>{const S=st(SEL),n=TT()[SEL][0];document.getElementById('cn').tex
 const set=()=>{const S=st(SEL);S.x=+ax.value;S.y=+ay.value;S.s=as.value/100;place()};
 ax.oninput=ay.oninput=as.oninput=set;ar.onclick=()=>{delete ST[SEL];sync();place()};
 document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{st(SEL).body=b.dataset.b;sync();place()});
-af.onchange=()=>{const f=af.files[0];if(!f)return;ART=URL.createObjectURL(f);draw()};
+af.onchange=()=>{const f=stuFresh(af);if(!f)return;ART=URL.createObjectURL(f);draw()};
 draw();
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news'});
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news';document.getElementById('t-car').hidden=b.dataset.tab!=='car';if(location.hash.slice(1)!==b.dataset.tab)history.replaceState(null,'','#'+b.dataset.tab)});
+/* every tab has its own link: studio.html#drop, #news, #car */
+const openTab=()=>{const t=location.hash.slice(1),b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
 /* ---------- NEWS: 20 full-screen designs, Story 9:16 or Post 4:5 ---------- */
 let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
 const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
@@ -188,7 +201,7 @@ nx.oninput=ny.oninput=nz.oninput=()=>{const S=ns(NSEL);S.x=+nx.value;S.y=+ny.val
 nt.oninput=ncap.oninput=nk.oninput=nn.oninput=()=>{clearTimeout(window._nt);window._nt=setTimeout(ndraw,250)};
 document.querySelectorAll('[data-nfit]').forEach(b=>b.onclick=()=>{NFIT=b.dataset.nfit;document.querySelectorAll('[data-nfit]').forEach(x=>x.classList.toggle('on',x===b));ndraw()});
 document.querySelectorAll('[data-nsz]').forEach(b=>b.onclick=()=>{NSZ=b.dataset.nsz;document.querySelectorAll('[data-nsz]').forEach(x=>x.classList.toggle('on',x===b));ndraw()});
-nf.onchange=()=>{const f=nf.files[0];if(!f)return;NM=URL.createObjectURL(f);NMV=/^video\//.test(f.type);ndraw()};
+nf.onchange=()=>{const f=stuFresh(nf);if(!f)return;if(NM)URL.revokeObjectURL(NM);NM=URL.createObjectURL(f);NMV=/^video\//.test(f.type);window._ntrim&&_ntrim.set(NMV?{url:NM,video:1}:null);ndraw()};
 ndraw();
 /* pick a posted article: its photo goes in the middle, its headline and summary become the title and caption */
 nart.onclick=async()=>{const API=window.RM_API||window.API||'';const m=document.createElement('div');m.className='ap';m.innerHTML='<div class="ap-pn"><h3>USE AN ARTICLE</h3><input placeholder="Search your articles"><div class="ap-l">Loading…</div><button class="rb-x">CLOSE</button></div>';document.body.appendChild(m);m.querySelector('.rb-x').onclick=()=>m.remove();
@@ -196,8 +209,8 @@ nart.onclick=async()=>{const API=window.RM_API||window.API||'';const m=document.
  const abs=u=>!u?'':/^https?:/.test(u)?u:API+u;
  const show=q=>{const f=L.filter(p=>!q||p.title.toLowerCase().includes(q.toLowerCase()));m.querySelector('.ap-l').innerHTML=f.length?f.map(p=>`<button data-id="${p.id}"><img src="${e(abs(p.cover))}" alt=""><span><b>${e(p.title)}</b><small>${e(p.dek||'')}</small></span></button>`).join(''):'No articles found.';
   m.querySelectorAll('[data-id]').forEach(b=>b.onclick=async()=>{const p=L.find(x=>x.id==+b.dataset.id);nt.value=p.title;ncap.value=p.dek||'';if(p.category)nk.value=String(p.category).toUpperCase();
-   if(p.cover){try{const bl=await fetch(abs(p.cover)).then(r=>{if(!r.ok)throw 0;return r.blob()});NM=URL.createObjectURL(bl);NMV=0}catch(er){alert('Could not load that article photo.')}}else alert('That article has no photo. Add one with + YOUR OWN PHOTO OR VIDEO.');
+   if(p.cover){try{const bl=await fetch(abs(p.cover)).then(r=>{if(!r.ok)throw 0;return r.blob()});NM=URL.createObjectURL(bl);NMV=0;_ntrim.clear()}catch(er){say('Could not load that article photo.')}}else say('That article has no photo. Add one with + YOUR OWN PHOTO OR VIDEO.');
    m.remove();ndraw()})};
  show('');m.querySelector('input').oninput=ev=>show(ev.target.value)};
-stuInit();
+stuInit();openTab();
 </script></body></html>
