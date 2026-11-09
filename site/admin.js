@@ -34,9 +34,9 @@ const localDT=s=>{if(!s)return'';const d=new Date(s.replace(' ','T')+'Z'),z=n=>S
 const isFuture=s=>s&&new Date(s.replace(' ','T')+'Z')>new Date();
 
 /* ---------- shell ---------- */
-function shell(on,title,extra){if(on==='edit')on='list';else if(on!=='new'&&location.hash!=='#'+on)history.pushState(null,'',location.pathname+location.search+'#'+on);app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['mags','MAGAZINE'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b r" href="studio.html" target="_blank">STUDIO ↗</a><a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
+function shell(on,title,extra){if(on==='edit')on='list';else if(on!=='new'&&location.hash!=='#'+on)history.pushState(null,'',location.pathname+location.search+'#'+on);app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['nextup','NEXT UP'],['mags','MAGAZINE'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b r" href="studio.html" target="_blank">STUDIO ↗</a><a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
  <div class="ah"><h1>${title}</h1>${extra||''}</div><div id="pg"></div>`;
- app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,mags,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
+ app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,nextup,mags,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
 
 /* ---------- login ---------- */
 function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
@@ -190,6 +190,22 @@ async function cats(){await loadMeta();const pg=shell('cats','CATEGORIES');
  pg.querySelectorAll('[data-c]').forEach(r=>{const s=r.dataset.c;r.querySelector('[data-s]').onclick=async()=>{try{await api('/api/admin/categories',{method:'POST',body:JSON.stringify({old:s,name:r.querySelector('[data-n]').value,visible:r.querySelector('[data-v]').checked,sort:r.querySelector('[data-o]').value})});ms('Saved.');loadMeta()}catch(e){ms(e.message)}};
   r.querySelector('[data-d]').onclick=async()=>{if(!await confirmBox('Delete this category?'))return;try{await api('/api/admin/categories/'+s,{method:'DELETE'});cats()}catch(e){ms(e.message)}}})}
 
+/* ---------- Next Up: pick the month's class from the artists running hottest on the chart ---------- */
+async function nextup(month){const pg=shell('nextup','NEXT UP');pg.innerHTML='<div class="st">Loading…</div>';const MAX=5;
+ let d;try{d=await api('/api/admin/nextup'+(month?'?month='+month:''))}catch(e){pg.innerHTML=`<div class="st">${esc(e.message)}</div>`;return}
+ const picked=new Map(d.picks.map(k=>[k.artist.toLowerCase(),k]));
+ const draw=()=>{pg.innerHTML=`<div class="ed"><div class="pn"><b style="font:400 24px Anton,sans-serif">CLASS OF ${esc(d.month)}</b>
+  <div class="hint">Each month, tick up to ${MAX} artists from the ones running hottest on the Indie Charts, then publish. They get a NEXT UP badge on the chart and a spot on the Next Up page. An artist who was already Next Up is marked; you can still tick them.</div>
+  <label>MONTH</label><input type="month" id="num" value="${esc(d.month)}">
+  <div class="st" style="margin:10px 0">${d.published?'<b style="color:#1a8f3c">PUBLISHED</b> on the site.':'Not published yet.'} Picked: <b>${picked.size}</b> of ${MAX}.</div>
+  ${d.shortlist.length?d.shortlist.map((r,i)=>`<label class="nurow" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #ddd;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" data-i="${i}" ${picked.has(r.artist.toLowerCase())?'checked':''} style="width:20px;height:20px">${r.cover?`<img src="${esc(img(r.cover))}" style="width:48px;height:48px;object-fit:cover">`:''}<span style="flex:1"><b>${esc(r.artist)}</b><br><small>${esc(r.title)} · best spot #${r.best} · ${r.days} day${r.days===1?'':'s'} on the chart${r.was?` · <b style="color:#c00">was Next Up ${esc(r.was)}</b>`:''}</small></span><b style="font:400 26px Anton,sans-serif">${r.heat}</b><small>HEAT</small></label>`).join(''):'<div class="hint">No chart history for this month yet. The chart is written down once a day, so check back tomorrow.</div>'}
+  <div style="display:flex;gap:6px;margin-top:16px;flex-wrap:wrap"><button class="b" id="nusv">SAVE (NOT PUBLIC)</button><button class="b r" id="nupb">${d.published?'UPDATE THE PUBLISHED CLASS':'PUBLISH THE CLASS'}</button><a class="b" href="index.html?c=next-up" target="_blank">VIEW PAGE ↗</a></div><div class="st" id="nust"></div></div>
+  <div class="pn"><b style="font:400 24px Anton,sans-serif">PAST CLASSES</b>${d.months.length?d.months.map(m=>`<div style="padding:8px 0;border-top:1px solid #ddd"><a href="#" data-m="${esc(m.month)}"><b>${esc(m.month)}</b></a> ${m.published?'· published':'· draft'}</div>`).join(''):'<div class="hint">None yet.</div>'}</div></div>`;
+  $('#num').onchange=()=>nextup($('#num').value);pg.querySelectorAll('[data-m]').forEach(a=>a.onclick=e=>{e.preventDefault();nextup(a.dataset.m)});
+  pg.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{const r=d.shortlist[+c.dataset.i],k=r.artist.toLowerCase();if(c.checked){if(picked.size>=MAX){c.checked=false;$('#nust').textContent='That is '+MAX+' already. Untick one first.';return}picked.set(k,{song:r.song,artist:r.artist,title:r.title,cover:r.cover,heat:r.heat})}else picked.delete(k);draw()});
+  const save=async pub=>{$('#nust').textContent='Saving…';try{await api('/api/admin/nextup',{method:'POST',body:JSON.stringify({month:d.month,picks:[...picked.values()],publish:pub})});d.published=pub;draw();$('#nust').textContent=pub?'Published. The class is live on the site.':'Saved. Not public yet.'}catch(e){$('#nust').textContent=e.message}};
+  $('#nusv').onclick=()=>save(false);$('#nupb').onclick=()=>save(true)};draw()}
+
 /* ---------- social distribution ---------- */
 async function dist(){const pg=shell('dist','SOCIAL DISTRIBUTION');const d=await api('/api/admin/posts'),livePosts=d.posts.filter(p=>p.status==='published'&&!isFuture(p.published_at)&&p.category!=='page');
  pg.innerHTML=`<div class="ed"><div class="pn"><b style="font:400 24px Anton,sans-serif">POST AN ARTICLE</b><div class="hint">Send any live article to your Facebook Page and/or X. Automatic posting is switched on in SETTINGS.</div>
@@ -229,7 +245,7 @@ function preview(v){const w=window.open('','_blank');if(!w)return;const b=v.body
 /* every tab has its own address (admin.html#indie, #edit-12 ...), so reloading stays on the same tab */
 const MK=window.RMMakerInit({api,upload,pick,shell,askBox,confirmBox,ms,esc,$,API}),mags=MK.mags,maker=MK.maker;
 function route(){const h=location.hash.slice(1),m=h.match(/^edit-(\d+)$/),mg=h.match(/^mag-(\d+)$/);if(m)return edit(+m[1]);if(mg)return maker(+mg[1]);if(h==='new')return edit(null);
- return ({authors,cats,media:()=>library(),indie,mags,dist,settings}[h]||list)()}
+ return ({authors,cats,media:()=>library(),indie,nextup,mags,dist,settings}[h]||list)()}
 window.onpopstate=()=>{if(TOKEN)route()};
 TOKEN?loadMeta().then(route).catch(()=>login()):login();
 

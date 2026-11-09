@@ -10,7 +10,7 @@ const LIST = `p.id,p.slug,p.title,p.dek,p.cover,p.cover_alt,p.category,p.tags,p.
 const FROM = `FROM posts p LEFT JOIN authors a ON a.id=p.author_id`;
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieChart(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieDaily(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), p = url.pathname, origin = req.headers.get('Origin') || '';
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim());
@@ -61,7 +61,11 @@ export default {
       if (p === '/api/mags' && req.method === 'GET') { await magTable(env); const rows = await all("SELECT id,slug,title,label,doc,published_at FROM mags WHERE status='published' ORDER BY published_at DESC LIMIT 200"); return json({ mags: rows.map(r => { let d = {}; try { d = JSON.parse(r.doc || '{}') } catch (e) { } return { id: r.id, slug: r.slug, title: r.title, label: r.label, published_at: r.published_at, pages: (d.pages || []).length, cover: (d.pages || [])[0] || null, logo: d.logo || null } }) }, 200, { 'Cache-Control': 'public, max-age=60' }) }
       const mgm = p.match(/^\/api\/mags\/([a-z0-9-]+)$/);
       if (mgm && req.method === 'GET') { await magTable(env); const x = await one("SELECT id,slug,title,label,thumb,doc,published_at FROM mags WHERE slug=? AND status='published'", mgm[1]); if (!x) return json({ error: 'not found' }, 404); x.doc = JSON.parse(x.doc || '{}'); return json({ mag: x }, 200, { 'Cache-Control': 'public, max-age=60' }) }
-      if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'no-store' }) }
+      if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env), items = await withHeat(env, c.items.slice(0, 20)); return json({ items, week: c.prevAt }, 200, { 'Cache-Control': 'no-store' }) }
+      /* Hall of Fame: every song that reached #1, with its dates and days on top */
+      if (p === '/api/indie/fame' && req.method === 'GET') { await heatTables(env); const r = await all('SELECT song,title,artist,cover,first,last,days FROM indie_fame ORDER BY first DESC LIMIT 200'); return json({ fame: r }, 200, { 'Cache-Control': 'public, max-age=120' }) }
+      /* Next Up: the published monthly classes, newest first */
+      if (p === '/api/nextup' && req.method === 'GET') { await heatTables(env); const r = await all('SELECT month,picks FROM nextup WHERE published=1 ORDER BY month DESC LIMIT 36'); return json({ classes: r.map(x => ({ month: x.month, picks: JSON.parse(x.picks || '[]') })) }, 200, { 'Cache-Control': 'public, max-age=120' }) }
       /* likes: one per visitor per song, tap again to take it back */
       if (p === '/api/indie/like' && req.method === 'POST') {
         const { id, on } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
@@ -235,6 +239,21 @@ export default {
           return json({ ok: true, status });
         }
       }
+      /* Next Up: the month's hottest artists (average heat over the days they charted) and the class you picked */
+      if (p === '/api/admin/nextup' && req.method === 'GET') {
+        await heatTables(env); await indieDaily(env); const month = /^\d{4}-\d{2}$/.test(url.searchParams.get('month') || '') ? url.searchParams.get('month') : new Date().toISOString().slice(0, 7);
+        const rows = await all(`SELECT song, MAX(title) title, MAX(artist) artist, MAX(cover) cover, ROUND(AVG(heat)) heat, MAX(heat) peak, MIN(rank) best, COUNT(*) days FROM indie_hist WHERE day LIKE ? GROUP BY song ORDER BY AVG(heat)*MIN(1.0,COUNT(*)/7.0) DESC LIMIT 40`, month + '-%');
+        const past = await all('SELECT month,picks FROM nextup WHERE month<>?', month), used = {}; for (const c of past) for (const k of JSON.parse(c.picks || '[]')) used[String(k.artist).toLowerCase()] = c.month;
+        const seen = new Set(), list = []; for (const r of rows) { const a = String(r.artist).toLowerCase(); if (seen.has(a)) continue; seen.add(a); list.push({ ...r, was: used[a] || null }) }
+        const cur = await one('SELECT picks,published FROM nextup WHERE month=?', month);
+        return json({ month, shortlist: list.slice(0, 20), picks: cur ? JSON.parse(cur.picks || '[]') : [], published: !!(cur && cur.published), months: (await all('SELECT month,published FROM nextup ORDER BY month DESC')) });
+      }
+      if (p === '/api/admin/nextup' && req.method === 'POST') {
+        await heatTables(env); if (!/^\d{4}-\d{2}$/.test(body.month || '')) return json({ error: 'bad month' }, 400);
+        const picks = (Array.isArray(body.picks) ? body.picks : []).slice(0, 10).map(k => ({ song: String(k.song || '').slice(0, 40), artist: String(k.artist || '').slice(0, 160), title: String(k.title || '').slice(0, 160), cover: httpsOnly(k.cover), heat: +k.heat || 0 })).filter(k => k.artist);
+        await DB.prepare('INSERT INTO nextup (month,picks,published) VALUES (?,?,?) ON CONFLICT(month) DO UPDATE SET picks=excluded.picks, published=excluded.published').bind(body.month, JSON.stringify(picks), body.publish ? 1 : 0).run();
+        return json({ ok: true });
+      }
       if (p === '/api/admin/indie/reset' && req.method === 'POST') {
         const c = await indieChart(env); await indieTable(env); await DB.prepare('DELETE FROM indie_plays').run();
         await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, pace: 0, boosts: [], lbonus: 0, lboosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
@@ -339,6 +358,25 @@ async function indieChart(env) {
   else if (Date.now() - cfg.prevAt > 7 * 864e5 && items.length) { cfg.prev = Object.fromEntries(items.map(x => [x.id, x.rank])); cfg.prevAt = Date.now(); await saveIndie(env, cfg) }
   return { items, cfg, prevAt: cfg.prevAt };
 }
+
+/* ---------- heat meter, Hall of Fame, Next Up ----------
+   Heat (0-100) rises as a song climbs: chart spot (up to 60) + climbing since last week (up to 15) + days on the chart (up to 15) + days at #1 (up to 10).
+   Once a day the chart is written down (indie_hist); a song at #1 gets / keeps its Hall of Fame plaque (indie_fame). */
+async function heatTables(env) { await env.DB.batch([env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_hist (song TEXT NOT NULL, day TEXT NOT NULL, rank INTEGER, heat INTEGER, title TEXT, artist TEXT, cover TEXT, PRIMARY KEY (song, day))'),
+  env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_fame (song TEXT PRIMARY KEY, title TEXT, artist TEXT, cover TEXT, first TEXT, last TEXT, days INTEGER DEFAULT 0)'),
+  env.DB.prepare('CREATE TABLE IF NOT EXISTS nextup (month TEXT PRIMARY KEY, picks TEXT, published INTEGER DEFAULT 0)')]) }
+const heatLabel = h => h >= 85 ? 'BLAZING' : h >= 65 ? 'ON FIRE' : h >= 40 ? 'HOT' : 'WARM';
+function heatOf(x, days, top) { const spot = Math.max(0, (21 - x.rank) / 20) * 60, climb = x.last && x.last > x.rank ? Math.min(15, (x.last - x.rank) * 3) : x.move === 'new' ? 6 : 0;
+  return Math.max(1, Math.min(100, Math.round(spot + climb + Math.min(days, 28) / 28 * 15 + Math.min(top, 10)))) }
+async function withHeat(env, items) { await heatTables(env);
+  const d = Object.fromEntries((await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_hist GROUP BY song').all()).results.map(r => [r.song, r.n])), f = Object.fromEntries((await env.DB.prepare('SELECT song, days FROM indie_fame').all()).results.map(r => [r.song, r.days]));
+  const m = new Date().toISOString().slice(0, 7), nu = await env.DB.prepare('SELECT picks FROM nextup WHERE month=? AND published=1').bind(m).first(), cls = new Set((nu ? JSON.parse(nu.picks || '[]') : []).map(k => String(k.artist).toLowerCase()));
+  return items.map(x => { const heat = heatOf(x, d[x.id] || 0, f[x.id] || 0); return { ...x, heat, heatLabel: heatLabel(heat), days: d[x.id] || 0, top: f[x.id] || 0, nextup: cls.has(String(x.artist).toLowerCase()) } }) }
+async function indieDaily(env) { await heatTables(env); const day = new Date().toISOString().slice(0, 10), c = await indieChart(env);
+  if (!c.items.length || await env.DB.prepare('SELECT 1 FROM indie_hist WHERE day=? LIMIT 1').bind(day).first()) return;
+  const items = await withHeat(env, c.items.slice(0, 20)), st = items.map(x => env.DB.prepare('INSERT OR REPLACE INTO indie_hist (song,day,rank,heat,title,artist,cover) VALUES (?,?,?,?,?,?,?)').bind(x.id, day, x.rank, x.heat, x.title, x.artist, x.cover || ''));
+  const t = items[0]; st.push(env.DB.prepare('INSERT INTO indie_fame (song,title,artist,cover,first,last,days) VALUES (?,?,?,?,?,?,1) ON CONFLICT(song) DO UPDATE SET title=excluded.title, artist=excluded.artist, cover=excluded.cover, last=excluded.last, days=days+1').bind(t.id, t.title, t.artist, t.cover || '', day, day));
+  await env.DB.batch(st) }
 
 /* ---------- social ---------- */
 async function settings(env) { const r = await env.DB.prepare('SELECT k,v FROM settings').all(); return Object.fromEntries(r.results.map(x => [x.k, x.v])) }
