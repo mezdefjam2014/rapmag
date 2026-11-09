@@ -181,3 +181,17 @@ button{font:inherit;cursor:pointer}
 .card.lead p{-webkit-line-clamp:4}
 .meta .vf{margin-left:3px}
 @media(max-width:860px){.card.lead .im{grid-row:auto}}
+
+/* header menu: links row on desktop, hamburger (left) + search (right) on mobile */
+.mast .menu{overflow:visible}.mast .links{display:flex;align-items:center;gap:clamp(20px,4vw,42px);overflow-x:auto;scrollbar-width:none}.mast .links::-webkit-scrollbar{display:none}
+.mast .hbtn{display:none;background:none;border:0;padding:0;width:40px;height:40px;cursor:pointer;flex-direction:column;justify-content:center;gap:5px}
+.mast .hbtn span{display:block;width:22px;height:2px;background:#fff;transition:.2s}
+.mast .hbtn[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}.mast .hbtn[aria-expanded=true] span:nth-child(2){opacity:0}.mast .hbtn[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(max-width:760px){
+.mast .menu{justify-content:space-between;padding:0;min-height:56px}
+.mast .hbtn{display:flex}
+.mast .menu .sbtn{position:static;transform:none;margin:0;width:40px;height:40px}
+.mast .links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:#000;border-top:1px solid #222;padding:6px var(--gut) 14px;z-index:30}
+.mast .links.open{display:flex}
+.mast .links a{padding:14px 0;border-bottom:1px solid #1c1c1c}.mast .links a.on{color:#ff8a90;border-bottom-color:#1c1c1c}
+}
