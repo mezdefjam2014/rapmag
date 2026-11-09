@@ -32,7 +32,7 @@ async function bgCut(src){const m=document.createElement('div');m.className='mod
   if(!ok){m.remove();return null}st('Uploading…');const name=(src.name||'photo').replace(/\.[^.]+$/,'')+'-cutout.png';const r=await upload(new File([blob],name,{type:'image/png'}));m.remove();ms('Background removed.');return r.url}
  catch(e){st('Could not remove the background: '+(e.message||e));const a=m.querySelector('.bgc-act');a.hidden=false;a.querySelector('#bgok').remove();await new Promise(r=>m.querySelector('#bgno').onclick=r);m.remove();return null}}
 
-const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=11';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
+const magLib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=12';s.onload=()=>{MAG.style();ok()};s.onerror=no;document.head.appendChild(s)});
 
 async function maker(id){const pg=shell('mags','MAGAZINE');history.replaceState(null,'',location.pathname+location.search+'#mag-'+id);pg.innerHTML='<div class="st">Loading…</div>';
  await magLib();let M;try{M=(await api('/api/admin/mags/'+id)).mag}catch(e){pg.innerHTML='<div class="st">'+esc(e.message)+'</div>';return}

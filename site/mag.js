@@ -438,6 +438,7 @@ const CSS=`.mg{position:relative;width:${W}px;height:${H}px;overflow:hidden;back
 .mg-vinyl{position:absolute;left:380px;top:200px;width:560px;height:560px;border-radius:50%;background:repeating-radial-gradient(#111 0 3px,#1c1c1c 3px 6px);box-shadow:0 20px 60px rgba(0,0,0,.5)}.mg-vinyl::after{content:'';position:absolute;inset:200px;border-radius:50%;background:var(--acc)}
 .mg-count{font:400 240px/1 var(--hf);color:var(--acc);margin:10px 0}
 .mg-wave{display:flex;justify-content:center;align-items:center;gap:6px;height:90px;margin-top:20px}.mg-wave i{display:block;width:8px;background:var(--acc);border-radius:4px}
+.mgb-sh{position:absolute;right:10px;top:10px;z-index:20;background:#e11d2a;color:#fff;border:0;font:800 11px Inter,sans-serif;letter-spacing:.14em;padding:9px 12px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4);opacity:.92}.mgb-sh:hover{opacity:1}
 `;
 let styled=0;function style(){if(styled)return;styled=1;const s=document.createElement('style');s.textContent=CSS;document.head.appendChild(s);
  const f=document.createElement('link');f.rel='stylesheet';f.href='https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@500;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,600&display=swap';document.head.appendChild(f)}
@@ -450,7 +451,7 @@ function book(root,doc,opt){style();opt=opt||{};const pages=doc.pages||[];let mo
  root.innerHTML=`<div class="mgb"><div class="mgb-stage"></div><div class="mgb-ui"><button class="pv" aria-label="Previous page">‹ PREV</button><span class="ct"></span><button class="nx" aria-label="Next page">NEXT ›</button>${opt.full!==false?'<button class="fs" aria-label="Full screen">⛶</button>':''}</div></div>`;
  const st=root.querySelector('.mgb-stage'),ui=root.querySelector('.mgb-ui');
  const pgHTML=i=>i<0||i>=pages.length?'':render(pages[i],doc);
- const slot=(i,cls,left)=>`<div class="mgb-pg ${cls}" style="left:${left}px;width:${pw}px;height:${ph}px">${i>=0&&i<pages.length?`<div class="mg-wrap" style="transform:scale(${k});transform-origin:0 0;width:${W}px;height:${H}px">${pgHTML(i)}</div>`:''}</div>`;
+ const slot=(i,cls,left)=>`<div class="mgb-pg ${cls}" style="left:${left}px;width:${pw}px;height:${ph}px">${i>=0&&i<pages.length?`<div class="mg-wrap" style="transform:scale(${k});transform-origin:0 0;width:${W}px;height:${H}px">${pgHTML(i)}</div>${opt.onShare?`<button class="mgb-sh" data-sh="${i}" aria-label="Share this page">SHARE PAGE</button>`:''}`:''}</div>`;
  const size=()=>{const avW=Math.min(root.clientWidth||window.innerWidth,1500),avH=Math.max(320,(opt.maxH||window.innerHeight-170));mode=avW>=820&&pages.length>1?'spread':'single';
   const cols=mode==='spread'?2:1;k=Math.min(avW/cols/W,avH/H);pw=Math.round(W*k);ph=Math.round(H*k);st.style.width=pw*cols+'px';st.style.height=ph+'px'};
  /* spread view: s=0 shows the cover alone on the right; s=n shows pages 2n-1 and 2n */
@@ -471,7 +472,7 @@ function book(root,doc,opt){style();opt=opt||{};const pages=doc.pages||[];let mo
   if(opt.onPage)opt.onPage(mode==='spread'?R(at+dir):at+dir)};
  ui.querySelector('.pv').onclick=()=>go(-1);ui.querySelector('.nx').onclick=()=>go(1);
  const fs=ui.querySelector('.fs');if(fs)fs.onclick=()=>{const b=root.querySelector('.mgb');if(document.fullscreenElement)document.exitFullscreen();else if(b.requestFullscreen)b.requestFullscreen().catch(()=>{})};
- st.onclick=e=>{if(e.target.closest('a'))return;const r=st.getBoundingClientRect();go(e.clientX-r.left>r.width/2?1:-1)};
+ st.onclick=e=>{const sb=e.target.closest('[data-sh]');if(sb){e.stopPropagation();opt.onShare(+sb.dataset.sh);return}if(e.target.closest('a'))return;const r=st.getBoundingClientRect();go(e.clientX-r.left>r.width/2?1:-1)};
  let sx=null;st.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});st.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>40){go(dx<0?1:-1)}},{passive:true});
  const kd=e=>{if(!document.body.contains(root))return document.removeEventListener('keydown',kd);if(e.target.closest&&e.target.closest('input,textarea,select'))return;if(e.key==='ArrowRight')go(1);if(e.key==='ArrowLeft')go(-1)};document.addEventListener('keydown',kd);
  const rs=()=>{if(!document.body.contains(root))return window.removeEventListener('resize',rs);const pageNow=mode==='spread'?R(at):at;size();at=mode==='spread'?Math.ceil(pageNow/2):pageNow;draw()};window.addEventListener('resize',rs);
