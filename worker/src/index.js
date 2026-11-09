@@ -1,5 +1,5 @@
 /* RAPAECHELON - RAPMAG API (Cloudflare Worker)
-   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending
+   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending   GET /api/rap-picks
             GET /api/settings   GET /api/build (everything the static page builder needs)   POST /api/view/:slug   GET /img/<key>
    Admin (Bearer token from /api/admin/login): posts, authors, categories, settings, media/audio upload, related-story search,
             social distribution (Facebook Page + X) with optional auto-posting when an article goes live (scheduled ones via the cron).
@@ -39,6 +39,8 @@ export default {
         sql += ' ORDER BY p.featured DESC, p.published_at DESC LIMIT ? OFFSET ?'; args.push(lim, off);
         return json({ posts: await all(sql, ...args) }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
+      /* Rap Picks: Apple's Hip-Hop/Rap top songs (30-second previews) with the editor's own order on top */
+      if (p === '/api/rap-picks' && req.method === 'GET') return json(await rapPicks(env, ctx), 200, { 'Cache-Control': 'public, max-age=120' });
       if (p === '/api/trending') return json({ posts: await all(`SELECT ${LIST} ${FROM} WHERE ${LIVE} AND p.category<>'page' AND p.published_at > datetime('now','-30 days') ORDER BY p.views DESC LIMIT 5`) }, 200, { 'Cache-Control': 'public, max-age=120' });
       if (p === '/api/settings') return json({ settings: await settings(env) }, 200, { 'Cache-Control': 'public, max-age=60' });
       if (p === '/api/cats') return json({ cats: await all(`SELECT slug,name FROM categories WHERE visible=1 ORDER BY sort,name`) }, 200, { 'Cache-Control': 'public, max-age=120' });
@@ -145,6 +147,22 @@ export default {
       }
       m = p.match(/^\/api\/admin\/categories\/([a-z0-9-]+)$/);
       if (m && req.method === 'DELETE') { const n = await one('SELECT COUNT(*) n FROM posts WHERE category=?', m[1]); if (n.n) return json({ error: 'This category still has ' + n.n + ' article(s). Move them first, or hide the category.' }, 409); await DB.prepare('DELETE FROM categories WHERE slug=?').bind(m[1]).run(); return json({ ok: true }) }
+      /* Rap Picks editor */
+      if (p === '/api/admin/rap-picks' && req.method === 'GET') { const auto = await appleChart(env, ctx, url.searchParams.get('fresh') === '1'); return json({ auto: auto.items, updated: auto.at, cfg: await rpCfg(env) }) }
+      if (p === '/api/admin/rap-picks' && req.method === 'POST') {
+        const ids = a => Array.isArray(a) ? a.map(String).filter(x => /^[ac]:[\w-]{1,40}$/.test(x)).slice(0, 100) : [];
+        const custom = {}; for (const [k, v] of Object.entries(body.custom || {}).slice(0, 100)) if (/^[ac]:[\w-]{1,40}$/.test(k) && v) custom[k] = rpItem(v, k);
+        const cfg = { order: ids(body.order), hidden: ids(body.hidden), custom };
+        await DB.prepare("INSERT INTO settings (k,v) VALUES ('rap_picks',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(cfg)).run();
+        return json({ ok: true });
+      }
+      if (p === '/api/admin/rap-picks/lookup' && req.method === 'POST') {
+        const u = String(body.url || ''), id = (u.match(/[?&]i=(\d+)/) || u.match(/\/song\/[^/]*\/(\d+)/) || u.match(/^(\d{5,})$/) || [])[1];
+        if (!id) return json({ error: 'Paste an Apple Music song link (it has ?i= or /song/ in it).' }, 400);
+        const r = await (await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id=' + id)).json(), t = (r.results || []).find(x => x.kind === 'song');
+        if (!t) return json({ error: 'Apple Music did not find that song.' }, 404);
+        return json({ item: rpItem({ title: t.trackName, artist: t.artistName, cover: (t.artworkUrl100 || '').replace('100x100bb', '600x600bb'), audio: t.previewUrl, link: t.trackViewUrl }, 'a:' + t.trackId) });
+      }
       /* settings */
       if (p === '/api/admin/settings' && req.method === 'POST') {
         for (const k of SETTINGS) if (k in body) await DB.prepare('INSERT INTO settings (k,v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').bind(k, String(body[k] ?? '').slice(0, 500)).run();
@@ -183,6 +201,33 @@ export default {
     } catch (e) { return json({ error: String(e && e.message || e) }, 500) }
   }
 };
+
+/* ---------- Rap Picks ---------- */
+const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/audio\//.test(String(u || '')) || /^\/img\/images\//.test(String(u || '')) ? String(u) : '';
+function rpItem(v, id) { return { id, title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), link: httpsOnly(v.link) } }
+async function rpCfg(env) { const r = await env.DB.prepare("SELECT v FROM settings WHERE k='rap_picks'").first(); try { const c = JSON.parse(r && r.v || '{}'); return { order: c.order || [], hidden: c.hidden || [], custom: c.custom || {} } } catch (e) { return { order: [], hidden: [], custom: {} } } }
+/* Apple's chart is fetched at most once an hour and kept in settings, so a slow or failed fetch never breaks the page */
+async function appleChart(env, ctx, fresh) {
+  const row = await env.DB.prepare("SELECT v FROM settings WHERE k='rp_auto'").first(); let cache = null; try { cache = JSON.parse(row && row.v || 'null') } catch (e) { }
+  if (cache && !fresh && Date.now() - cache.at < 3600e3) return cache;
+  try {
+    /* Hip-Hop/Rap (genre 18) and R&B/Soul (genre 15) charts, merged by chart position: rap #1, R&B #1, rap #2, R&B #2… */
+    const feeds = await Promise.all([18, 15].map(g => fetch(`https://itunes.apple.com/us/rss/topsongs/limit=50/genre=${g}/json`, { cf: { cacheTtl: 900 } }).then(r => r.ok ? r.json() : {}).catch(() => ({}))));
+    const lists = feeds.map(d => [].concat((d.feed || {}).entry || [])), merged = [];
+    for (let i = 0; i < 50; i++) for (const l of lists) if (l[i] && !merged.some(e => e.id.attributes['im:id'] === l[i].id.attributes['im:id'])) merged.push(l[i]);
+    const items = merged.map(e => { const L = [].concat(e.link || []), img = [].concat(e['im:image'] || []).pop(); return rpItem({ title: e['im:name'].label, artist: e['im:artist'].label, cover: img ? img.label.replace(/\/\d+x\d+bb\./, '/600x600bb.') : '', audio: (L.find(l => (l.attributes.type || '').startsWith('audio')) || { attributes: {} }).attributes.href, link: (L.find(l => l.attributes.rel === 'alternate') || { attributes: {} }).attributes.href }, 'a:' + e.id.attributes['im:id']) });
+    if (!items.length) throw new Error('empty');
+    cache = { at: Date.now(), items };
+    await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('rp_auto',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(cache)).run();
+    return cache;
+  } catch (e) { return cache || { at: 0, items: [] } }
+}
+async function rapPicks(env, ctx) {
+  const [auto, cfg] = await Promise.all([appleChart(env, ctx), rpCfg(env)]), byId = Object.fromEntries(auto.items.map(i => [i.id, i])), hide = new Set(cfg.hidden), out = [], seen = new Set();
+  for (const id of cfg.order) { const it = cfg.custom[id] || byId[id]; if (it && !hide.has(id) && !seen.has(id)) { out.push({ ...it, pick: 1 }); seen.add(id) } }
+  for (const it of auto.items) if (!hide.has(it.id) && !seen.has(it.id)) { out.push(it); seen.add(it.id) }
+  return { items: out.slice(0, 50), updated: auto.at };
+}
 
 /* ---------- social ---------- */
 async function settings(env) { const r = await env.DB.prepare('SELECT k,v FROM settings').all(); return Object.fromEntries(r.results.map(x => [x.k, x.v])) }

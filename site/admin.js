@@ -28,9 +28,9 @@ const localDT=s=>{if(!s)return'';const d=new Date(s.replace(' ','T')+'Z'),z=n=>S
 const isFuture=s=>s&&new Date(s.replace(' ','T')+'Z')>new Date();
 
 /* ---------- shell ---------- */
-function shell(on,title,extra){app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
+function shell(on,title,extra){app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['picks','RAP PICKS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
  <div class="ah"><h1>${title}</h1>${extra||''}</div><div id="pg"></div>`;
- app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
+ app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),picks,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
 
 /* ---------- login ---------- */
 function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
@@ -207,9 +207,8 @@ async function library(onPick){const m=modal(`<h1 style="font-size:30px">MEDIA</
  m.querySelector('#mu').onclick=async()=>{for(const f of await pick())await upload(f).catch(e=>alert(e.message));load()};
  m.querySelector('#ml').onclick=async e=>{const del=e.target.closest('[data-del]');if(del){e.stopPropagation();const k=del.dataset.del,u=(await api('/api/admin/images/usage?key='+encodeURIComponent(k))).used;if(await confirmBox(u.length?'This image is still used by:\n\n'+u.join('\n')+'\n\nDelete it from storage anyway? Those places will show a broken image.':'Delete this image from storage for good?')){await api('/api/admin/images/'+encodeURIComponent(k),{method:'DELETE'});load()}return}const t=e.target.closest('[data-u]');if(t&&onPick){onPick(t.dataset.u);m.remove()}};load()}
 function preview(v){const w=window.open('','_blank');if(!w)return;const b=v.body.replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,c)=>a+API+c+'"'),au=(AUTHORS.find(a=>a.id===+v.author_id)||{}).name||'';
- w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview: ${esc(v.title)}</title><base href="${SITE}"><link rel="stylesheet" href="style.css?v=23"></head><body><div class="bar" style="display:block!important">PREVIEW · NOT PUBLISHED YET</div><article class="wrap story"><header class="st-head"><span class="c">${esc(catName(v.category))}</span><h1>${esc(v.title)}</h1><p class="dek">${esc(v.dek)}</p><div class="meta">By ${esc(au)}</div></header>${v.cover?`<figure class="st-cover"><img src="${esc(img(v.cover))}" alt="${esc(v.cover_alt)}"></figure>`:''}<div class="st-cols"><div>${v.audio?`<div class="listen"><span>LISTEN TO THIS STORY</span><audio controls src="${esc(img(v.audio))}"></audio></div>`:''}<div class="body">${b}</div></div></div></article></body></html>`);w.document.close()}
+ w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview: ${esc(v.title)}</title><base href="${SITE}"><link rel="stylesheet" href="style.css?v=24"></head><body><div class="bar" style="display:block!important">PREVIEW · NOT PUBLISHED YET</div><article class="wrap story"><header class="st-head"><span class="c">${esc(catName(v.category))}</span><h1>${esc(v.title)}</h1><p class="dek">${esc(v.dek)}</p><div class="meta">By ${esc(au)}</div></header>${v.cover?`<figure class="st-cover"><img src="${esc(img(v.cover))}" alt="${esc(v.cover_alt)}"></figure>`:''}<div class="st-cols"><div>${v.audio?`<div class="listen"><span>LISTEN TO THIS STORY</span><audio controls src="${esc(img(v.audio))}"></audio></div>`:''}<div class="body">${b}</div></div></div></article></body></html>`);w.document.close()}
 TOKEN?loadMeta().then(list).catch(()=>login()):login();
-})();
 
 /* New Music Friday chart: one song row (YouTube link, title, artist, chart move). Rank = order in the story; cover comes from YouTube. */
 function songForm(done){let aud='';const f=(id,l,ph)=>`<label>${l}</label><input type="text" id="${id}" placeholder="${ph}">`;
@@ -224,3 +223,36 @@ function songForm(done){let aud='';const f=(id,l,ph)=>`<label>${l}</label><input
   if(!v&&!aud){q('#sms').textContent='Add a YouTube link or upload the song audio.';return}if(!t||!a){q('#sms').textContent='Add the song title and the artist.';return}
   const lab={new:'NEW',up:'▲',down:'▼',same:'—',re:'RE'}[mv];
   done(`<div class="chart-row">${v?`<img src="https://i.ytimg.com/vi/${v}/hqdefault.jpg" alt="${esc(t+' by '+a)}">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(t)}</h3><p>${esc(a)}</p></div><span class="cr-m ${mv}">${lab}</span>${aud?`<a class="cr-a" href="${esc(img(aud))}">Audio</a>`:''}${v?`<a class="cr-y" href="https://www.youtube.com/watch?v=${v}" target="_blank" rel="noopener">YouTube</a>`:''}</div>`);m.remove()}}
+
+/* ---------- Rap Picks: Apple's rap chart fills itself in; YOUR ORDER sits on top (move, pin, hide, add your own) ---------- */
+async function picks(){const pg=shell('picks','RAP PICKS','<button class="b" id="rpr">REFRESH APPLE CHART</button><button class="b r" id="rps">SAVE</button>');pg.innerHTML='<div class="st">Loading…</div>';
+ let d;const load=async fresh=>{d=await api('/api/admin/rap-picks'+(fresh?'?fresh=1':''));draw()};
+ const item=id=>d.cfg.custom[id]||d.auto.find(x=>x.id===id);
+ const row=(it,i,mine)=>`<div class="rp-row${d.cfg.hidden.includes(it.id)?' off':''}" data-id="${esc(it.id)}"><b class="rp-n">${i==null?'':i+1}</b>${it.cover?`<img src="${esc(img(it.cover))}">`:'<span class="rp-ni"></span>'}<div class="rp-t"><strong>${esc(it.title)}</strong><small>${esc(it.artist)} · ${it.id.startsWith('c:')?'YOUR UPLOAD':d.cfg.custom[it.id]?'ADDED BY YOU':'APPLE CHART'}${it.audio?'':' · NO AUDIO'}</small></div>
+  <div class="rp-b">${it.audio?`<button class="b" data-a="play" title="Listen">▶</button>`:''}${mine?`<button class="b" data-a="top" title="Move to #1">TOP</button><button class="b" data-a="up" title="Move up">▲</button><button class="b" data-a="down" title="Move down">▼</button><button class="b" data-a="unpin" title="Back to the Apple order">${d.cfg.custom[it.id]?'REMOVE':'UNPIN'}</button>`:d.cfg.hidden.includes(it.id)?`<button class="b" data-a="show">SHOW</button>`:`<button class="b" data-a="pin" title="Put it in your order on top">PIN</button><button class="b" data-a="hide">HIDE</button>`}</div></div>`;
+ const draw=()=>{const C=d.cfg,mine=C.order.map(item).filter(Boolean),rest=d.auto.filter(x=>!C.order.includes(x.id)),vis=rest.filter(x=>!C.hidden.includes(x.id)),hid=rest.filter(x=>C.hidden.includes(x.id));
+  pg.innerHTML=`<div class="st" style="margin-top:0">The site shows YOUR ORDER first, then Apple's Hip-Hop/Rap and R&B charts mixed together (updates by itself every hour${d.updated?', last fetched '+new Date(d.updated).toLocaleString():''}). Click SAVE when you are done.</div>
+  <div class="rp-add"><input type="text" id="rpl" placeholder="Paste an Apple Music song link to add it"><button class="b" id="rpla">ADD LINK</button><button class="b" id="rpu">+ UPLOAD MP3</button></div><div class="st" id="rpm"></div>
+  <h2 class="rp-h">YOUR ORDER <small>${mine.length?'':'empty: PIN a song below or add one'}</small></h2>${mine.map((it,i)=>row(it,i,1)).join('')}
+  <h2 class="rp-h">APPLE CHART <small>after your order</small></h2>${vis.map((it,i)=>row(it,mine.length+i,0)).join('')||'<div class="st">Apple charts not loaded yet. Try REFRESH APPLE CHART.</div>'}
+  ${hid.length?`<h2 class="rp-h">HIDDEN</h2>${hid.map(it=>row(it,null,0)).join('')}`:''}`;
+  $('#rpla').onclick=async()=>{$('#rpm').textContent='Looking it up…';try{const r=await api('/api/admin/rap-picks/lookup',{method:'POST',body:JSON.stringify({url:$('#rpl').value.trim()})});C.custom[r.item.id]=r.item;C.order=C.order.filter(x=>x!==r.item.id);C.order.unshift(r.item.id);C.hidden=C.hidden.filter(x=>x!==r.item.id);draw();$('#rpm').textContent='Added at #1. Click SAVE to keep it.'}catch(e){$('#rpm').textContent=e.message}};
+  $('#rpu').onclick=()=>uploadPick(it=>{C.custom[it.id]=it;C.order.unshift(it.id);draw();$('#rpm').textContent='Added at #1. Click SAVE to keep it.'})};
+ pg.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=b.closest('.rp-row').dataset.id,C=d.cfg,o=C.order,i=o.indexOf(id),a=b.dataset.a;
+  if(a==='play'){const it=item(id);let au=$('#rpa');if(!au){au=new Audio();au.id='rpa';document.body.appendChild(au)}if(au.dataset.id===id&&!au.paused){au.pause();return}au.dataset.id=id;au.src=img(it.audio);au.play();return}
+  if(a==='top'){o.splice(i,1);o.unshift(id)}else if(a==='up'&&i>0){o.splice(i,1);o.splice(i-1,0,id)}else if(a==='down'&&i<o.length-1){o.splice(i,1);o.splice(i+1,0,id)}
+  else if(a==='unpin'){o.splice(i,1);if(C.custom[id]&&!d.auto.find(x=>x.id===id))delete C.custom[id];else delete C.custom[id]}
+  else if(a==='pin')o.push(id);else if(a==='hide')C.hidden.push(id);else if(a==='show')C.hidden=C.hidden.filter(x=>x!==id);draw()};
+ $('#rps').onclick=async()=>{try{await api('/api/admin/rap-picks',{method:'POST',body:JSON.stringify(d.cfg)});ms('Rap Picks saved. The site shows it within 2 minutes.')}catch(e){ms(e.message)}};
+ $('#rpr').onclick=()=>load(1).then(()=>ms('Apple chart refreshed.'),e=>ms(e.message));
+ try{await load()}catch(e){pg.innerHTML=`<div class="st">${esc(e.message)}</div>`}}
+function uploadPick(done){let aud='',cov='';const f=(id,l,ph)=>`<label>${l}</label><input type="text" id="${id}" placeholder="${ph}">`;
+ const m=modal(`<h1 style="font-size:30px">UPLOAD A SONG</h1>`,`<div style="min-width:min(480px,80vw)">${f('ut','Song title','e.g. Pushin P')}${f('ua','Artist','e.g. Gunna')}
+ <div style="display:flex;gap:8px;margin-top:14px"><button class="b" id="uau">UPLOAD MP3</button><button class="b" id="ucv">UPLOAD COVER</button></div><div class="st" id="ums">Only upload songs you have the rights to post (artist or label promo copies).</div><button class="b r" id="uok" style="margin-top:10px">ADD</button></div>`);
+ const q=s=>m.querySelector(s);
+ q('#uau').onclick=async()=>{const [fl]=await pick('audio/*',false);if(fl)try{aud=(await upload(fl)).url;q('#ums').textContent='Audio added: '+fl.name}catch(e){q('#ums').textContent=e.message}};
+ q('#ucv').onclick=async()=>{const [fl]=await pick('image/*',false);if(fl)try{cov=(await upload(fl)).url;q('#ums').textContent='Cover added.'}catch(e){q('#ums').textContent=e.message}};
+ q('#uok').onclick=()=>{const t=q('#ut').value.trim(),a=q('#ua').value.trim();if(!t||!a||!aud){q('#ums').textContent='Add the title, the artist and the MP3.';return}
+  done({id:'c:'+Date.now().toString(36),title:t,artist:a,cover:cov,audio:aud,link:''});m.remove()}}
+
+})();

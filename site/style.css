@@ -259,3 +259,11 @@ button{font:inherit;cursor:pointer}
 .chart-row.playing .cr-p{background:var(--red)}
 .body .cr-noimg{display:block;width:76px;height:76px;background:#111}
 @media(prefers-reduced-motion:reduce){.chart-row.playing .cr-w i{animation:none;height:8px}}
+
+/* ===== Rap Picks page ===== */
+.rp-page{max-width:900px;margin:0 auto;padding:0}
+.rp-page .body{max-width:none}
+.body .cr-am{display:inline-block;margin-top:5px;font:800 10px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);text-decoration:none;border-bottom:1px solid currentColor}
+.body .cr-am:hover{color:var(--red)}
+.rp-src{font:600 11px Inter,sans-serif;color:var(--mut);margin:18px 0 0;letter-spacing:.04em}
+.body .chart-row:has(.cr-noimg)::before{align-self:center}
