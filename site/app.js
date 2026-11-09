@@ -42,7 +42,7 @@ function setMeta(t,d,im,type){document.title=t;let c=document.querySelector('lin
 
 /* ---------- home / section / search ---------- */
 async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');let off=0;const N=12;
- const head=!cat&&q==null?'<h1 class="vh">RAPAECHELON - RAPMAG: Hip-Hop, Rap &amp; Entertainment News</h1>':cat?`<div class="sh"><h1>${esc(CN[cat]||cat)}</h1></div>`:`<div class="sh"><h1>${q?'Search: '+esc(q):'Search'}</h1></div>`;
+ const head=!cat&&q==null?'<h1 class="vh">RAPAECHELON - RAPMAG: Hip-Hop, Rap &amp; Entertainment News</h1>':cat&&/new-music/.test(cat)?`<header class="nmf"><span>EVERY FRIDAY</span><h1>${esc(CN[cat]||'New Music Friday')}</h1><p>The week's hottest rap and hip-hop drops, ranked. Hit play and run the whole chart.</p></header>`:cat?`<div class="sh"><h1>${esc(CN[cat]||cat)}</h1></div>`:`<div class="sh"><h1>${q?'Search: '+esc(q):'Search'}</h1></div>`;
  setMeta(cat?(CN[cat]||cat)+' News | RAPAECHELON - RAPMAG':q!=null?'Search | RAPAECHELON - RAPMAG':'RAPAECHELON - RAPMAG | Hip-Hop, Rap & Entertainment News',cat?'The latest '+String(CN[cat]||cat).toLowerCase()+' stories in hip-hop and rap from RAPAECHELON - RAPMAG.':'RAPAECHELON - RAPMAG: breaking hip-hop and rap news, new music and entertainment stories, updated daily.');
  main.innerHTML=`<div class="wrap shell">${!cat&&q==null?promo():''}${head}<section class="grid" id="g" aria-label="Published articles"></section><button class="more" id="mo" hidden>LOAD MORE STORIES</button></div>`;
  const load=async()=>{const B=window.RM_BOOT,d=!off&&!cat&&q==null&&B&&B.posts?B.posts:await get('/api/posts?limit='+N+'&offset='+off+(cat?'&cat='+cat:'')+(q?'&q='+encodeURIComponent(q):''));
@@ -67,9 +67,18 @@ async function article(){const main=$('#main'),isPage=document.body.dataset.page
  <div class="st-cols">${isPage?'':`<div class="share"><a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(p.title)}&url=${encodeURIComponent(url)}" target="_blank" rel="noopener" title="Share on X">X</a><a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" rel="noopener" title="Share on Facebook">FB</a><button id="cp" title="Copy link">LINK</button></div>`}
  <div>${p.audio?`<div class="listen"><span>LISTEN TO THIS STORY</span><audio controls preload="none" src="${esc(img(p.audio))}"></audio></div>`:''}<div class="body">${fix(p.body)}</div>${p.tags&&!isPage?`<div class="tags">${p.tags.split(',').map(t=>t.trim()).filter(Boolean).map(t=>`<a href="index.html?q=${encodeURIComponent(t)}">${esc(t)}</a>`).join('')}</div>`:''}</div></div></article>
  ${!isPage&&d.related.length?`<section class="wrap related"><div class="sh"><h1>More ${esc(CN[p.category]||'')}</h1></div><div class="grid">${d.related.map(r=>card(r)).join('')}</div></section>`:''}`;
- if($('#cp'))$('#cp').onclick=()=>{navigator.clipboard.writeText(url).then(()=>{$('#cp').textContent='COPIED';setTimeout(()=>$('#cp').textContent='LINK',1500)})};
+ chart(main);if($('#cp'))$('#cp').onclick=()=>{navigator.clipboard.writeText(url).then(()=>{$('#cp').textContent='COPIED';setTimeout(()=>$('#cp').textContent='LINK',1500)})};
  if(!isPage){const k='rm_v_'+p.slug;try{if(!sessionStorage.getItem(k)){sessionStorage.setItem(k,1);fetch(API+'/api/view/'+p.slug,{method:'POST'})}}catch(e){}
   addEventListener('scroll',()=>{const a=$('.story'),r=a.getBoundingClientRect(),h=a.offsetHeight-innerHeight;$('#prog').style.width=Math.min(100,Math.max(0,-r.top/h*100))+'%'},{passive:true})}reveal()}
+/* New Music Friday chart: each row gets a PLAY button; songs play in a small player docked in the corner, then the rest of the chart plays in order */
+const ytId=u=>{const m=String(u).match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([\w-]{11})/);return m?m[1]:''};
+function chart(root){const rows=[...root.querySelectorAll('.chart-row')].map(r=>[r,ytId((r.querySelector('.cr-y')||{}).href||'')]).filter(x=>x[1]);if(!rows.length)return;rows[0][0].classList.add('top');
+ const play=i=>{const [r,id]=rows[i],next=rows.slice(i+1).map(x=>x[1]).join(',');let mp=$('#mp');
+  if(!mp){mp=document.createElement('div');mp.id='mp';document.body.appendChild(mp)}
+  mp.innerHTML=`<div class="mp-h"><span>NEW MUSIC FRIDAY · FROM #${i+1}</span><button aria-label="Close player">✕</button></div><iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0${next?'&playlist='+next:''}" title="${esc((r.querySelector('h3')||{}).textContent||'Song')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  mp.querySelector('button').onclick=()=>{mp.remove();rows.forEach(([x])=>x.classList.remove('on'))};
+  rows.forEach(([x],j)=>x.classList.toggle('on',j===i))};
+ rows.forEach(([r],i)=>{if(r.querySelector('.cr-p'))return;const b=document.createElement('button');b.className='cr-p';b.setAttribute('aria-label','Play '+((r.querySelector('h3')||{}).textContent||'song'));b.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span>';b.onclick=()=>play(i);r.appendChild(b)})}
 function fix(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,b)=>a+API+b+'" loading="lazy"')}
 
 /* 404.html serves clean links the build has not made yet */
