@@ -105,8 +105,8 @@ export default {
         const exp = Date.now() + 1000 * 60 * 60 * 24 * 7;
         return json({ token: exp + '.' + await sign(String(exp), env) });
       }
-      if (!p.startsWith('/api/admin/')) return json({ error: 'Not found' }, 404);
       if (p === '/api/ig/callback') return igCallback(url, env);
+      if (!p.startsWith('/api/admin/')) return json({ error: 'Not found' }, 404);
       if (!(await authed(req, env))) return json({ error: 'Not logged in' }, 401);
       const body = req.method === 'POST' && !(req.headers.get('Content-Type') || '').startsWith('multipart') ? await req.json().catch(() => ({})) : null;
 
