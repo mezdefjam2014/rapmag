@@ -70,15 +70,25 @@ async function article(){const main=$('#main'),isPage=document.body.dataset.page
  chart(main);if($('#cp'))$('#cp').onclick=()=>{navigator.clipboard.writeText(url).then(()=>{$('#cp').textContent='COPIED';setTimeout(()=>$('#cp').textContent='LINK',1500)})};
  if(!isPage){const k='rm_v_'+p.slug;try{if(!sessionStorage.getItem(k)){sessionStorage.setItem(k,1);fetch(API+'/api/view/'+p.slug,{method:'POST'})}}catch(e){}
   addEventListener('scroll',()=>{const a=$('.story'),r=a.getBoundingClientRect(),h=a.offsetHeight-innerHeight;$('#prog').style.width=Math.min(100,Math.max(0,-r.top/h*100))+'%'},{passive:true})}reveal()}
-/* New Music Friday chart: each row gets a PLAY button; songs play in a small player docked in the corner, then the rest of the chart plays in order */
+/* New Music Friday chart: PLAY on a row with an uploaded audio file plays just the sound (waveform under the button) and runs on down the chart;
+   rows with only a YouTube link open the small docked YouTube player instead */
 const ytId=u=>{const m=String(u).match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([\w-]{11})/);return m?m[1]:''};
-function chart(root){const rows=[...root.querySelectorAll('.chart-row')].map(r=>[r,ytId((r.querySelector('.cr-y')||{}).href||'')]).filter(x=>x[1]);if(!rows.length)return;rows[0][0].classList.add('top');
- const play=i=>{const [r,id]=rows[i],next=rows.slice(i+1).map(x=>x[1]).join(',');let mp=$('#mp');
+function chart(root){const rows=[...root.querySelectorAll('.chart-row')].map(r=>({r,au:(r.querySelector('.cr-a')||{}).href||'',yt:ytId((r.querySelector('.cr-y')||{}).href||'')})).filter(x=>x.au||x.yt);if(!rows.length)return;rows[0].r.classList.add('top');
+ const A=new Audio();A.preload='none';let cur=-1;
+ const mark=i=>rows.forEach((x,j)=>{x.r.classList.toggle('on',j===i);x.r.classList.toggle('playing',j===i&&!!x.au&&!A.paused);const s=x.r.querySelector('.cr-p span');if(s)s.textContent=j===i&&x.au&&!A.paused?'PAUSE':'PLAY'});
+ const closeMp=()=>{const mp=$('#mp');if(mp)mp.remove()};
+ const yt=i=>{A.pause();const {r,yt:id}=rows[i],next=rows.slice(i+1).map(x=>x.yt).filter(Boolean).join(',');let mp=$('#mp');
   if(!mp){mp=document.createElement('div');mp.id='mp';document.body.appendChild(mp)}
   mp.innerHTML=`<div class="mp-h"><span>NEW MUSIC FRIDAY · FROM #${i+1}</span><button aria-label="Close player">✕</button></div><iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0${next?'&playlist='+next:''}" title="${esc((r.querySelector('h3')||{}).textContent||'Song')}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-  mp.querySelector('button').onclick=()=>{mp.remove();rows.forEach(([x])=>x.classList.remove('on'))};
-  rows.forEach(([x],j)=>x.classList.toggle('on',j===i))};
- rows.forEach(([r],i)=>{if(r.querySelector('.cr-p'))return;const b=document.createElement('button');b.className='cr-p';b.setAttribute('aria-label','Play '+((r.querySelector('h3')||{}).textContent||'song'));b.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span>';b.onclick=()=>play(i);r.appendChild(b)})}
+  mp.querySelector('button').onclick=()=>{closeMp();cur=-1;mark(-1)};cur=i;mark(i)};
+ const play=i=>{const x=rows[i];if(!x.au)return yt(i);closeMp();
+  if(cur===i&&A.src){A.paused?A.play():A.pause();return}
+  cur=i;A.src=x.au;A.play().catch(()=>{});mark(i)};
+ A.onplay=A.onpause=()=>mark(cur);
+ A.onended=()=>{const n=rows.findIndex((x,j)=>j>cur&&x.au);if(n>-1)play(n);else{cur=-1;mark(-1)}};
+ rows.forEach(({r},i)=>{if(r.querySelector('.cr-p'))return;const w=document.createElement('div');w.className='cr-pw';
+  w.innerHTML='<button class="cr-p" aria-label="Play '+esc((r.querySelector('h3')||{}).textContent||'song')+'"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span></button><div class="cr-w" aria-hidden="true">'+'<i></i>'.repeat(14)+'</div>';
+  w.querySelector('button').onclick=()=>play(i);r.appendChild(w)})}
 function fix(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,b)=>a+API+b+'" loading="lazy"')}
 
 /* 404.html serves clean links the build has not made yet */
