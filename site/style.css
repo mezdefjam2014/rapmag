@@ -195,3 +195,6 @@ button{font:inherit;cursor:pointer}
 .mast .links.open{display:flex}
 .mast .links a{padding:14px 0;border-bottom:1px solid #1c1c1c}.mast .links a.on{color:#ff8a90;border-bottom-color:#1c1c1c}
 }
+
+/* home lead story: excerpt shows on desktop only */
+@media(max-width:760px){.card.lead .ldek{display:none}}
