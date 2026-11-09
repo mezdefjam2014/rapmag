@@ -40,7 +40,7 @@ const im=(v,k,cls,st)=>{const o=v[k];const u=o&&(o.u||(typeof o==='string'?o:'')
  if(!u)return EDIT?`<div class="mg-ph ${cls||''}" style="${st||''}" data-slot="${k}"><span>PHOTO</span></div>`:'';
  const x=o.x??50,y=o.y??50,z=o.z??1;return `<div class="mg-im ${cls||''}" style="${st||''}" data-slot="${k}"><img src="${esc(abs(u))}" alt="" style="object-position:${x}% ${y}%;transform:scale(${z});transform-origin:${x}% ${y}%" loading="lazy" draggable="false"></div>`};
 const cut=(v,k,st)=>{const o=v[k],u=o&&o.u;if(!u)return EDIT?`<div class="mg-ph mg-cutph" style="${st}" data-slot="${k}"><span>COVER STAR<br><small>PNG cut-out</small></span></div>`:'';
- return `<img class="mg-cut" data-slot="${k}" src="${esc(abs(u))}" alt="" style="${st};transform:scale(${o.z??1});transform-origin:50% 100%;object-position:${o.x??50}% 100%" draggable="false">`};
+ return `<img class="mg-cut" data-slot="${k}" src="${esc(abs(u))}" alt="" style="${st};transform:scale(${o.z??1});transform-origin:50% 100%;margin-left:${((o.x??50)-50)*6}px" draggable="false">`};
 const fit=(s,base,n)=>Math.round(base*Math.max(.42,Math.min(1,Math.sqrt((n||12)/Math.max(1,String(s||'').length)))));
 /* the masthead: always at the top, always big. A logo uploaded in the Maker replaces the built one. */
 /* the logo at the top: size and position can be moved per page (mh_s %, mh_x / mh_y px) */
