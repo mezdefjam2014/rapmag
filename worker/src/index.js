@@ -207,7 +207,7 @@ export default {
         return json({ ok: true });
       }
       /* Magazine Maker: drafts autosave here; publish / unpublish; delete erases the issue's images */
-      if (p === '/api/admin/mags' && req.method === 'GET') { await magTable(env); return json({ mags: await all('SELECT id,slug,title,label,thumb,status,updated_at,published_at FROM mags ORDER BY updated_at DESC') }) }
+      if (p === '/api/admin/mags' && req.method === 'GET') { await magTable(env); return json({ mags: await all('SELECT id,slug,title,label,thumb,status,updated_at,published_at,(draft IS NOT NULL) AS has_draft FROM mags ORDER BY updated_at DESC') }) }
       if (p === '/api/admin/mags' && req.method === 'POST') {
         await magTable(env); const title = String(body.title || 'New issue').slice(0, 120), label = String(body.label || '').slice(0, 120);
         let slug = slugify(title) || 'issue'; if (await one('SELECT id FROM mags WHERE slug=?', slug)) slug += '-' + Date.now().toString(36);
@@ -217,17 +217,20 @@ export default {
       m = p.match(/^\/api\/admin\/mags\/(\d+)$/);
       if (m) {
         await magTable(env); const id = +m[1], x = await one('SELECT * FROM mags WHERE id=?', id); if (!x) return json({ error: 'not found' }, 404);
-        if (req.method === 'GET') { x.doc = JSON.parse(x.doc || '{}'); return json({ mag: x }) }
+        if (req.method === 'GET') { x.has_draft = x.draft ? 1 : 0; x.doc = JSON.parse(x.draft || x.doc || '{}'); delete x.draft; return json({ mag: x }) }
         if (req.method === 'DELETE') {
           for (const u of magImages(x.doc)) if (!(await imageUsedElsewhere(env, u, id))) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') }
           await DB.prepare('DELETE FROM mags WHERE id=?').bind(id).run(); return json({ ok: true });
         }
+        if (req.method === 'POST' && body.discard) { await DB.prepare('UPDATE mags SET draft=NULL WHERE id=?').bind(id).run(); return json({ ok: true, doc: JSON.parse(x.doc || '{}') }) }
+        /* a live issue keeps working edits in a private draft until "update live issue" */
+        if (req.method === 'POST' && body.draft && x.status === 'published') { const dd = JSON.stringify(body.doc || {}); if (dd.length > 900000) return json({ error: 'This issue is too big to save. Split it into two issues.' }, 400); await DB.prepare("UPDATE mags SET draft=?, updated_at=datetime('now') WHERE id=?").bind(dd, id).run(); return json({ ok: true, status: x.status, draft: 1 }) }
         if (req.method === 'POST') {
           const doc = body.doc ? JSON.stringify(body.doc) : x.doc; if (doc.length > 900000) return json({ error: 'This issue is too big to save. Split it into two issues.' }, 400);
           const status = body.status === 'published' || body.status === 'draft' ? body.status : x.status;
           /* images removed from the issue since the last save are erased */
-          if (body.doc) { const keep = new Set(magImages(doc)); for (const u of magImages(x.doc)) if (!keep.has(u) && !(await imageUsedElsewhere(env, u, id))) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') } }
-          await DB.prepare("UPDATE mags SET title=?, label=?, thumb=?, doc=?, status=?, updated_at=datetime('now'), published_at=CASE WHEN ?='published' AND published_at IS NULL THEN datetime('now') ELSE published_at END WHERE id=?")
+          if (body.doc) { const keep = new Set([...magImages(doc), ...(x.draft ? magImages(x.draft) : [])]); for (const u of magImages(x.doc)) if (!keep.has(u) && !(await imageUsedElsewhere(env, u, id))) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') } }
+          await DB.prepare("UPDATE mags SET title=?, label=?, thumb=?, doc=?, draft=NULL, status=?, updated_at=datetime('now'), published_at=CASE WHEN ?='published' AND published_at IS NULL THEN datetime('now') ELSE published_at END WHERE id=?")
             .bind(String(body.title ?? x.title).slice(0, 120), String(body.label ?? x.label).slice(0, 120), String(body.thumb ?? x.thumb ?? '').slice(0, 300), doc, status, status, id).run();
           return json({ ok: true, status });
         }
@@ -277,7 +280,7 @@ export default {
 };
 
 /* ---------- digital magazine ---------- */
-async function magTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS mags (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, label TEXT DEFAULT '', thumb TEXT DEFAULT '', doc TEXT DEFAULT '{}', status TEXT NOT NULL DEFAULT 'draft', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), published_at TEXT)").run() }
+async function magTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS mags (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, label TEXT DEFAULT '', thumb TEXT DEFAULT '', doc TEXT DEFAULT '{}', status TEXT NOT NULL DEFAULT 'draft', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), published_at TEXT)").run(); try { await env.DB.prepare('ALTER TABLE mags ADD COLUMN draft TEXT').run() } catch (e) { } }
 function magImages(doc) { return [...new Set(String(doc || '').match(/\/img\/images\/[\w\/.%-]+/g) || [])] }
 /* never erase an image an article, the chart, settings or another issue still uses */
 async function imageUsedElsewhere(env, u, magId) {
