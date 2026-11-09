@@ -10,7 +10,7 @@ const LIST = `p.id,p.slug,p.title,p.dek,p.cover,p.cover_alt,p.category,p.tags,p.
 const FROM = `FROM posts p LEFT JOIN authors a ON a.id=p.author_id`;
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)) },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieChart(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), p = url.pathname, origin = req.headers.get('Origin') || '';
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim());
