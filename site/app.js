@@ -50,12 +50,8 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
 /* ---------- Rap Picks: Apple's Hip-Hop/Rap chart + the editor's picks, 30-second previews play with no video ---------- */
-/* Rap Picks straight from Apple in the browser (used when the RAPMAG server has no Rap Picks yet):
-   Apple Music's most-played songs in the US, keeping only Hip-Hop/Rap and R&B/Soul, with 30-second previews from Apple's lookup */
-async function appleDirect(){const d=await fetch('https://rss.marketingtools.apple.com/api/v2/us/music/most-played/100/songs.json').then(r=>r.json()),
- keep=((d.feed||{}).results||[]).filter(x=>(x.genres||[]).some(g=>/^(Hip-Hop\/Rap|R&B\/Soul|Rap)$/.test(g.name)));if(!keep.length)throw new Error('empty');
- const lk=await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id='+keep.map(x=>x.id).join(',')).then(r=>r.json()).catch(()=>({results:[]})),pv=Object.fromEntries((lk.results||[]).filter(r=>r.trackId).map(r=>[String(r.trackId),r.previewUrl]));
- return{items:keep.map(x=>({id:'a:'+x.id,title:x.name,artist:x.artistName,cover:(x.artworkUrl100||'').replace(/\/\d+x\d+bb\./,'/600x600bb.'),audio:pv[x.id]||'',link:x.url||''})).slice(0,50)}}
+/* Rap Picks without the server: the site build saves Apple Music's rap + R&B chart as rap-picks.json every 10 minutes */
+async function appleDirect(){const r=await fetch('rap-picks.json?t='+Math.floor(Date.now()/6e5));if(!r.ok)throw new Error('no chart');return r.json()}
 async function rapPicks(){const main=$('#main');
  setMeta('Rap Picks: Top Rap Songs Right Now | RAPAECHELON - RAPMAG','The top rap and R&B songs right now, picked and ranked by RAPMAG. Hit play to hear each one.');
  main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>UPDATED ALL THE TIME</span><h1>Rap Picks</h1><p>The most-played rap and R&B songs right now, ranked by RAPMAG. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div><p class="rp-src">Song previews courtesy of Apple Music.</p></div></div>`;
