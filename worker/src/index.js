@@ -263,18 +263,6 @@ export default {
         return json({ images: l.objects.sort((a, b) => b.uploaded - a.uploaded).map(o => ({ key: o.key, url: '/img/' + o.key, size: o.size, uploaded: o.uploaded })), cursor: l.truncated ? l.cursor : null });
       }
       if (p.startsWith('/api/admin/images/') && req.method === 'DELETE') { const k = decodeURIComponent(p.slice(18)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp'); return json({ ok: true }) }
-      /* email a finished picture / video with its caption to yourself (Resend; secret RESEND_API_KEY). Nothing is stored. */
-      if (p === '/api/admin/mail/status') return json({ ready: !!env.RESEND_API_KEY });
-      if (p === '/api/admin/mail' && req.method === 'POST') {
-        if (!env.RESEND_API_KEY) return json({ error: 'Email sending is not set up yet (RESEND_API_KEY)' }, 400);
-        const fd = await req.formData(), f = fd.get('file'), to = String(fd.get('to') || '').trim(), text = String(fd.get('text') || '').slice(0, 5000), subject = String(fd.get('subject') || 'RAPAECHELON post').slice(0, 200);
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return json({ error: 'Type a real email address' }, 400);
-        if (!f || typeof f === 'string') return json({ error: 'No file' }, 400); if (f.size > 28e6) return json({ error: 'File is too big to email (over 28 MB)' }, 400);
-        const u8 = new Uint8Array(await f.arrayBuffer()); let b = ''; for (let i = 0; i < u8.length; i += 0x8000) b += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-        const r = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from: env.MAIL_FROM || 'RAPAECHELON Studio <onboarding@resend.dev>', to: [to], subject, text, attachments: [{ filename: f.name || 'post', content: btoa(b) }] }) }), d = await r.json().catch(() => ({}));
-        return r.ok ? json({ sent: true }) : json({ error: d.message || 'The email service said no' }, 400);
-      }
       /* social distribution */
       if (p === '/api/admin/social/test') return json({ ...(await socialTest(env)), instant: env.GH_TOKEN ? 'connected' : 'not connected' });
       if (p === '/api/admin/social/post' && req.method === 'POST') {

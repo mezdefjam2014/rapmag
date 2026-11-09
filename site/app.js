@@ -70,7 +70,7 @@ async function pageShare(d,start){const pages=d.doc.pages;let at=start||0,sz='po
  const make=async()=>{note('Making the picture…');await lib();const off=document.createElement('div');off.style.cssText='position:fixed;left:-99999px;top:0';off.innerHTML=card();document.body.appendChild(off);await Promise.all([...off.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));await document.fonts.ready;
   try{const b=await htmlToImage.toBlob(off.firstElementChild,{pixelRatio:1,cacheBust:false});return new File([b],`rapmag-${d.slug||'issue'}-page-${at+1}-${sz}.png`,{type:'image/png'})}finally{off.remove()}};
  m.onclick=async e=>{const b=e.target.closest('button');if(e.target===m||(b&&b.classList.contains('psh-x')))return m.remove();if(!b)return;
-  if(b.classList.contains('psh-ig')){try{const f=await make();note('');if(!window.SHARE)await new Promise((ok,no)=>{const x=document.createElement('script');x.src='share.js?v=4';x.onload=ok;x.onerror=no;document.head.appendChild(x)});
+  if(b.classList.contains('psh-ig')){try{const f=await make();note('');if(!window.SHARE)await new Promise((ok,no)=>{const x=document.createElement('script');x.src='share.js?v=5';x.onload=ok;x.onerror=no;document.head.appendChild(x)});
    const pg=pages[at];SHARE.panel(f,{h:sz==='post'?1350:1920,name:'rapmag-page.jpg',ctx:{type:'mag',title:d.title,section:kind(pg),artist:(pg.v&&(pg.v.name||''))||'',head:(pg.v&&(pg.v.title||pg.v.adh))||'',link:location.href}})}catch(er){note('Could not make the picture.')}return}
   if(b.dataset.d){at=(at+ +b.dataset.d+pages.length)%pages.length;prev()}
   else if(b.dataset.s){sz=b.dataset.s;m.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b));prev()}

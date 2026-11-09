@@ -3,3 +3,5 @@
 window.RM_LOCAL=/localhost|127\.0\.0\.1/.test(location.hostname);
 window.RM_API=window.RM_LOCAL?'http://127.0.0.1:8787':'https://rapmag-api.cookupking18.workers.dev';
 window.RM_PRETTY=!window.RM_LOCAL;
+/* Google sign-in client id for making Gmail drafts with the file attached (Studio share box). Empty = off. */
+window.RM_GCID='';

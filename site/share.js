@@ -50,6 +50,21 @@ function buildCaption(c,dest){const L=[],link=dest==='fb'&&c.link?c.link:'';
 /* any picture becomes a JPG (Instagram only takes JPG) */
 async function toJpg(blob){if(blob.type==='image/jpeg'||/^video/.test(blob.type))return blob;const im=new Image();const u=URL.createObjectURL(blob);im.src=u;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0);URL.revokeObjectURL(u);return new Promise(r=>c.toBlob(b=>r(new File([b],'post.jpg',{type:'image/jpeg'})),'image/jpeg',.93))}
 
+/* Gmail draft with a real attachment. Uses Google's own sign-in in this browser; the file goes from this computer
+   straight to your Gmail drafts. Nothing is sent and nothing passes through our server. */
+const b64=s=>btoa(unescape(encodeURIComponent(s)));
+let GTOK=null;
+const gsi=()=>window.google&&google.accounts?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://accounts.google.com/gsi/client';x.onload=ok;x.onerror=()=>no(new Error('Google sign-in did not load'));document.head.appendChild(x)});
+async function gtoken(){if(GTOK&&GTOK.exp>Date.now())return GTOK.t;await gsi();return new Promise((ok,no)=>{const c=google.accounts.oauth2.initTokenClient({client_id:window.RM_GCID,scope:'https://www.googleapis.com/auth/gmail.compose',
+  callback:r=>{if(r.error||!r.access_token)return no(new Error(r.error_description||r.error||'Google said no'));GTOK={t:r.access_token,exp:Date.now()+(+r.expires_in-60)*1000};ok(GTOK.t)},error_callback:e=>no(new Error(e.message||'Sign-in was closed'))});c.requestAccessToken({prompt:''})})}
+async function gmailDraft(blob,name,to,subj,text,say){const t=await gtoken();say('Attaching the file…');
+ const data=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(',')[1]);fr.readAsDataURL(blob)});
+ const bd='rm'+Date.now(),L='\r\n',wrap=x=>x.replace(/.{76}/g,'$&'+L);
+ const mime=[(to?'To: '+to+L:'')+'Subject: =?UTF-8?B?'+b64(subj)+'?='+L+'MIME-Version: 1.0'+L+'Content-Type: multipart/mixed; boundary="'+bd+'"'+L,
+  '--'+bd+L+'Content-Type: text/plain; charset="UTF-8"'+L+'Content-Transfer-Encoding: base64'+L+L+wrap(b64(text))+L,
+  '--'+bd+L+'Content-Type: '+(blob.type||'application/octet-stream')+'; name="'+name+'"'+L+'Content-Disposition: attachment; filename="'+name+'"'+L+'Content-Transfer-Encoding: base64'+L+L,wrap(data),L+'--'+bd+'--'+L];
+ say('Saving the draft in Gmail…');const r=await fetch('https://gmail.googleapis.com/upload/gmail/v1/users/me/drafts?uploadType=media',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'message/rfc822'},body:new Blob(mime)}),d=await r.json().catch(()=>({}));
+ if(!r.ok){if(r.status===401)GTOK=null;throw new Error((d.error&&d.error.message)||'Gmail said no')}return d.message.id}
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}};
 const SHARE={buildTags,buildCaption,tagify,
  /* blob: the finished picture or video. o: {h, w, name, ctx:{type:'drop'|'news'|'article'|'mag'|'file', artist, song, title, dek, cap, category, section, head, link}} */
@@ -65,7 +80,7 @@ const SHARE={buildTags,buildCaption,tagify,
   <div class="igp-tags"></div><input class="igp-add" placeholder="+ add a hashtag and press Enter">
   <div class="igp-look"><b>HOW IT WILL LOOK</b><div class="igp-mock"></div></div>
   <div class="igp-to"><b>EMAIL TO</b><input type="email" class="igp-em" placeholder="your@email.com (remembered on this computer)"></div></div></div>
-  <div class="igp-act"><button class="igp-go">✉ EMAIL IT</button><button class="igp-cp">COPY CAPTION</button><a class="igp-sv" href="${url}" download="${name}">SAVE FILE</a><button class="igp-x">CLOSE</button></div><div class="igp-st"></div></div>`;
+  <div class="igp-act"><button class="igp-go">✉ MAKE THE EMAIL</button><button class="igp-cp">COPY CAPTION</button><a class="igp-sv" href="${url}" download="${name}">SAVE FILE</a><button class="igp-x">CLOSE</button></div><div class="igp-st"></div></div>`;
   document.body.appendChild(m);const $=s=>m.querySelector(s),st=h=>$('.igp-st').innerHTML=h;
   const full=d=>C[d].trim()+(T[d].length?'\n\n'+T[d].map(t=>'#'+t).join(' '):'');
   const mock=()=>$('.igp-mock').innerHTML=`<b>rapaechelon</b> ${esc(full(tab)).replace(/\n/g,'<br>').replace(/#(\w+)/g,'<span>#$1</span>')}`;
@@ -83,16 +98,15 @@ const SHARE={buildTags,buildCaption,tagify,
   /* phones: the share sheet attaches the file to the email for you. computers: the file is saved, the email opens with the caption */
   $('.igp-go').onclick=async()=>{const text=full(tab),subj='RAPAECHELON '+(c.type==='drop'?'drop':c.type==='mag'?'magazine page':'post')+(c.title||c.song?': '+(c.title||c.song):''),f=new File([blob],name,{type:blob.type});
    if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){await navigator.share({files:[f],title:subj,text}).catch(()=>{});return}
-   const to0=$('.igp-em').value.trim(),tk=LS('rm_tok'),API=window.RM_API||'';
-   if(tk&&API){if(!to0)return st('<p class="igp-w">Type your email in EMAIL TO first.</p>');LS('rm_mailto',to0);
-    try{const ok=await fetch(API+'/api/admin/mail/status',{headers:{Authorization:'Bearer '+tk}}).then(r=>r.json());
-     if(ok.ready){$('.igp-go').disabled=true;st('Sending the email with the file attached…');const fd=new FormData();fd.append('file',blob,name);fd.append('to',to0);fd.append('subject',subj);fd.append('text',text);
-      const r=await fetch(API+'/api/admin/mail',{method:'POST',headers:{Authorization:'Bearer '+tk},body:fd}),d=await r.json().catch(()=>({}));$('.igp-go').disabled=false;
-      if(r.ok)return st(`<b>Sent!</b> Check ${esc(to0)}. The ${vid?'video':'picture'} is attached, with the caption and hashtags.`);return st('<p class="igp-w">Could not send: '+esc(d.error||'error')+'</p>')}}catch(e){$('.igp-go').disabled=false}}
-   const notReady=!!(tk&&API);
+   const to0=$('.igp-em').value.trim();if(to0)LS('rm_mailto',to0);
+   if(window.RM_GCID){$('.igp-go').disabled=true;try{st('Asking Gmail…');const id=await gmailDraft(blob,name,to0,subj,text,t=>st(esc(t)));
+     window.open('https://mail.google.com/mail/#drafts?compose='+encodeURIComponent(id),'_blank');
+     st(`<b>Draft ready in Gmail</b> with the ${vid?'video':'picture'} attached, plus the caption and hashtags. It opened in a new tab. Nothing was sent: press Send there when you are ready.`)}
+    catch(e){st('<p class="igp-w">Could not make the Gmail draft: '+esc(e.message||e)+'</p>')}$('.igp-go').disabled=false;return}
+   const notReady=true;
    const a=document.createElement('a');a.href=url;a.download=name;a.click();await copy();
    const to=$('.igp-em').value.trim();window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`,'_blank');
-   st((notReady?'<p class="igp-w">Real attaching is not switched on yet (the email key is missing on the server), so this opened a Gmail draft instead.</p>':'')+`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
+   st((notReady?'<p class="igp-w">Attaching for you is not switched on yet (Gmail is not linked), so the file was saved to Downloads for you to drag in.</p>':'')+`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
   const close=()=>{URL.revokeObjectURL(url);m.remove()};$('.igp-x').onclick=$('.igp-xx').onclick=close;m.onclick=e=>{if(e.target===m)close()};draw()}
 };
 window.SHARE=SHARE;
