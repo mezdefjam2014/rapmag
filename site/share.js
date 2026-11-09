@@ -83,6 +83,12 @@ const SHARE={buildTags,buildCaption,tagify,
   /* phones: the share sheet attaches the file to the email for you. computers: the file is saved, the email opens with the caption */
   $('.igp-go').onclick=async()=>{const text=full(tab),subj='RAPAECHELON '+(c.type==='drop'?'drop':c.type==='mag'?'magazine page':'post')+(c.title||c.song?': '+(c.title||c.song):''),f=new File([blob],name,{type:blob.type});
    if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){await navigator.share({files:[f],title:subj,text}).catch(()=>{});return}
+   const to0=$('.igp-em').value.trim(),tk=LS('rm_tok'),API=window.RM_API||'';
+   if(tk&&API){if(!to0)return st('<p class="igp-w">Type your email in EMAIL TO first.</p>');LS('rm_mailto',to0);
+    try{const ok=await fetch(API+'/api/admin/mail/status',{headers:{Authorization:'Bearer '+tk}}).then(r=>r.json());
+     if(ok.ready){$('.igp-go').disabled=true;st('Sending the email with the file attached…');const fd=new FormData();fd.append('file',blob,name);fd.append('to',to0);fd.append('subject',subj);fd.append('text',text);
+      const r=await fetch(API+'/api/admin/mail',{method:'POST',headers:{Authorization:'Bearer '+tk},body:fd}),d=await r.json().catch(()=>({}));$('.igp-go').disabled=false;
+      if(r.ok)return st(`<b>Sent!</b> Check ${esc(to0)}. The ${vid?'video':'picture'} is attached, with the caption and hashtags.`);return st('<p class="igp-w">Could not send: '+esc(d.error||'error')+'</p>')}}catch(e){$('.igp-go').disabled=false}}
    const a=document.createElement('a');a.href=url;a.download=name;a.click();await copy();
    const to=$('.igp-em').value.trim();window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`,'_blank');
    st(`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
