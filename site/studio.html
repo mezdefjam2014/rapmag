@@ -149,9 +149,9 @@ af.onchange=()=>{const f=stuFresh(af);if(!f)return;ART=URL.createObjectURL(f);dr
 draw();
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news';document.getElementById('t-car').hidden=b.dataset.tab!=='car';if(location.hash.slice(1)!==b.dataset.tab)history.replaceState(null,'','#'+b.dataset.tab)});
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news';document.getElementById('t-car').hidden=b.dataset.tab!=='car';if(location.hash.slice(1)!==b.dataset.tab)history.replaceState(null,'','#'+b.dataset.tab);try{localStorage.setItem('stu_tab',b.dataset.tab)}catch(e){}});
 /* every tab has its own link: studio.html#drop, #news, #car */
-const openTab=()=>{const t=location.hash.slice(1),b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
+const openTab=()=>{let t=location.hash.slice(1);if(!t)try{t=localStorage.getItem('stu_tab')||''}catch(e){}const b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
 /* ---------- NEWS: 20 full-screen designs, Story 9:16 or Post 4:5 ---------- */
 let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
 const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
