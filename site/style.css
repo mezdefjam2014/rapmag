@@ -361,3 +361,12 @@ body.has-np{padding-bottom:80px}
 .nmore.open .mdd{display:block}
 .nmore .mdd a{display:block;padding:13px 20px;border:0}.nmore .mdd a:hover{background:#111}.nmore .mdd a.on{color:#ff8a90}
 @media(max-width:760px){.nmore .mbt{display:none}.nmore .mdd{display:block;position:static;transform:none;min-width:0;background:none;border:0;padding:0;box-shadow:none}.nmore .mdd a{padding:14px 0;border-bottom:1px solid #1c1c1c}.nmore .mdd a:hover{background:none}}
+
+/* share-a-page box (magazine) */
+.mgz-sh.pg{background:var(--red);color:#fff;border-color:var(--red);margin-right:8px}
+.psh{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:grid;place-items:center;padding:16px}
+.psh-pn{background:#111;color:#fff;width:min(420px,100%);max-height:96vh;overflow:auto;padding:20px;position:relative;text-align:center}
+.psh-pn h3{font:400 28px Anton,sans-serif;margin:0 0 12px;letter-spacing:.04em}.psh-x{position:absolute;right:10px;top:6px;background:none;border:0;color:#fff;font-size:32px;cursor:pointer}
+.psh-prev{margin-bottom:12px}.psh-row{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:10px}
+.psh-row button{flex:1;background:#222;color:#fff;border:1px solid #333;font:800 12px Inter,sans-serif;letter-spacing:.14em;padding:13px 8px;cursor:pointer}.psh-row button.on{border-color:var(--red);color:#ff8a90}.psh-row button.r{background:var(--red);border-color:var(--red)}
+.psh-row [data-d]{flex:0 0 50px;font-size:20px}.psh-n{flex:1;font:800 12px Inter,sans-serif;letter-spacing:.14em}.psh-note{font:13px Inter,sans-serif;color:#bbb;min-height:18px;margin:10px 0 0}

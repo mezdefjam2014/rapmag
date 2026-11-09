@@ -52,8 +52,25 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
 
 /* ---------- Indie Charts: top 20 ranked by plays; a play counts after 10 seconds of listening ---------- */
 /* digital magazine: newest issue on top, archive of past covers underneath; ?c=magazine&m=slug opens the flip-book */
+/* share one magazine page as a picture for Instagram (post 4:5 or story 9:16) */
+async function pageShare(d,start){const pages=d.doc.pages;let at=start||0,sz='post';
+ const m=document.createElement('div');m.className='psh';m.innerHTML=`<div class="psh-pn"><button class="psh-x" aria-label="Close">×</button><h3>SHARE THIS PAGE</h3><div class="psh-prev"></div><div class="psh-row"><button data-d="-1">‹</button><span class="psh-n"></span><button data-d="1">›</button></div><div class="psh-row"><button data-s="post" class="on">POST 4:5</button><button data-s="story">STORY 9:16</button></div><div class="psh-row"><button class="psh-go r">SHARE</button><button class="psh-sv">SAVE IMAGE</button></div><p class="psh-note"></p></div>`;document.body.appendChild(m);
+ const card=(w)=>{const W=1080,H=sz==='post'?1350:1920,k=sz==='post'?1220/MAG.H:1000/MAG.W,pw=Math.round(MAG.W*k),ph=Math.round(MAG.H*k);
+  return `<div style="width:${W}px;height:${H}px;background:#000;position:relative;overflow:hidden;font-family:Inter,sans-serif">${sz==='story'?`<img src="logo-mag.webp" style="position:absolute;left:50%;top:120px;width:560px;margin-left:-280px">`:''}<div style="position:absolute;left:${(W-pw)/2}px;top:${sz==='post'?40:(H-ph)/2}px;width:${pw}px;height:${ph}px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)"><div style="transform:scale(${k});transform-origin:0 0;width:${MAG.W}px;height:${MAG.H}px">${MAG.render(pages[at],d.doc)}</div></div><div style="position:absolute;left:0;right:0;bottom:${sz==='post'?24:110}px;text-align:center;color:#fff;font:800 ${sz==='post'?26:36}px Inter,sans-serif;letter-spacing:.2em">READ IT AT RAPAECHELON.COM</div></div>`};
+ const prev=()=>{m.querySelector('.psh-n').textContent=(at===0?'COVER':'PAGE '+(at+1))+' / '+pages.length;const W=1080,H=sz==='post'?1350:1920,s=Math.min(300/W,420/H);m.querySelector('.psh-prev').innerHTML=`<div style="width:${W*s}px;height:${H*s}px;overflow:hidden;margin:0 auto"><div style="transform:scale(${s});transform-origin:0 0">${card()}</div></div>`};
+ const lib=()=>window.htmlToImage?Promise.resolve():new Promise((ok,no)=>{const x=document.createElement('script');x.src='https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';x.onload=ok;x.onerror=no;document.head.appendChild(x)});
+ const note=t=>m.querySelector('.psh-note').textContent=t;
+ const make=async()=>{note('Making the picture…');await lib();const off=document.createElement('div');off.style.cssText='position:fixed;left:-99999px;top:0';off.innerHTML=card();document.body.appendChild(off);await Promise.all([...off.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));await document.fonts.ready;
+  try{const b=await htmlToImage.toBlob(off.firstElementChild,{pixelRatio:1,cacheBust:false});return new File([b],`rapmag-${d.slug||'issue'}-page-${at+1}-${sz}.png`,{type:'image/png'})}finally{off.remove()}};
+ m.onclick=async e=>{const b=e.target.closest('button');if(e.target===m||(b&&b.classList.contains('psh-x')))return m.remove();if(!b)return;
+  if(b.dataset.d){at=(at+ +b.dataset.d+pages.length)%pages.length;prev()}
+  else if(b.dataset.s){sz=b.dataset.s;m.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b));prev()}
+  else if(b.classList.contains('psh-go')||b.classList.contains('psh-sv')){try{const f=await make();const link=location.href;
+   if(b.classList.contains('psh-go')&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:d.title,text:'Read '+d.title+' on RAPMAG: '+link}).catch(()=>{});note('')}
+   else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();note('Saved. Post it on Instagram, and put the link in your bio or story.')}}catch(er){note('Could not make the picture. Try again.')}}};
+ prev()}
 async function magazine(){const main=$('#main'),slug=qs.get('m');
- const lib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=9';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+ const lib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=11';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
  const href=m=>'index.html?c=magazine&m='+encodeURIComponent(m.slug);
  main.innerHTML=`<div class="wrap shell mgz"><div class="empty">Loading the magazine…</div></div>`;
  let list;try{[list]=await Promise.all([get('/api/mags'),lib()])}catch(e){main.querySelector('.mgz').innerHTML='<div class="empty">The magazine is coming soon.</div>';return}
@@ -62,9 +79,9 @@ async function magazine(){const main=$('#main'),slug=qs.get('m');
  const covers=()=>box.querySelectorAll('[data-cv]').forEach(el=>{const m=mags.find(x=>x.slug===el.dataset.cv);if(m&&m.cover)el.innerHTML=MAG.mini(m.cover,{logo:m.logo},el.clientWidth||220)});
  if(slug){let d;try{d=(await get('/api/mags/'+encodeURIComponent(slug))).mag}catch(e){box.innerHTML='<div class="empty">That issue was not found. <a href="index.html?c=magazine">See all issues</a></div>';return}
   setMeta(d.title+(d.label?' · '+d.label:'')+' | RAPMAG Magazine','Read '+d.title+' from RAPMAG, the RapAechelon digital magazine. Flip through every page online.');
-  box.innerHTML=`<div class="mgz-top"><a href="index.html?c=magazine" class="mgz-back">‹ ALL ISSUES</a><div><h1>${esc(d.title)}</h1><small>${esc(d.label||'')}</small></div><button class="mgz-sh">SHARE</button></div><div class="mgz-book"></div>${arch(slug)}`;
-  MAG.book(box.querySelector('.mgz-book'),d.doc,{maxH:window.innerHeight-150});covers();
-  box.querySelector('.mgz-sh').onclick=async()=>{const u=location.href;try{if(navigator.share)await navigator.share({title:d.title,text:'Read '+d.title+' on RAPMAG',url:u});else{await navigator.clipboard.writeText(u);box.querySelector('.mgz-sh').textContent='LINK COPIED'}}catch(e){}};return}
+  box.innerHTML=`<div class="mgz-top"><a href="index.html?c=magazine" class="mgz-back">‹ ALL ISSUES</a><div><h1>${esc(d.title)}</h1><small>${esc(d.label||'')}</small></div><button class="mgz-sh pg">SHARE THIS PAGE</button><button class="mgz-sh">SHARE</button></div><div class="mgz-book"></div>${arch(slug)}`;
+  let cur=0;MAG.book(box.querySelector('.mgz-book'),d.doc,{maxH:window.innerHeight-150,onPage:i=>{cur=Math.max(0,Math.min(d.doc.pages.length-1,i))}});covers();box.querySelector('.mgz-sh.pg').onclick=()=>pageShare(d,cur);
+  box.querySelector('.mgz-sh:not(.pg)').onclick=async()=>{const u=location.href;try{if(navigator.share)await navigator.share({title:d.title,text:'Read '+d.title+' on RAPMAG',url:u});else{await navigator.clipboard.writeText(u);box.querySelector('.mgz-sh:not(.pg)').textContent='LINK COPIED'}}catch(e){}};return}
  setMeta('RAPMAG Magazine: The Digital Issues | RAPAECHELON','Flip through RAPMAG, the RapAechelon digital hip-hop magazine. Read the latest issue and every past issue online.');
  if(!mags.length){box.innerHTML='<header class="nmf"><span>RAPAECHELON</span><h1>RAPMAG Magazine</h1><p>The first digital issue is on the way.</p></header>';return}
  const n=mags[0];box.innerHTML=`<header class="nmf"><span>THE DIGITAL MAGAZINE</span><h1>RAPMAG Magazine</h1><p>Flip through every page, right here.</p></header>
