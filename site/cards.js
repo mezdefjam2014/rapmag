@@ -31,7 +31,7 @@ const CSS=`.shc .c{position:relative;overflow:hidden;font-family:Inter}
 .shc .B .mv{color:#7ee08a}
 .shc /* ===== C: MAGAZINE (off-white paper,.shc big type,.shc red bar,.shc like the site) ===== */
 .C{background:#f7f6f3;color:#0c0c0e}
-.shc .C .bar{position:absolute;left:0;right:0;top:0;background:#e0242f;color:#fff;font:900 24px Inter;letter-spacing:.35em;display:flex;align-items:center;justify-content:center}
+.shc .C .cbar{position:absolute;left:0;right:0;top:0;background:#e0242f;color:#fff;font:900 24px Inter;letter-spacing:.35em;display:flex;align-items:center;justify-content:center}
 .shc .C .cov{position:absolute;background:#0c0c0e;overflow:hidden}
 .shc .C .cov img{width:100%;height:100%;object-fit:cover}
 .shc .C .rk{font-family:Anton;color:#0c0c0e;line-height:.8}
@@ -65,49 +65,50 @@ A:{
 story:s=>`<div class="c A grain" style="width:1080px;height:1920px">
  <div class="glow" style="width:1500px;height:1500px;right:-700px;top:-200px"></div>
  <img class="rec" src="${s.cover}" style="width:1250px;height:1250px;right:-560px;top:120px">
- <div style="position:absolute;left:80px;top:90px">${L}</div>
- <div class="wk" style="position:absolute;left:80px;top:210px">INDIE CHARTS · ${s.week}</div>
- <div class="rk" style="position:absolute;left:58px;top:330px;font-size:620px">#${s.rank}</div>
+ <div style="position:absolute;left:80px;top:80px;font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:118px"><div><img src="logo.webp" style="height:150px;width:auto;display:inline-block;vertical-align:middle;margin-bottom:14px"></div><div style="color:#e0242f">INDIE CHARTS</div></div>
+ <div class="wk" style="position:absolute;left:80px;top:370px">${s.week}</div>
+ <div class="rk" style="position:absolute;left:58px;top:440px;font-size:520px">#${s.rank}</div>
  <div style="position:absolute;left:80px;right:80px;top:1010px">
   <span class="mv">${s.move}</span> ${s.rank==1?`<span class="mv" style="background:#fff;color:#0a0a0b">${TRO} #1 THIS WEEK</span>`:``}
   <div class="t" style="font-size:${fit(150,s.title)}px;margin-top:40px">${s.title}</div>
   <div class="ar" style="font-size:46px;margin-top:26px">${s.artist}</div>
   <div class="st" style="margin-top:70px"><div><small>PLAYS</small>${s.plays}</div><div><small>LIKES</small>${H} ${s.likes}</div><div><small>LAST WEEK</small>${s.lastTxt}</div></div>
  </div>
- <div class="foot" style="height:150px;padding:0 80px"><span class="url">RAPAECHELON.COM/CHARTS</span><span class="url" style="color:#e0242f">LISTEN NOW →</span></div></div>`,
+ <div class="foot" style="height:150px;padding:0 80px"><span class="url">RAPAECHELON.COM</span><span class="url" style="color:#e0242f">LISTEN NOW →</span></div></div>`,
 post:s=>`<div class="c A grain" style="width:1080px;height:1080px">
  <div class="glow" style="width:1100px;height:1100px;right:-500px;top:-300px"></div>
  <img class="rec" src="${s.cover}" style="width:820px;height:820px;right:-330px;top:20px">
- <div style="position:absolute;left:70px;top:60px">${L}</div>
- <div class="rk" style="position:absolute;left:52px;top:170px;font-size:400px">#${s.rank}</div>
+ <div style="position:absolute;left:70px;top:52px;font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:76px"><div><img src="logo.webp" style="height:96px;width:auto;display:inline-block;vertical-align:middle;margin-bottom:8px"></div><div style="color:#e0242f">INDIE CHARTS</div></div>
+ <div class="rk" style="position:absolute;left:52px;top:250px;font-size:310px">#${s.rank}</div>
  <div style="position:absolute;left:70px;right:300px;top:590px"><span class="mv" style="font-size:28px">${s.move}</span>
   <div class="t" style="font-size:${fit(96,s.title)}px;margin-top:22px">${s.title}</div>
   <div class="ar" style="font-size:34px;margin-top:16px">${s.artist} · ${H} ${s.likes}</div></div>
- <div class="foot" style="height:110px;padding:0 70px"><span class="url" style="font-size:20px">INDIE CHARTS · ${s.week}</span><span class="url" style="font-size:20px;color:#e0242f">RAPAECHELON.COM</span></div></div>`},
+ <div class="foot" style="height:110px;padding:0 70px"><span class="url" style="font-size:20px">${s.week}</span><span class="url" style="font-size:20px;color:#e0242f">RAPAECHELON.COM</span></div></div>`},
 B:{
 story:s=>`<div class="c B grain" style="width:1080px;height:1920px">
- <div style="position:absolute;left:0;right:0;top:100px">${L}</div>
- <div class="lbl" style="position:absolute;left:0;right:0;top:220px">INDIE CHARTS · ${s.week}</div>
- <div class="ring" style="width:980px;height:980px;top:330px"></div><div class="ring" style="width:1060px;height:1060px;top:290px;opacity:.5"></div>
- <img class="rec" src="${s.cover}" style="width:900px;height:900px;top:370px">
- <div class="rk" style="position:absolute;left:0;right:0;top:1150px;font-size:300px">№${s.rank}</div>
+ <div style="position:absolute;left:0;right:0;top:70px;font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:112px;color:#fff"><div><img src="logo.webp" style="height:140px;width:auto;display:inline-block;vertical-align:middle;margin-bottom:10px"></div><div class="rk" style="font-size:112px;line-height:.95">INDIE CHARTS</div></div>
+ <div class="lbl" style="position:absolute;left:0;right:0;top:330px">${s.week}</div>
+ <div class="ring" style="width:900px;height:900px;top:405px"></div><div class="ring" style="width:980px;height:980px;top:365px;opacity:.5"></div>
+ <img class="rec" src="${s.cover}" style="width:820px;height:820px;top:445px">
+ <div class="rk" style="position:absolute;left:0;right:0;top:1170px;font-size:280px">№${s.rank}</div>
  <div style="position:absolute;left:90px;right:90px;top:1440px"><div class="t" style="font-size:${fit(88,s.title)}px">${s.title}</div>
  <div class="ar" style="font-size:38px;margin-top:22px">${s.artist}</div></div>
  <div style="position:absolute;left:0;right:0;bottom:90px"><div class="line" style="width:600px;margin-bottom:34px"></div>
   <div class="st"><div><small>PLAYS</small>${s.plays}</div><div><small>LIKES</small>${H} ${s.likes}</div><div><small>MOVE</small><span class="mv">${s.move}</span></div></div></div>
  </div>`,
 post:s=>`<div class="c B grain" style="width:1080px;height:1080px">
- <div class="lbl" style="position:absolute;left:0;right:0;top:56px;font-size:22px">INDIE CHARTS · ${s.week}</div>
- <div class="ring" style="width:640px;height:640px;top:120px"></div>
- <img class="rec" src="${s.cover}" style="width:580px;height:580px;top:150px">
- <div class="rk" style="position:absolute;left:0;right:0;top:330px;font-size:230px;text-shadow:none;filter:drop-shadow(0 8px 20px #000)">№${s.rank}</div>
+ <div style="position:absolute;left:0;right:0;top:36px;font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:62px;color:#fff"><img src="logo.webp" style="height:70px;width:auto;display:inline-block;vertical-align:middle;margin-right:16px"><span class="rk" style="font-size:62px">INDIE CHARTS</span></div>
+ <div class="lbl" style="position:absolute;left:0;right:0;top:120px;font-size:18px">${s.week}</div>
+ <div class="ring" style="width:590px;height:590px;top:160px"></div>
+ <img class="rec" src="${s.cover}" style="width:530px;height:530px;top:190px">
+ <div class="rk" style="position:absolute;left:0;right:0;top:350px;font-size:230px;text-shadow:none;filter:drop-shadow(0 8px 20px #000)">№${s.rank}</div>
  <div style="position:absolute;left:70px;right:70px;top:760px"><div class="t" style="font-size:${fit(58,s.title)}px">${s.title}</div>
  <div class="ar" style="font-size:26px;margin-top:12px">${s.artist}</div></div>
  <div class="st" style="position:absolute;left:0;right:0;top:950px;font-size:30px"><div>${s.plays} PLAYS</div><div>${H} ${s.likes}</div><div class="mv">${s.move}</div></div></div>`},
 C:{
 story:s=>`<div class="c C grain" style="width:1080px;height:1920px">
- <div class="bar" style="height:110px">INDIE CHARTS · ${s.week}</div>
- <div class="cov" style="left:80px;right:80px;top:200px;height:920px"><img src="${s.cover}" style="object-fit:contain;padding:60px;background:#0c0c0e"></div>
+ <div class="cbar" style="height:230px;flex-direction:column;letter-spacing:0"><div style="font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:110px;display:flex;align-items:center;gap:26px"><img src="logo.webp" style="height:120px;width:auto;display:inline-block;vertical-align:middle;">INDIE CHARTS</div><div style="font:900 24px Inter;letter-spacing:.35em;margin-top:14px">${s.week}</div></div>
+ <div class="cov" style="left:80px;right:80px;top:290px;height:830px"><img src="${s.cover}" style="object-fit:contain;padding:60px;background:#0c0c0e"></div>
  <div class="rk" style="position:absolute;right:80px;top:1060px;font-size:300px;background:#f7f6f3;padding:20px 30px 0"><sup>NO.</sup>${s.rank}</div>
  <div style="position:absolute;left:80px;right:80px;top:1250px">
   <div class="ar" style="font-size:38px">${s.artist}${s.rank==1?` · ${TRO} #1 THIS WEEK`:``}</div>
@@ -115,9 +116,9 @@ story:s=>`<div class="c C grain" style="width:1080px;height:1920px">
   <div class="st" style="margin-top:44px"><div><small>PLAYS</small>${s.plays}</div><div><small>LIKES</small>${H} ${s.likes}</div><div><small>MOVE</small><span class="mv">${s.move}</span></div></div></div>
  <div class="foot" style="height:140px;padding:0 80px">${L.replace('70px','60px')}<span style="font:900 24px Inter;letter-spacing:.3em">LISTEN → RAPAECHELON.COM</span></div></div>`,
 post:s=>`<div class="c C grain" style="width:1080px;height:1080px">
- <div class="bar" style="height:84px;font-size:20px">INDIE CHARTS · ${s.week}</div>
- <div class="cov" style="left:60px;top:144px;width:470px;height:470px"><img src="${s.cover}" style="object-fit:contain;padding:30px"></div>
- <div class="rk" style="position:absolute;left:580px;top:150px;font-size:400px"><sup>NO.</sup>${s.rank}</div>
+ <div class="cbar" style="height:140px;flex-direction:column;letter-spacing:0"><div style="font-family:Anton;line-height:.92;letter-spacing:.01em;text-transform:uppercase;font-size:74px;display:flex;align-items:center;gap:18px"><img src="logo.webp" style="height:80px;width:auto;display:inline-block;vertical-align:middle;">INDIE CHARTS</div><div style="font:900 17px Inter;letter-spacing:.35em;margin-top:8px">${s.week}</div></div>
+ <div class="cov" style="left:60px;top:180px;width:440px;height:440px"><img src="${s.cover}" style="object-fit:contain;padding:30px"></div>
+ <div class="rk" style="position:absolute;left:560px;top:190px;font-size:380px"><sup>NO.</sup>${s.rank}</div>
  <div style="position:absolute;left:60px;right:60px;top:650px">
   <div class="ar" style="font-size:30px">${s.artist}</div>
   <div class="t" style="font-size:${fit(88,s.title)}px;margin-top:8px">${s.title}</div></div>
