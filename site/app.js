@@ -50,10 +50,15 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
 /* ---------- Rap Picks: Apple's Hip-Hop/Rap chart + the editor's picks, 30-second previews play with no video ---------- */
+/* Rap Picks straight from Apple in the browser (used when the RAPMAG server has no Rap Picks yet): rap #1, R&B #1, rap #2… */
+async function appleDirect(){const feeds=await Promise.all([18,15].map(g=>fetch(`https://itunes.apple.com/us/rss/topsongs/limit=50/genre=${g}/json`).then(r=>r.ok?r.json():{}).catch(()=>({})))),lists=feeds.map(d=>[].concat((d.feed||{}).entry||[])),seen=new Set(),items=[];
+ for(let i=0;i<50;i++)for(const l of lists){const e=l[i];if(!e)continue;const id=e.id.attributes['im:id'];if(seen.has(id))continue;seen.add(id);const L=[].concat(e.link||[]),im=[].concat(e['im:image']||[]).pop();
+  items.push({id:'a:'+id,title:e['im:name'].label,artist:e['im:artist'].label,cover:im?im.label.replace(/\/\d+x\d+bb\./,'/600x600bb.'):'',audio:(L.find(x=>(x.attributes.type||'').startsWith('audio'))||{attributes:{}}).attributes.href||'',link:(L.find(x=>x.attributes.rel==='alternate')||{attributes:{}}).attributes.href||''})}
+ if(!items.length)throw new Error('empty');return{items:items.slice(0,50)}}
 async function rapPicks(){const main=$('#main');
  setMeta('Rap Picks: Top Rap Songs Right Now | RAPAECHELON - RAPMAG','The top rap and R&B songs right now, picked and ranked by RAPMAG. Hit play to hear each one.');
  main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>UPDATED ALL THE TIME</span><h1>Rap Picks</h1><p>The hottest rap and R&B songs right now, ranked by RAPMAG. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div><p class="rp-src">Song previews courtesy of Apple Music.</p></div></div>`;
- let d;try{d=await get('/api/rap-picks')}catch(e){$('#rpb').innerHTML='<div class="empty">The chart could not load. Try again in a minute.</div>';return}
+ let d;try{d=await get('/api/rap-picks')}catch(e){try{d=await appleDirect()}catch(e2){$('#rpb').innerHTML='<div class="empty">The chart could not load. Try again in a minute.</div>';return}}
  if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The chart is being updated. Check back soon.</div>';return}
  $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p>${it.link?`<a class="cr-am" href="${esc(it.link)}" target="_blank" rel="noopener">Listen on Apple Music</a>`:''}</div>${it.pick?'<span class="cr-m new">PICK</span>':''}${it.audio?`<a class="cr-a" href="${esc(img(it.audio))}">Audio</a>`:''}</div>`).join('');
  chart(main)}
