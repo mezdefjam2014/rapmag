@@ -15,7 +15,7 @@ const blob=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
 async function prep(f){if(!/^image\/(jpeg|png|webp)$/.test(f.type))return{main:f};const u=URL.createObjectURL(f),img=new Image();img.src=u;try{await img.decode()}catch(e){return{main:f}}finally{setTimeout(()=>URL.revokeObjectURL(u),5000)}
  let main=f;if(img.naturalWidth>2000||f.size>1.5e6){const b=await blob(canv(img,2000),'image/webp',.86);if(b&&b.size<f.size)main=new File([b],f.name.replace(/\.[^.]+$/,'')+'.webp',{type:'image/webp'})}
  const t=img.naturalWidth>800?await blob(canv(img,800),'image/webp',.82):null;return{main,thumb:t}}
-async function upload(f){if(!/^(image|audio)\//.test(f.type))throw new Error('Images or audio only');up('Uploading '+f.name+'…');
+async function upload(f){{const T={ogg:'audio/ogg',mp3:'audio/mpeg',m4a:'audio/mp4',wav:'audio/wav'},e=(f.name.match(/\.(\w+)$/)||[])[1];if(e&&T[e.toLowerCase()]&&!/^audio\//.test(f.type))f=new File([f],f.name,{type:T[e.toLowerCase()]})}if(!/^(image|audio)\//.test(f.type))throw new Error('Images or audio only');up('Uploading '+f.name+'…');
  try{const {main,thumb}=/^image\//.test(f.type)?await prep(f):{main:f},fd=new FormData();fd.append('file',main);const d=await api('/api/admin/upload',{method:'POST',body:fd});
   if(thumb){const t=new FormData();t.append('file',new File([thumb],'thumb.webp',{type:'image/webp'}));t.append('thumb_of',d.key);await api('/api/admin/upload',{method:'POST',body:t}).catch(()=>{})}return d}finally{up('')}}
 const pick=(acc,multi)=>new Promise(res=>{const i=document.createElement('input');i.type='file';i.accept=acc||'image/*';i.multiple=multi!==false;i.onchange=()=>res([...i.files]);i.click()});
@@ -28,9 +28,9 @@ const localDT=s=>{if(!s)return'';const d=new Date(s.replace(' ','T')+'Z'),z=n=>S
 const isFuture=s=>s&&new Date(s.replace(' ','T')+'Z')>new Date();
 
 /* ---------- shell ---------- */
-function shell(on,title,extra){app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['picks','RAP PICKS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
+function shell(on,title,extra){app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
  <div class="ah"><h1>${title}</h1>${extra||''}</div><div id="pg"></div>`;
- app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),picks,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
+ app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
 
 /* ---------- login ---------- */
 function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
@@ -224,35 +224,27 @@ function songForm(done){let aud='';const f=(id,l,ph)=>`<label>${l}</label><input
   const lab={new:'NEW',up:'▲',down:'▼',same:'—',re:'RE'}[mv];
   done(`<div class="chart-row">${v?`<img src="https://i.ytimg.com/vi/${v}/hqdefault.jpg" alt="${esc(t+' by '+a)}">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(t)}</h3><p>${esc(a)}</p></div><span class="cr-m ${mv}">${lab}</span>${aud?`<a class="cr-a" href="${esc(img(aud))}">Audio</a>`:''}${v?`<a class="cr-y" href="https://www.youtube.com/watch?v=${v}" target="_blank" rel="noopener">YouTube</a>`:''}</div>`);m.remove()}}
 
-/* ---------- Rap Picks: Apple's rap chart fills itself in; YOUR ORDER sits on top (move, pin, hide, add your own) ---------- */
-async function picks(){const pg=shell('picks','RAP PICKS','<button class="b" id="rpr">REFRESH APPLE CHART</button><button class="b r" id="rps">SAVE</button>');pg.innerHTML='<div class="st">Loading…</div>';
- let d;const load=async fresh=>{d=await api('/api/admin/rap-picks'+(fresh?'?fresh=1':''));draw()};
- const item=id=>d.cfg.custom[id]||d.auto.find(x=>x.id===id);
- const row=(it,i,mine)=>`<div class="rp-row${d.cfg.hidden.includes(it.id)?' off':''}" data-id="${esc(it.id)}"><b class="rp-n">${i==null?'':i+1}</b>${it.cover?`<img src="${esc(img(it.cover))}">`:'<span class="rp-ni"></span>'}<div class="rp-t"><strong>${esc(it.title)}</strong><small>${esc(it.artist)} · ${it.id.startsWith('c:')?'YOUR UPLOAD':d.cfg.custom[it.id]?'ADDED BY YOU':'APPLE CHART'}${it.audio?'':' · NO AUDIO'}</small></div>
-  <div class="rp-b">${it.audio?`<button class="b" data-a="play" title="Listen">▶</button>`:''}${mine?`<button class="b" data-a="top" title="Move to #1">TOP</button><button class="b" data-a="up" title="Move up">▲</button><button class="b" data-a="down" title="Move down">▼</button><button class="b" data-a="unpin" title="Back to the Apple order">${d.cfg.custom[it.id]?'REMOVE':'UNPIN'}</button>`:d.cfg.hidden.includes(it.id)?`<button class="b" data-a="show">SHOW</button>`:`<button class="b" data-a="pin" title="Put it in your order on top">PIN</button><button class="b" data-a="hide">HIDE</button>`}</div></div>`;
- const draw=()=>{const C=d.cfg,mine=C.order.map(item).filter(Boolean),rest=d.auto.filter(x=>!C.order.includes(x.id)),vis=rest.filter(x=>!C.hidden.includes(x.id)),hid=rest.filter(x=>C.hidden.includes(x.id));
-  pg.innerHTML=`<div class="st" style="margin-top:0">The site shows YOUR ORDER first, then Apple Music's most-played rap and R&B songs (updates by itself every hour${d.updated?', last fetched '+new Date(d.updated).toLocaleString():''}). Click SAVE when you are done.</div>
-  <div class="rp-add"><input type="text" id="rpl" placeholder="Paste an Apple Music song link to add it"><button class="b" id="rpla">ADD LINK</button><button class="b" id="rpu">+ UPLOAD MP3</button></div><div class="st" id="rpm"></div>
-  <h2 class="rp-h">YOUR ORDER <small>${mine.length?'':'empty: PIN a song below or add one'}</small></h2>${mine.map((it,i)=>row(it,i,1)).join('')}
-  <h2 class="rp-h">APPLE CHART <small>after your order</small></h2>${vis.map((it,i)=>row(it,mine.length+i,0)).join('')||'<div class="st">Apple charts not loaded yet. Try REFRESH APPLE CHART.</div>'}
-  ${hid.length?`<h2 class="rp-h">HIDDEN</h2>${hid.map(it=>row(it,null,0)).join('')}`:''}`;
-  $('#rpla').onclick=async()=>{$('#rpm').textContent='Looking it up…';try{const r=await api('/api/admin/rap-picks/lookup',{method:'POST',body:JSON.stringify({url:$('#rpl').value.trim()})});C.custom[r.item.id]=r.item;C.order=C.order.filter(x=>x!==r.item.id);C.order.unshift(r.item.id);C.hidden=C.hidden.filter(x=>x!==r.item.id);draw();$('#rpm').textContent='Added at #1. Click SAVE to keep it.'}catch(e){$('#rpm').textContent=e.message}};
-  $('#rpu').onclick=()=>uploadPick(it=>{C.custom[it.id]=it;C.order.unshift(it.id);draw();$('#rpm').textContent='Added at #1. Click SAVE to keep it.'})};
- pg.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const id=b.closest('.rp-row').dataset.id,C=d.cfg,o=C.order,i=o.indexOf(id),a=b.dataset.a;
-  if(a==='play'){const it=item(id);let au=$('#rpa');if(!au){au=new Audio();au.id='rpa';document.body.appendChild(au)}if(au.dataset.id===id&&!au.paused){au.pause();return}au.dataset.id=id;au.src=img(it.audio);au.play();return}
-  if(a==='top'){o.splice(i,1);o.unshift(id)}else if(a==='up'&&i>0){o.splice(i,1);o.splice(i-1,0,id)}else if(a==='down'&&i<o.length-1){o.splice(i,1);o.splice(i+1,0,id)}
-  else if(a==='unpin'){o.splice(i,1);if(C.custom[id]&&!d.auto.find(x=>x.id===id))delete C.custom[id];else delete C.custom[id]}
-  else if(a==='pin')o.push(id);else if(a==='hide')C.hidden.push(id);else if(a==='show')C.hidden=C.hidden.filter(x=>x!==id);draw()};
- $('#rps').onclick=async()=>{try{await api('/api/admin/rap-picks',{method:'POST',body:JSON.stringify(d.cfg)});ms('Rap Picks saved. The site shows it within 2 minutes.')}catch(e){ms(e.message)}};
- $('#rpr').onclick=()=>load(1).then(()=>ms('Apple chart refreshed.'),e=>ms(e.message));
- try{await load()}catch(e){pg.innerHTML=`<div class="st">${esc(e.message)}</div>`}}
-function uploadPick(done){let aud='',cov='';const f=(id,l,ph)=>`<label>${l}</label><input type="text" id="${id}" placeholder="${ph}">`;
- const m=modal(`<h1 style="font-size:30px">UPLOAD A SONG</h1>`,`<div style="min-width:min(480px,80vw)">${f('ut','Song title','e.g. Pushin P')}${f('ua','Artist','e.g. Gunna')}
- <div style="display:flex;gap:8px;margin-top:14px"><button class="b" id="uau">UPLOAD MP3</button><button class="b" id="ucv">UPLOAD COVER</button></div><div class="st" id="ums">Only upload songs you have the rights to post (artist or label promo copies).</div><button class="b r" id="uok" style="margin-top:10px">ADD</button></div>`);
- const q=s=>m.querySelector(s);
- q('#uau').onclick=async()=>{const [fl]=await pick('audio/*',false);if(fl)try{aud=(await upload(fl)).url;q('#ums').textContent='Audio added: '+fl.name}catch(e){q('#ums').textContent=e.message}};
- q('#ucv').onclick=async()=>{const [fl]=await pick('image/*',false);if(fl)try{cov=(await upload(fl)).url;q('#ums').textContent='Cover added.'}catch(e){q('#ums').textContent=e.message}};
- q('#uok').onclick=()=>{const t=q('#ut').value.trim(),a=q('#ua').value.trim();if(!t||!a||!aud){q('#ums').textContent='Add the title, the artist and the MP3.';return}
-  done({id:'c:'+Date.now().toString(36),title:t,artist:a,cover:cov,audio:aud,link:''});m.remove()}}
+/* ---------- Indie Charts: your songs, ranked by plays + the plays you add; lock a song to a spot; removing a song erases its files ---------- */
+async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" id="icadd">+ ADD SONGS</button><button class="b" id="icrst">NEW WEEK</button><button class="b r" id="icsv">SAVE</button>');pg.innerHTML='<div class="st">Loading…</div>';
+ let d,dirty=0;const load=async()=>{d=await api('/api/admin/indie');d.songs=d.items.map(x=>({...x}));dirty=0;draw()};
+ const fromName=n=>{const b=n.replace(/\.[^.]+$/,'').replace(/^\d+\s*-\s*/,''),i=b.lastIndexOf(' - ');return i>0?{title:b.slice(0,i).trim(),artist:b.slice(i+3).trim()}:{title:b.trim(),artist:''}};
+ const draw=()=>{const S=d.songs,opt=v=>'<option value="0">AUTO</option>'+Array.from({length:20},(_,i)=>`<option value="${i+1}"${+v===i+1?' selected':''}>LOCK #${i+1}</option>`).join('');
+  pg.innerHTML=`<div class="st" style="margin-top:0">Songs rank by <b>plays</b> (one per visitor per song per day, after 10 seconds of listening) <b>+ the plays you add</b>. LOCK puts a song at a spot no matter the plays. The top 20 show on the site. REMOVE takes a song off and erases its files from storage when you SAVE. NEW WEEK starts the plays over and saves this week's ranks for the ▲▼ arrows.${dirty?' <b style="color:var(--red)">Unsaved changes. Click SAVE.</b>':''}</div><div class="st" id="icm"></div>
+  ${S.length?S.map((x,i)=>`<div class="rp-row ic-row${i>=20?' off':''}" data-i="${i}"><b class="rp-n">${x.rank||'–'}</b>${x.cover?`<img src="${esc(img(x.cover))}" data-a="cover" title="Change cover">`:'<span class="rp-ni" data-a="cover" title="Add cover" style="cursor:pointer;color:#fff;display:grid;place-items:center;font:700 10px Inter">+ COVER</span>'}
+   <div class="rp-t"><input type="text" data-f="title" value="${esc(x.title)}" placeholder="Title"><input type="text" data-f="artist" value="${esc(x.artist)}" placeholder="Artist"><small>REAL PLAYS ${x.real||0} · TOTAL ${(x.real||0)+(+x.bonus||0)}</small></div>
+   <div class="rp-b"><label class="ic-l">ADDED PLAYS<input type="number" min="0" data-f="bonus" value="${+x.bonus||0}"></label><select data-f="lock">${opt(x.lock)}</select><button class="b" data-a="play" title="Listen">▶</button><button class="b" data-a="del">REMOVE</button></div></div>`).join(''):'<div class="st">No songs yet. Click + ADD SONGS and pick your audio files (you can pick 20 at once).</div>'}`;
+ };
+ pg.oninput=e=>{const f=e.target.dataset.f,r=e.target.closest('.ic-row');if(!f||!r)return;const x=d.songs[+r.dataset.i];x[f]=f==='bonus'||f==='lock'?Math.max(0,+e.target.value||0):e.target.value;if(!dirty){dirty=1;const m=pg.querySelector('.st');if(m)m.insertAdjacentHTML('beforeend',' <b style="color:var(--red)">Unsaved changes. Click SAVE.</b>')}};
+ pg.onchange=e=>{if(e.target.dataset.f==='lock')draw()};
+ pg.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=+b.closest('.ic-row').dataset.i,x=d.songs[i],a=b.dataset.a;
+  if(a==='play'){let au=$('#ica');if(!au){au=new Audio();au.id='ica';document.body.appendChild(au)}if(au.dataset.i==i&&!au.paused){au.pause();return}au.dataset.i=i;au.src=img(x.audio);au.play();return}
+  if(a==='del'){if(!confirm('Remove "'+x.title+'"? Its audio and cover are erased from storage when you click SAVE.'))return;d.songs.splice(i,1);dirty=1;draw()}
+  if(a==='cover'){const [fl]=await pick('image/*',false);if(!fl)return;try{x.cover=(await upload(fl)).url;dirty=1;draw()}catch(er){ms(er.message)}}};
+ $('#icadd').onclick=async()=>{const fs=await pick('audio/*',true);if(!fs||!fs.length)return;let k=0;
+  for(const fl of fs){$('#icm').textContent=`Uploading ${++k} of ${fs.length}: ${fl.name}…`;try{const u=await upload(fl),t=fromName(fl.name);d.songs.push({id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...t,cover:'',audio:u.url,bonus:0,lock:0,real:0})}catch(er){ms(fl.name+': '+er.message)}}
+  dirty=1;draw();$('#icm').textContent=`Added ${k} song(s). Check the titles, then click SAVE.`};
+ $('#icsv').onclick=async()=>{try{await api('/api/admin/indie',{method:'POST',body:JSON.stringify({songs:d.songs})});await load();ms('Indie Charts saved. It shows on the site right away.')}catch(er){ms(er.message)}};
+ $('#icrst').onclick=async()=>{if(dirty){ms('Click SAVE first.');return}if(!confirm('Start a new week? All plays and added plays go back to 0, and this week\'s ranks are kept for the ▲▼ arrows.'))return;try{await api('/api/admin/indie/reset',{method:'POST',body:'{}'});await load();ms('New week started.')}catch(er){ms(er.message)}};
+ try{await load()}catch(er){pg.innerHTML=`<div class="st">${esc(er.message)}</div>`}}
 
 })();

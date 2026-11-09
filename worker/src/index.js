@@ -1,5 +1,5 @@
 /* RAPAECHELON - RAPMAG API (Cloudflare Worker)
-   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending   GET /api/rap-picks
+   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending   GET /api/indie   POST /api/indie/play
             GET /api/settings   GET /api/build (everything the static page builder needs)   POST /api/view/:slug   GET /img/<key>
    Admin (Bearer token from /api/admin/login): posts, authors, categories, settings, media/audio upload, related-story search,
             social distribution (Facebook Page + X) with optional auto-posting when an article goes live (scheduled ones via the cron).
@@ -39,8 +39,16 @@ export default {
         sql += ' ORDER BY p.featured DESC, p.published_at DESC LIMIT ? OFFSET ?'; args.push(lim, off);
         return json({ posts: await all(sql, ...args) }, 200, { 'Cache-Control': 'public, max-age=60' });
       }
-      /* Rap Picks: Apple's Hip-Hop/Rap top songs (30-second previews) with the editor's own order on top */
-      if (p === '/api/rap-picks' && req.method === 'GET') return json(await rapPicks(env, ctx), 200, { 'Cache-Control': 'public, max-age=120' });
+      /* Indie Charts: top 20 ranked by plays (one per song per visitor per day) plus the editor's added plays */
+      if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'public, max-age=30' }) }
+      if (p === '/api/indie/play' && req.method === 'POST') {
+        const { id } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
+        if (!cfg.songs.some(x => x.id === id)) return json({ error: 'unknown song' }, 404);
+        await indieTable(env);
+        const who = (await sign((req.headers.get('CF-Connecting-IP') || '') + '|' + (req.headers.get('User-Agent') || ''), env)).slice(0, 22);
+        await DB.prepare('INSERT OR IGNORE INTO indie_plays (song,day,who) VALUES (?,?,?)').bind(id, new Date().toISOString().slice(0, 10), who).run();
+        return json({ ok: true });
+      }
       if (p === '/api/trending') return json({ posts: await all(`SELECT ${LIST} ${FROM} WHERE ${LIVE} AND p.category<>'page' AND p.published_at > datetime('now','-30 days') ORDER BY p.views DESC LIMIT 5`) }, 200, { 'Cache-Control': 'public, max-age=120' });
       if (p === '/api/settings') return json({ settings: await settings(env) }, 200, { 'Cache-Control': 'public, max-age=60' });
       if (p === '/api/cats') return json({ cats: await all(`SELECT slug,name FROM categories WHERE visible=1 ORDER BY sort,name`) }, 200, { 'Cache-Control': 'public, max-age=120' });
@@ -147,21 +155,22 @@ export default {
       }
       m = p.match(/^\/api\/admin\/categories\/([a-z0-9-]+)$/);
       if (m && req.method === 'DELETE') { const n = await one('SELECT COUNT(*) n FROM posts WHERE category=?', m[1]); if (n.n) return json({ error: 'This category still has ' + n.n + ' article(s). Move them first, or hide the category.' }, 409); await DB.prepare('DELETE FROM categories WHERE slug=?').bind(m[1]).run(); return json({ ok: true }) }
-      /* Rap Picks editor */
-      if (p === '/api/admin/rap-picks' && req.method === 'GET') { const auto = await appleChart(env, ctx, url.searchParams.get('fresh') === '1'); return json({ auto: auto.items, updated: auto.at, cfg: await rpCfg(env) }) }
-      if (p === '/api/admin/rap-picks' && req.method === 'POST') {
-        const ids = a => Array.isArray(a) ? a.map(String).filter(x => /^[ac]:[\w-]{1,40}$/.test(x)).slice(0, 100) : [];
-        const custom = {}; for (const [k, v] of Object.entries(body.custom || {}).slice(0, 100)) if (/^[ac]:[\w-]{1,40}$/.test(k) && v) custom[k] = rpItem(v, k);
-        const cfg = { order: ids(body.order), hidden: ids(body.hidden), custom };
-        await DB.prepare("INSERT INTO settings (k,v) VALUES ('rap_picks',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(cfg)).run();
+      /* Indie Charts editor: songs, added plays, locked spots, reset */
+      if (p === '/api/admin/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items, cfg: c.cfg }) }
+      if (p === '/api/admin/indie' && req.method === 'POST') {
+        const old = await indieCfg(env), songs = (Array.isArray(body.songs) ? body.songs : []).slice(0, 200).map(indieSong).filter(x => x.id && x.audio);
+        await saveIndie(env, { ...old, songs });
+        /* songs taken off: erase their audio and cover from storage (unless another song still uses the file) */
+        const used = new Set(songs.flatMap(x => [x.audio, x.cover]));
+        for (const x of old.songs.filter(o => !songs.some(n => n.id === o.id))) for (const u of [x.audio, x.cover]) if (u && !used.has(u) && /^\/img\/(audio|images)\//.test(u)) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') }
+        const keep = songs.map(x => x.id); await indieTable(env);
+        if (keep.length) await DB.prepare(`DELETE FROM indie_plays WHERE song NOT IN (${keep.map(() => '?').join(',')})`).bind(...keep).run(); else await DB.prepare('DELETE FROM indie_plays').run();
         return json({ ok: true });
       }
-      if (p === '/api/admin/rap-picks/lookup' && req.method === 'POST') {
-        const u = String(body.url || ''), id = (u.match(/[?&]i=(\d+)/) || u.match(/\/song\/[^/]*\/(\d+)/) || u.match(/^(\d{5,})$/) || [])[1];
-        if (!id) return json({ error: 'Paste an Apple Music song link (it has ?i= or /song/ in it).' }, 400);
-        const r = await (await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id=' + id)).json(), t = (r.results || []).find(x => x.kind === 'song');
-        if (!t) return json({ error: 'Apple Music did not find that song.' }, 404);
-        return json({ item: rpItem({ title: t.trackName, artist: t.artistName, cover: (t.artworkUrl100 || '').replace('100x100bb', '600x600bb'), audio: t.previewUrl, link: t.trackViewUrl }, 'a:' + t.trackId) });
+      if (p === '/api/admin/indie/reset' && req.method === 'POST') {
+        const c = await indieChart(env); await indieTable(env); await DB.prepare('DELETE FROM indie_plays').run();
+        await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0 })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
+        return json({ ok: true });
       }
       /* settings */
       if (p === '/api/admin/settings' && req.method === 'POST') {
@@ -202,31 +211,24 @@ export default {
   }
 };
 
-/* ---------- Rap Picks ---------- */
-const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/audio\//.test(String(u || '')) || /^\/img\/images\//.test(String(u || '')) ? String(u) : '';
-function rpItem(v, id) { return { id, title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), link: httpsOnly(v.link) } }
-async function rpCfg(env) { const r = await env.DB.prepare("SELECT v FROM settings WHERE k='rap_picks'").first(); try { const c = JSON.parse(r && r.v || '{}'); return { order: c.order || [], hidden: c.hidden || [], custom: c.custom || {} } } catch (e) { return { order: [], hidden: [], custom: {} } } }
-/* Apple's chart is fetched at most once an hour and kept in settings, so a slow or failed fetch never breaks the page */
-async function appleChart(env, ctx, fresh) {
-  const row = await env.DB.prepare("SELECT v FROM settings WHERE k='rp_auto'").first(); let cache = null; try { cache = JSON.parse(row && row.v || 'null') } catch (e) { }
-  if (cache && !fresh && Date.now() - cache.at < 3600e3) return cache;
-  try {
-    /* Apple Music's most-played songs in the US, keeping only Hip-Hop/Rap and R&B/Soul; 30-second previews come from Apple's lookup */
-    const d = await (await fetch('https://rss.marketingtools.apple.com/api/v2/us/music/most-played/100/songs.json', { cf: { cacheTtl: 900 } })).json();
-    const keep = ((d.feed || {}).results || []).filter(x => (x.genres || []).some(g => /^(Hip-Hop\/Rap|R&B\/Soul|Rap)$/.test(g.name)));
-    const lk = keep.length ? await (await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id=' + keep.map(x => x.id).join(','))).json().catch(() => ({})) : {}, pv = Object.fromEntries((lk.results || []).filter(r => r.trackId).map(r => [String(r.trackId), r.previewUrl]));
-    const items = keep.map(x => rpItem({ title: x.name, artist: x.artistName, cover: (x.artworkUrl100 || '').replace(/\/\d+x\d+bb\./, '/600x600bb.'), audio: pv[x.id], link: x.url }, 'a:' + x.id));
-    if (!items.length) throw new Error('empty');
-    cache = { at: Date.now(), items };
-    await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('rp_auto',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(cache)).run();
-    return cache;
-  } catch (e) { return cache || { at: 0, items: [] } }
-}
-async function rapPicks(env, ctx) {
-  const [auto, cfg] = await Promise.all([appleChart(env, ctx), rpCfg(env)]), byId = Object.fromEntries(auto.items.map(i => [i.id, i])), hide = new Set(cfg.hidden), out = [], seen = new Set();
-  for (const id of cfg.order) { const it = cfg.custom[id] || byId[id]; if (it && !hide.has(id) && !seen.has(id)) { out.push({ ...it, pick: 1 }); seen.add(id) } }
-  for (const it of auto.items) if (!hide.has(it.id) && !seen.has(it.id)) { out.push(it); seen.add(it.id) }
-  return { items: out.slice(0, 50), updated: auto.at };
+/* ---------- Indie Charts ---------- */
+const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/(audio|images)\//.test(String(u || '')) ? String(u) : '';
+function indieSong(v) { return { id: /^[\w-]{1,40}$/.test(v.id) ? v.id : '', title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), bonus: Math.max(0, Math.min(1e9, Math.round(+v.bonus || 0))), lock: Math.max(0, Math.min(20, Math.round(+v.lock || 0))) } }
+async function indieTable(env) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_plays (song TEXT NOT NULL, day TEXT NOT NULL, who TEXT NOT NULL, PRIMARY KEY (song, day, who))').run() }
+async function indieCfg(env) { const r = await env.DB.prepare("SELECT v FROM settings WHERE k='indie'").first(); try { const c = JSON.parse(r && r.v || '{}'); return { songs: (c.songs || []).map(indieSong), prev: c.prev || {}, prevAt: c.prevAt || 0 } } catch (e) { return { songs: [], prev: {}, prevAt: 0 } } }
+async function saveIndie(env, c) { await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('indie',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(c)).run() }
+/* rank = plays + added plays, locked songs sit at their spot; movement compares with last week's ranks (snapshot every 7 days) */
+async function indieChart(env) {
+  await indieTable(env);
+  const cfg = await indieCfg(env), rows = (await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_plays GROUP BY song').all()).results, real = Object.fromEntries(rows.map(r => [r.song, r.n]));
+  const list = cfg.songs.map(x => ({ ...x, real: real[x.id] || 0, plays: (real[x.id] || 0) + x.bonus }));
+  const free = list.filter(x => !x.lock).sort((a, b) => b.plays - a.plays), out = [];
+  for (const x of list.filter(x => x.lock).sort((a, b) => a.lock - b.lock)) out[x.lock - 1] ? free.unshift(x) : (out[x.lock - 1] = x);
+  for (let i = 0; free.length; i++) if (!out[i]) out[i] = free.shift();
+  const items = out.filter(Boolean).map((x, i) => { const was = cfg.prev[x.id], rank = i + 1; return { ...x, rank, move: was == null ? 'new' : was > rank ? 'up' : was < rank ? 'down' : 'same', last: was || null } });
+  if (!cfg.prevAt && items.length) { cfg.prevAt = Date.now(); await saveIndie(env, cfg) }
+  else if (Date.now() - cfg.prevAt > 7 * 864e5 && items.length) { cfg.prev = Object.fromEntries(items.map(x => [x.id, x.rank])); cfg.prevAt = Date.now(); await saveIndie(env, cfg) }
+  return { items, cfg, prevAt: cfg.prevAt };
 }
 
 /* ---------- social ---------- */

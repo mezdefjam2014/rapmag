@@ -22,7 +22,7 @@ const pathSlug=k=>{const m=location.pathname.match(new RegExp('/'+k+'/([a-z0-9-]
 function chrome(){const cat=qs.get('c'),here=page==='home'&&!cat&&qs.get('q')==null;
  document.body.insertAdjacentHTML('afterbegin',`<div class="prog" id="prog"></div>
  <header class="mast"><div class="wrap"><a class="brand" href="./" aria-label="Rapaechelon home"><img src="${esc(SET.logo?img(SET.logo):'logo.webp')}" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a>
- <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}</nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
+ <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a><a href="index.html?c=indie-charts"${cat==='indie-charts'?' class="on"':''}>Indie Charts</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}</nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
  <div class="search" id="sr"><div class="wrap"><input id="si" placeholder="Search RAPMAG…" value="${esc(qs.get('q')||'')}"></div></div>`);
  const pl=s=>PRETTY?'page/'+s+'/':'page.html?s='+s;
  document.body.insertAdjacentHTML('beforeend',`<footer class="foot"><div class="wrap"><div><a class="brand sm" href="./"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a><p>${esc(SET.tagline||'Music, entertainment, culture and breaking stories.')}</p>
@@ -41,7 +41,7 @@ function ld(o){const s=document.createElement('script');s.type='application/ld+j
 function setMeta(t,d,im,type){document.title=t;let c=document.querySelector('link[rel=canonical]');if(!c){c=document.createElement('link');c.rel='canonical';document.head.appendChild(c)}c.href=location.href.split('#')[0];const m=(n,v,a)=>{if(!v)return;let el=document.querySelector(`meta[${a||'name'}="${n}"]`);if(!el){el=document.createElement('meta');el.setAttribute(a||'name',n);document.head.appendChild(el)}el.content=v};m('description',d);m('og:title',t,'property');m('og:description',d,'property');m('og:image',im||new URL('og.jpg',document.baseURI).href,'property');m('og:type',type||'website','property');m('og:url',location.href,'property');m('og:site_name','RAPAECHELON - RAPMAG','property');m('twitter:card','summary_large_image')}
 
 /* ---------- home / section / search ---------- */
-async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat==='rap-picks')return rapPicks();let off=0;const N=12;
+async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat==='indie-charts')return indie();let off=0;const N=12;
  const head=!cat&&q==null?'<h1 class="vh">RAPAECHELON - RAPMAG: Hip-Hop, Rap &amp; Entertainment News</h1>':cat&&/new-music/.test(cat)?`<header class="nmf"><span>EVERY FRIDAY</span><h1>${esc(CN[cat]||'New Music Friday')}</h1><p>The week's hottest rap and hip-hop drops, ranked. Hit play and run the whole chart.</p></header>`:cat?`<div class="sh"><h1>${esc(CN[cat]||cat)}</h1></div>`:`<div class="sh"><h1>${q?'Search: '+esc(q):'Search'}</h1></div>`;
  setMeta(cat?(CN[cat]||cat)+' News | RAPAECHELON - RAPMAG':q!=null?'Search | RAPAECHELON - RAPMAG':'RAPAECHELON - RAPMAG | Hip-Hop, Rap & Entertainment News',cat?'The latest '+String(CN[cat]||cat).toLowerCase()+' stories in hip-hop and rap from RAPAECHELON - RAPMAG.':'RAPAECHELON - RAPMAG: breaking hip-hop and rap news, new music and entertainment stories, updated daily.');
  main.innerHTML=`<div class="wrap shell">${!cat&&q==null?promo():''}${head}<section class="grid" id="g" aria-label="Published articles"></section><button class="more" id="mo" hidden>LOAD MORE STORIES</button></div>`;
@@ -49,14 +49,15 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
   const shown=!cat&&q==null?d.posts.filter(p=>!/new-music/.test(p.category)):d.posts;$('#g').insertAdjacentHTML('beforeend',shown.map((p,i)=>card(p,!cat&&q==null&&off===0&&i===0)).join(''));off+=d.posts.length;$('#mo').hidden=d.posts.length<N;
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
-/* ---------- Rap Picks: Apple's Hip-Hop/Rap chart + the editor's picks, 30-second previews play with no video ---------- */
-async function rapPicks(){const main=$('#main');
- setMeta('Rap Picks: Top Rap Songs Right Now | RAPAECHELON - RAPMAG','The top rap and R&B songs right now, picked and ranked by RAPMAG. Hit play to hear each one.');
- main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>UPDATED ALL THE TIME</span><h1>Rap Picks</h1><p>The most-played rap and R&B songs right now, ranked by RAPMAG. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div><p class="rp-src">Song previews courtesy of Apple Music.</p></div></div>`;
- let d;try{d=await get('/api/rap-picks')}catch(e){$('#rpb').innerHTML='<div class="empty">Rap Picks is coming soon.</div>';return}
- if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The chart is being updated. Check back soon.</div>';return}
- $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p>${it.link?`<a class="cr-am" href="${esc(it.link)}" target="_blank" rel="noopener">Listen on Apple Music</a>`:''}</div>${it.pick?'<span class="cr-m new">PICK</span>':''}${it.audio?`<a class="cr-a" href="${esc(img(it.audio))}">Audio</a>`:''}</div>`).join('');
- chart(main)}
+/* ---------- Indie Charts: top 20 ranked by plays; a play counts after 10 seconds of listening ---------- */
+async function indie(){const main=$('#main');
+ setMeta('Indie Charts: Top 20 Indie Rap & R&B Songs | RAPAECHELON - RAPMAG','The top 20 indie rap and R&B songs, ranked by plays on RAPMAG. Hit play to hear each one.');
+ main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>RANKED BY YOUR PLAYS</span><h1>Indie Charts</h1><p>The top 20 indie rap and R&amp;B songs, ranked by plays. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div></div></div>`;
+ let d;try{d=await get('/api/indie')}catch(e){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
+ if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
+ const MV={new:'NEW',up:'▲',down:'▼',same:'–'},n=v=>v>=1e6?(v/1e6).toFixed(1).replace(/\.0$/,'')+'M':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'K':String(v);
+ $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row" data-id="${esc(it.id)}">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p><small class="cr-pl">${n(it.plays)} plays${it.last?' · last week #'+it.last:''}</small></div><span class="cr-m ${it.move}">${MV[it.move]}</span><a class="cr-a" href="${esc(img(it.audio))}">Audio</a></div>`).join('');
+ const sent=new Set();chart(main,r=>{const id=r.dataset.id;if(!id||sent.has(id))return;sent.add(id);fetch(API+'/api/indie/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{})})}
 /* ---------- author page ---------- */
 async function author(){const main=$('#main'),s=qs.get('s')||pathSlug('author');let a;try{a=(await get('/api/authors/'+encodeURIComponent(s||''))).author}catch(e){main.innerHTML='<div class="wrap shell"><div class="empty">Author not found.</div></div>';return}
  setMeta(a.name+' | RAPAECHELON - RAPMAG',a.bio||a.role||a.name,img(a.photo),'profile');
@@ -81,7 +82,7 @@ async function article(){const main=$('#main'),isPage=document.body.dataset.page
 /* New Music Friday chart: PLAY on a row with an uploaded audio file plays just the sound (waveform under the button) and runs on down the chart;
    rows with only a YouTube link open the small docked YouTube player instead */
 const ytId=u=>{const m=String(u).match(/(?:youtu\.be\/|v=|shorts\/|embed\/|live\/)([\w-]{11})/);return m?m[1]:''};
-function chart(root){const rows=[...root.querySelectorAll('.chart-row')].map(r=>({r,au:(r.querySelector('.cr-a')||{}).href||'',yt:ytId((r.querySelector('.cr-y')||{}).href||'')})).filter(x=>x.au||x.yt);if(!rows.length)return;rows[0].r.classList.add('top');
+function chart(root,onListen){const rows=[...root.querySelectorAll('.chart-row')].map(r=>({r,au:(r.querySelector('.cr-a')||{}).href||'',yt:ytId((r.querySelector('.cr-y')||{}).href||'')})).filter(x=>x.au||x.yt);if(!rows.length)return;rows[0].r.classList.add('top');
  const A=new Audio();A.preload='none';let cur=-1;
  const mark=i=>rows.forEach((x,j)=>{x.r.classList.toggle('on',j===i);x.r.classList.toggle('playing',j===i&&!!x.au&&!A.paused);const s=x.r.querySelector('.cr-p span');if(s)s.textContent=j===i&&x.au&&!A.paused?'PAUSE':'PLAY'});
  const closeMp=()=>{const mp=$('#mp');if(mp)mp.remove()};
@@ -92,7 +93,7 @@ function chart(root){const rows=[...root.querySelectorAll('.chart-row')].map(r=>
  const play=i=>{const x=rows[i];if(!x.au)return yt(i);closeMp();
   if(cur===i&&A.src){A.paused?A.play():A.pause();return}
   cur=i;A.src=x.au;A.play().catch(()=>{});mark(i)};
- A.onplay=A.onpause=()=>mark(cur);
+ A.onplay=A.onpause=()=>mark(cur);if(onListen)A.ontimeupdate=()=>{if(cur>-1&&A.currentTime>=10)onListen(rows[cur].r)};
  A.onended=()=>{const n=rows.findIndex((x,j)=>j>cur&&x.au);if(n>-1)play(n);else{cur=-1;mark(-1)}};
  rows.forEach(({r},i)=>{if(r.querySelector('.cr-p'))return;const w=document.createElement('div');w.className='cr-pw';
   w.innerHTML='<button class="cr-p" aria-label="Play '+esc((r.querySelector('h3')||{}).textContent||'song')+'"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span></button><div class="cr-w" aria-hidden="true">'+'<i></i>'.repeat(14)+'</div>';
