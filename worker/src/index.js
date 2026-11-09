@@ -1,5 +1,5 @@
 /* RAPAECHELON - RAPMAG API (Cloudflare Worker)
-   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending   GET /api/indie   POST /api/indie/play
+   Public:  GET /api/posts?cat=&q=&author=&limit=&offset=   GET /api/posts/:slug   GET /api/cats   GET /api/authors/:slug   GET /api/trending   GET /api/indie   POST /api/indie/play   POST /api/indie/like   GET /api/indie/mine
             GET /api/settings   GET /api/build (everything the static page builder needs)   POST /api/view/:slug   GET /img/<key>
    Admin (Bearer token from /api/admin/login): posts, authors, categories, settings, media/audio upload, related-story search,
             social distribution (Facebook Page + X) with optional auto-posting when an article goes live (scheduled ones via the cron).
@@ -41,11 +41,20 @@ export default {
       }
       /* Indie Charts: top 20 ranked by plays (one per song per visitor per day) plus the editor's added plays */
       if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'public, max-age=30' }) }
+      /* likes: one per visitor per song, tap again to take it back */
+      if (p === '/api/indie/like' && req.method === 'POST') {
+        const { id, on } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
+        if (!cfg.songs.some(x => x.id === id)) return json({ error: 'unknown song' }, 404);
+        await indieTable(env); const who = await visitor(req, env);
+        await DB.prepare(on ? 'INSERT OR IGNORE INTO indie_likes (song,who) VALUES (?,?)' : 'DELETE FROM indie_likes WHERE song=? AND who=?').bind(id, who).run();
+        return json({ ok: true });
+      }
+      if (p === '/api/indie/mine' && req.method === 'GET') { await indieTable(env); const r = await all('SELECT song FROM indie_likes WHERE who=?', await visitor(req, env)); return json({ liked: r.map(x => x.song) }, 200, { 'Cache-Control': 'no-store' }) }
       if (p === '/api/indie/play' && req.method === 'POST') {
         const { id } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
         if (!cfg.songs.some(x => x.id === id)) return json({ error: 'unknown song' }, 404);
         await indieTable(env);
-        const who = (await sign((req.headers.get('CF-Connecting-IP') || '') + '|' + (req.headers.get('User-Agent') || ''), env)).slice(0, 22);
+        const who = await visitor(req, env);
         await DB.prepare('INSERT OR IGNORE INTO indie_plays (song,day,who) VALUES (?,?,?)').bind(id, new Date().toISOString().slice(0, 10), who).run();
         return json({ ok: true });
       }
@@ -164,12 +173,12 @@ export default {
         const used = new Set(songs.flatMap(x => [x.audio, x.cover]));
         for (const x of old.songs.filter(o => !songs.some(n => n.id === o.id))) for (const u of [x.audio, x.cover]) if (u && !used.has(u) && /^\/img\/(audio|images)\//.test(u)) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') }
         const keep = songs.map(x => x.id); await indieTable(env);
-        if (keep.length) await DB.prepare(`DELETE FROM indie_plays WHERE song NOT IN (${keep.map(() => '?').join(',')})`).bind(...keep).run(); else await DB.prepare('DELETE FROM indie_plays').run();
+        for (const t of ['indie_plays', 'indie_likes']) { if (keep.length) await DB.prepare(`DELETE FROM ${t} WHERE song NOT IN (${keep.map(() => '?').join(',')})`).bind(...keep).run(); else await DB.prepare(`DELETE FROM ${t}`).run() }
         return json({ ok: true });
       }
       if (p === '/api/admin/indie/reset' && req.method === 'POST') {
         const c = await indieChart(env); await indieTable(env); await DB.prepare('DELETE FROM indie_plays').run();
-        await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, pace: 0, boosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
+        await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, pace: 0, boosts: [], lbonus: 0, lboosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
         return json({ ok: true });
       }
       /* settings */
@@ -213,7 +222,7 @@ export default {
 
 /* ---------- Indie Charts ---------- */
 const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/(audio|images)\//.test(String(u || '')) ? String(u) : '';
-function indieSong(v) { return { id: /^[\w-]{1,40}$/.test(v.id) ? v.id : '', title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), bonus: Math.max(0, Math.min(1e9, Math.round(+v.bonus || 0))), lock: Math.max(0, Math.min(20, Math.round(+v.lock || 0))), hold: v.hold ? 1 : 0, pace: Math.max(0, Math.round(+v.pace || 0)), boosts: (Array.isArray(v.boosts) ? v.boosts : []).slice(0, 20).map(b => ({ a: Math.max(0, Math.min(1e9, Math.round(+b.a || 0))), s: +b.s || 0, e: +b.e || 0 })).filter(b => b.a && b.e > b.s) } }
+function indieSong(v) { return { id: /^[\w-]{1,40}$/.test(v.id) ? v.id : '', title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), bonus: Math.max(0, Math.min(1e9, Math.round(+v.bonus || 0))), lock: Math.max(0, Math.min(20, Math.round(+v.lock || 0))), hold: v.hold ? 1 : 0, pace: Math.max(0, Math.round(+v.pace || 0)), lbonus: Math.max(0, Math.min(1e9, Math.round(+v.lbonus || 0))), lauto: v.lauto === 0 || v.lauto === false ? 0 : 1, lboosts: (Array.isArray(v.lboosts) ? v.lboosts : []).slice(0, 20).map(b => ({ a: Math.max(0, Math.min(1e9, Math.round(+b.a || 0))), s: +b.s || 0, e: +b.e || 0 })).filter(b => b.a && b.e > b.s), boosts: (Array.isArray(v.boosts) ? v.boosts : []).slice(0, 20).map(b => ({ a: Math.max(0, Math.min(1e9, Math.round(+b.a || 0))), s: +b.s || 0, e: +b.e || 0 })).filter(b => b.a && b.e > b.s) } }
 /* autoplay: each boost adds its plays evenly from start to end */
 /* each hour gets an uneven share (busier evenings, quieter nights, random swings) so the plays look like real listening; the total lands exactly on the target at the end */
 function boostEarned(b, t = Date.now()) {
@@ -226,17 +235,23 @@ function boostEarned(b, t = Date.now()) {
   return Math.min(b.a, Math.floor(b.a * (done + w[k] * Math.min(1, pos - k)) / tot));
 }
 const boosted = (x, t = Date.now()) => x.boosts.reduce((n, b) => n + boostEarned(b, t), 0)
-async function indieTable(env) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_plays (song TEXT NOT NULL, day TEXT NOT NULL, who TEXT NOT NULL, PRIMARY KEY (song, day, who))').run() }
+async function indieTable(env) { await env.DB.batch([env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_plays (song TEXT NOT NULL, day TEXT NOT NULL, who TEXT NOT NULL, PRIMARY KEY (song, day, who))'), env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_likes (song TEXT NOT NULL, who TEXT NOT NULL, PRIMARY KEY (song, who))')]) }
+/* a visitor = scrambled code of internet address + browser (the real address is never stored) */
+async function visitor(req, env) { return (await sign((req.headers.get('CF-Connecting-IP') || '') + '|' + (req.headers.get('User-Agent') || ''), env)).slice(0, 22) }
+/* each song's own like ratio, 22%-36% of plays, so no two songs look the same; likes never pass 40% of plays */
+function likeRatio(id) { let h = 2166136261; for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; return 0.22 + ((h >>> 0) % 1400) / 10000 }
 async function indieCfg(env) { const r = await env.DB.prepare("SELECT v FROM settings WHERE k='indie'").first(); try { const c = JSON.parse(r && r.v || '{}'); return { songs: (c.songs || []).map(indieSong), prev: c.prev || {}, prevAt: c.prevAt || 0 } } catch (e) { return { songs: [], prev: {}, prevAt: 0 } } }
 async function saveIndie(env, c) { await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('indie',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(c)).run() }
 /* rank = plays + added plays, locked songs sit at their spot; movement compares with last week's ranks (snapshot every 7 days) */
 async function indieChart(env) {
   await indieTable(env);
-  const cfg = await indieCfg(env), rows = (await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_plays GROUP BY song').all()).results, real = Object.fromEntries(rows.map(r => [r.song, r.n]));
+  const cfg = await indieCfg(env), rows = (await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_plays GROUP BY song').all()).results, real = Object.fromEntries(rows.map(r => [r.song, r.n])), lrows = (await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_likes GROUP BY song').all()).results, lreal = Object.fromEntries(lrows.map(r => [r.song, r.n]));
   const list = cfg.songs.map(x => { const auto = boosted(x); return { ...x, boosts: x.boosts.map(b => ({ ...b, got: boostEarned(b) })), real: real[x.id] || 0, auto, plays: (real[x.id] || 0) + x.bonus + auto + x.pace } });
   /* STAY #1: the held song earns just enough plays to stay a little ahead of the next song (kept, so its count never drops) */
   const held = list.find(x => x.hold && !x.lock);
   if (held) { const best = Math.max(0, ...list.filter(x => x !== held).map(x => x.plays)); if (held.plays <= best) { const add = best - held.plays + Math.max(1, Math.ceil(best * (0.02 + Math.random() * 0.03))); held.pace += add; held.plays += add; const c = cfg.songs.find(x => x.id === held.id); c.pace = held.pace; await saveIndie(env, cfg) } }
+  for (const x of list) { const lb = x.lboosts.reduce((n, b) => n + boostEarned(b), 0), mine = (lreal[x.id] || 0) + x.lbonus + lb, ratio = x.lauto ? Math.floor(x.plays * likeRatio(x.id)) : 0;
+    x.lreal = lreal[x.id] || 0; x.lboosted = lb; x.lratio = x.lauto ? ratio : 0; x.likes = Math.min(Math.max(mine, ratio), Math.floor(x.plays * 0.4)); x.lboosts = x.lboosts.map(b => ({ ...b, got: boostEarned(b) })) }
   const free = list.filter(x => !x.lock).sort((a, b) => b.plays - a.plays), out = [];
   for (const x of list.filter(x => x.lock).sort((a, b) => a.lock - b.lock)) out[x.lock - 1] ? free.unshift(x) : (out[x.lock - 1] = x);
   for (let i = 0; free.length; i++) if (!out[i]) out[i] = free.shift();
