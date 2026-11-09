@@ -131,7 +131,6 @@ window.stuInit=()=>{const $=s=>document.querySelector(s);let rt;const redraw=()=
  const ngo=()=>{const [,,f]=NT()[NSEL];if(!NM)return say('Add a photo or video first.');renderDesign(f(NSEL),NH(),{name:nt.value,start:ntrim.start,end:ntrim.end,media:{url:NM,video:NMV},S:ns(NSEL),still:!NMV})};
  $('#nrender').onclick=ngo;
  $('#nprev').onclick=()=>{const [,,f]=NT()[NSEL];previewDesign(f(NSEL),NH(),{place:r=>r.querySelectorAll('.md').forEach(m=>{const S=ns(NSEL),el=m.querySelector('img,video');if(el){el.style.objectPosition=S.x+'% '+S.y+'%';el.style.transform=`scale(${S.z})`;el.style.transformOrigin=S.x+'% '+S.y+'%'}}),start:ntrim.start,end:ntrim.end,go:ngo})};
- carInit();
 };
 /* ---------- CAROUSEL: a cover slide plus 2-10 slides, each with its own picture/video, sound and cut ---------- */
 function carInit(){const $=s=>document.querySelector(s),list=$('#cslides');const SL=[];let CD=0;

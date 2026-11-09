@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=4"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=5"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -58,7 +58,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 .cs{background:#141414;border:1px solid #2a2a2a;padding:14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px}.cs-h{flex-basis:100%;display:flex;justify-content:space-between;align-items:center}.cs-h b{font:400 24px Anton;letter-spacing:.04em}.cs-b{flex-basis:100%;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cs-b .up{background:#e11d2a;font:800 12px Inter;letter-spacing:.12em;padding:12px 16px;cursor:pointer}.cs-b small{color:#999}
 .rb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}.rb-grid video,.rb-grid img{width:100%;max-height:200px}.rb-grid a{color:#fff;font:700 11px Inter;display:block;margin-top:4px}
 </style></head><body>
-<h1>RAPAECHELON <span>STUDIO</span></h1><div class="tabs"><button data-tab="drop" class="on">THE DROP</button><button data-tab="news">NEWS</button><button data-tab="car">CAROUSEL</button></div><div id="t-drop">
+<h1>RAPAECHELON <span>STUDIO</span></h1><div class="tabs"><button data-tab="drop" class="on">THE DROP</button><button data-tab="news">NEWS</button></div><div id="t-drop">
 <p class="sub">New Drops for artists: pick a design, add the song, cover and cut-out, and render a 9:16 video (1080×1920) for Reels and Stories. The wave moves to the real song.</p>
 <div class="ctl"><div class="cur">EDITING: <b id="cn"></b> <span>(click any design below to pick it)</span></div><label class="up">+ TRY YOUR OWN ARTIST CUT-OUT (PNG)<input type="file" id="af" accept="image/*" hidden></label>
 <div class="seg"><button data-b="full" class="on">FULL BODY</button><button data-b="half">HALF BODY</button></div>
@@ -92,12 +92,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <button id="nclr" class="rs">CLEAR PHOTO / VIDEO</button><div class="trim" id="ntrim" hidden></div>
 <button id="nprev" class="go gr2">👁 PREVIEW</button><button id="nrender" class="go">RENDER</button><small>A photo saves as a picture. A video renders as a video, kept under 25 MB.</small></div>
 <div class="grid" id="ng"></div></div>
-<div id="t-car" hidden>
-<p class="sub">A carousel post: a cover slide, then 2 to 10 slides (for example "The best 5 beats Tupac had"). Each slide gets its own picture or video, its own sound, and its own START and END. It uses the News design and size you pick. Everything renders in a row and downloads together.</p>
-<div class="ctl"><div class="cur">DESIGN</div><select id="cdes" class="tx"></select><small>Story or Post size comes from the NEWS tab switch.</small></div>
-<div id="cslides"></div>
-<div class="ctl mk"><button id="cadd" class="rs">+ ADD SLIDE</button><button id="cprev" class="go gr2">👁 PREVIEW SLIDES</button><button id="crender" class="go">RENDER ALL + DOWNLOAD</button></div>
-</div>
+
 <script>
 const W=(n,h,col)=>`<div class="wave" style="${h};color:${col||'#fff'}">${Array.from({length:n},(_,i)=>`<i style="height:${60+Math.round(Math.abs(Math.sin(i*1.3))*200)}px;animation-delay:${(i%7)*-.13}s"></i>`).join('')}</div>`;
 const SIL='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#777"/><stop offset="1" stop-color="#2a2a2a"/></linearGradient></defs><g fill="url(#g)"><ellipse cx="300" cy="150" rx="110" ry="135"/><path d="M300 290c-170 0-250 90-260 250l-20 460h560l-20-460c-10-160-90-250-260-250z"/></g></svg>');
@@ -149,9 +144,9 @@ af.onchange=()=>{const f=stuFresh(af);if(!f)return;ART=URL.createObjectURL(f);dr
 draw();
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news';document.getElementById('t-car').hidden=b.dataset.tab!=='car';const pg={drop:'studio.html',news:'studio-news.html',car:'studio-carousel.html'}[b.dataset.tab];if(!location.pathname.endsWith(pg))history.replaceState(null,'',pg);try{localStorage.setItem('stu_tab',b.dataset.tab)}catch(e){}});
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('t-drop').hidden=b.dataset.tab!=='drop';document.getElementById('t-news').hidden=b.dataset.tab!=='news';const pg={drop:'studio.html',news:'studio-news.html'}[b.dataset.tab];if(!location.pathname.endsWith(pg))history.replaceState(null,'',pg);try{localStorage.setItem('stu_tab',b.dataset.tab)}catch(e){}});
 /* every tab has its own link: studio.html#drop, #news, #car */
-const openTab=()=>{let t=/studio-news/.test(location.pathname)?'news':/studio-carousel/.test(location.pathname)?'car':/studio(\.html)?$/.test(location.pathname)&&!location.hash?'drop':location.hash.slice(1);if(!t)try{t=localStorage.getItem('stu_tab')||''}catch(e){}const b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
+const openTab=()=>{let t=/studio-news/.test(location.pathname)?'news':/studio(\.html)?$/.test(location.pathname)&&!location.hash?'drop':location.hash.slice(1);if(!t)try{t=localStorage.getItem('stu_tab')||''}catch(e){}const b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
 /* ---------- NEWS: 20 full-screen designs, Story 9:16 or Post 4:5 ---------- */
 let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
 const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
