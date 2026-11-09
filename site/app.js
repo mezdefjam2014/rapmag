@@ -22,7 +22,7 @@ const pathSlug=k=>{const m=location.pathname.match(new RegExp('/'+k+'/([a-z0-9-]
 function chrome(){const cat=qs.get('c'),here=page==='home'&&!cat&&qs.get('q')==null;
  document.body.insertAdjacentHTML('afterbegin',`<div class="prog" id="prog"></div>
  <header class="mast"><div class="wrap"><a class="brand" href="./" aria-label="Rapaechelon home"><img src="${esc(SET.logo?img(SET.logo):'logo.webp')}" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a>
- <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a><a href="index.html?c=indie-charts"${cat==='indie-charts'?' class="on"':''}>Indie Charts</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}</nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
+ <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a><a href="index.html?c=indie-charts"${cat==='indie-charts'?' class="on"':''}>Indie Charts</a><a href="index.html?c=magazine"${cat==='magazine'?' class="on"':''}>Magazine</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}</nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
  <div class="search" id="sr"><div class="wrap"><input id="si" placeholder="Search RAPMAG…" value="${esc(qs.get('q')||'')}"></div></div>`);
  const pl=s=>PRETTY?'page/'+s+'/':'page.html?s='+s;
  document.body.insertAdjacentHTML('beforeend',`<footer class="foot"><div class="wrap"><div><a class="brand sm" href="./"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a><p>${esc(SET.tagline||'Music, entertainment, culture and breaking stories.')}</p>
@@ -41,7 +41,7 @@ function ld(o){const s=document.createElement('script');s.type='application/ld+j
 function setMeta(t,d,im,type){document.title=t;let c=document.querySelector('link[rel=canonical]');if(!c){c=document.createElement('link');c.rel='canonical';document.head.appendChild(c)}c.href=location.href.split('#')[0];const m=(n,v,a)=>{if(!v)return;let el=document.querySelector(`meta[${a||'name'}="${n}"]`);if(!el){el=document.createElement('meta');el.setAttribute(a||'name',n);document.head.appendChild(el)}el.content=v};m('description',d);m('og:title',t,'property');m('og:description',d,'property');m('og:image',im||new URL('og.jpg',document.baseURI).href,'property');m('og:type',type||'website','property');m('og:url',location.href,'property');m('og:site_name','RAPAECHELON - RAPMAG','property');m('twitter:card','summary_large_image')}
 
 /* ---------- home / section / search ---------- */
-async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat==='indie-charts')return indie();let off=0;const N=12;
+async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat==='indie-charts')return indie();if(cat==='magazine')return magazine();let off=0;const N=12;
  const head=!cat&&q==null?'<h1 class="vh">RAPAECHELON - RAPMAG: Hip-Hop, Rap &amp; Entertainment News</h1>':cat&&/new-music/.test(cat)?`<header class="nmf"><span>EVERY FRIDAY</span><h1>${esc(CN[cat]||'New Music Friday')}</h1><p>The week's hottest rap and hip-hop drops, ranked. Hit play and run the whole chart.</p></header>`:cat?`<div class="sh"><h1>${esc(CN[cat]||cat)}</h1></div>`:`<div class="sh"><h1>${q?'Search: '+esc(q):'Search'}</h1></div>`;
  setMeta(cat?(CN[cat]||cat)+' News | RAPAECHELON - RAPMAG':q!=null?'Search | RAPAECHELON - RAPMAG':'RAPAECHELON - RAPMAG | Hip-Hop, Rap & Entertainment News',cat?'The latest '+String(CN[cat]||cat).toLowerCase()+' stories in hip-hop and rap from RAPAECHELON - RAPMAG.':'RAPAECHELON - RAPMAG: breaking hip-hop and rap news, new music and entertainment stories, updated daily.');
  main.innerHTML=`<div class="wrap shell">${!cat&&q==null?promo():''}${head}<section class="grid" id="g" aria-label="Published articles"></section><button class="more" id="mo" hidden>LOAD MORE STORIES</button></div>`;
@@ -50,6 +50,25 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
 /* ---------- Indie Charts: top 20 ranked by plays; a play counts after 10 seconds of listening ---------- */
+/* digital magazine: newest issue on top, archive of past covers underneath; ?c=magazine&m=slug opens the flip-book */
+async function magazine(){const main=$('#main'),slug=qs.get('m');
+ const lib=()=>window.MAG?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='mag.js?v=2';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+ const href=m=>'index.html?c=magazine&m='+encodeURIComponent(m.slug);
+ main.innerHTML=`<div class="wrap shell mgz"><div class="empty">Loading the magazine…</div></div>`;
+ let list;try{[list]=await Promise.all([get('/api/mags'),lib()])}catch(e){main.querySelector('.mgz').innerHTML='<div class="empty">The magazine is coming soon.</div>';return}
+ const mags=list.mags||[],box=main.querySelector('.mgz');
+ const arch=(skip)=>{const rest=mags.filter(m=>m.slug!==skip);return rest.length?`<section class="mgz-arch"><h2>${skip?'More Issues':'Past Issues'}</h2><div class="mgz-grid">${rest.map(m=>`<a class="mgz-it" href="${href(m)}"><div class="mgz-cv" data-cv="${esc(m.slug)}"></div><b>${esc(m.title)}</b><small>${esc(m.label||'')}</small></a>`).join('')}</div></section>`:''};
+ const covers=()=>box.querySelectorAll('[data-cv]').forEach(el=>{const m=mags.find(x=>x.slug===el.dataset.cv);if(m&&m.cover)el.innerHTML=MAG.mini(m.cover,{logo:m.logo},el.clientWidth||220)});
+ if(slug){let d;try{d=(await get('/api/mags/'+encodeURIComponent(slug))).mag}catch(e){box.innerHTML='<div class="empty">That issue was not found. <a href="index.html?c=magazine">See all issues</a></div>';return}
+  setMeta(d.title+(d.label?' · '+d.label:'')+' | RAPMAG Magazine','Read '+d.title+' from RAPMAG, the RapAechelon digital magazine. Flip through every page online.');
+  box.innerHTML=`<div class="mgz-top"><a href="index.html?c=magazine" class="mgz-back">‹ ALL ISSUES</a><div><h1>${esc(d.title)}</h1><small>${esc(d.label||'')}</small></div><button class="mgz-sh">SHARE</button></div><div class="mgz-book"></div>${arch(slug)}`;
+  MAG.book(box.querySelector('.mgz-book'),d.doc,{maxH:window.innerHeight-150});covers();
+  box.querySelector('.mgz-sh').onclick=async()=>{const u=location.href;try{if(navigator.share)await navigator.share({title:d.title,text:'Read '+d.title+' on RAPMAG',url:u});else{await navigator.clipboard.writeText(u);box.querySelector('.mgz-sh').textContent='LINK COPIED'}}catch(e){}};return}
+ setMeta('RAPMAG Magazine: The Digital Issues | RAPAECHELON','Flip through RAPMAG, the RapAechelon digital hip-hop magazine. Read the latest issue and every past issue online.');
+ if(!mags.length){box.innerHTML='<header class="nmf"><span>RAPAECHELON</span><h1>RAPMAG Magazine</h1><p>The first digital issue is on the way.</p></header>';return}
+ const n=mags[0];box.innerHTML=`<header class="nmf"><span>THE DIGITAL MAGAZINE</span><h1>RAPMAG Magazine</h1><p>Flip through every page, right here.</p></header>
+  <a class="mgz-new" href="${href(n)}"><div class="mgz-cv" data-cv="${esc(n.slug)}"></div><div class="mgz-nt"><span>NEW ISSUE</span><h2>${esc(n.title)}</h2><small>${esc(n.label||'')}</small><em>${n.pages} PAGES</em><b class="mgz-read">READ NOW ›</b></div></a>${arch(n.slug)}`;covers()}
+
 async function indie(){const main=$('#main');
  setMeta('Indie Charts: Top 20 Indie Rap & R&B Songs | RAPAECHELON - RAPMAG','The top 20 indie rap and R&B songs, ranked by plays on RAPMAG. Hit play to hear each one.');
  main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>RANKED BY YOUR PLAYS</span><h1>Indie Charts</h1><p>The top 20 indie rap and R&amp;B songs, ranked by plays. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div></div></div>`;

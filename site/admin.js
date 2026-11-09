@@ -31,9 +31,9 @@ const localDT=s=>{if(!s)return'';const d=new Date(s.replace(' ','T')+'Z'),z=n=>S
 const isFuture=s=>s&&new Date(s.replace(' ','T')+'Z')>new Date();
 
 /* ---------- shell ---------- */
-function shell(on,title,extra){if(on==='edit')on='list';else if(on!=='new'&&location.hash!=='#'+on)history.pushState(null,'',location.pathname+location.search+'#'+on);app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
+function shell(on,title,extra){if(on==='edit')on='list';else if(on!=='new'&&location.hash!=='#'+on)history.pushState(null,'',location.pathname+location.search+'#'+on);app.innerHTML=`<div class="topnav">${[['list','ARTICLES'],['new','+ NEW'],['authors','AUTHORS'],['cats','CATEGORIES'],['media','MEDIA'],['indie','INDIE CHARTS'],['mags','MAGAZINE'],['dist','DISTRIBUTION'],['settings','SETTINGS']].map(([k,t])=>`<button class="b${k===on?' on':''}${k==='new'?' r':''}" data-go="${k}">${t}</button>`).join('')}<a class="b" href="./" target="_blank">VIEW SITE ↗</a><button class="b" data-go="out">LOG OUT</button></div>
  <div class="ah"><h1>${title}</h1>${extra||''}</div><div id="pg"></div>`;
- app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
+ app.querySelector('.topnav').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;({list,new:()=>edit(null),authors,cats,media:()=>library(),indie,mags,dist,settings,out:logout})[b.dataset.go]()};return $('#pg')}
 
 /* ---------- login ---------- */
 function login(){app.innerHTML=`<div class="login"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" style="width:220px;background:#000;padding:10px"><h1 style="margin-top:30px">BACK OFFICE</h1><div class="pn" style="margin-top:20px"><label>PASSWORD</label><input type="password" id="pw" autocomplete="current-password"><button class="b r" id="go" style="width:100%;margin-top:16px">LOG IN</button><div class="st" id="ms"></div></div></div>`;
@@ -223,8 +223,9 @@ async function library(onPick){const m=modal(`<h1 style="font-size:30px">MEDIA</
 function preview(v){const w=window.open('','_blank');if(!w)return;const b=v.body.replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,c)=>a+API+c+'"'),au=(AUTHORS.find(a=>a.id===+v.author_id)||{}).name||'';
  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview: ${esc(v.title)}</title><base href="${SITE}"><link rel="stylesheet" href="style.css?v=24"></head><body><div class="bar" style="display:block!important">PREVIEW · NOT PUBLISHED YET</div><article class="wrap story"><header class="st-head"><span class="c">${esc(catName(v.category))}</span><h1>${esc(v.title)}</h1><p class="dek">${esc(v.dek)}</p><div class="meta">By ${esc(au)}</div></header>${v.cover?`<figure class="st-cover"><img src="${esc(img(v.cover))}" alt="${esc(v.cover_alt)}"></figure>`:''}<div class="st-cols"><div>${v.audio?`<div class="listen"><span>LISTEN TO THIS STORY</span><audio controls src="${esc(img(v.audio))}"></audio></div>`:''}<div class="body">${b}</div></div></div></article></body></html>`);w.document.close()}
 /* every tab has its own address (admin.html#indie, #edit-12 ...), so reloading stays on the same tab */
-function route(){const h=location.hash.slice(1),m=h.match(/^edit-(\d+)$/);if(m)return edit(+m[1]);if(h==='new')return edit(null);
- return ({authors,cats,media:()=>library(),indie,dist,settings}[h]||list)()}
+const MK=window.RMMakerInit({api,upload,pick,shell,askBox,confirmBox,ms,esc,$,API}),mags=MK.mags,maker=MK.maker;
+function route(){const h=location.hash.slice(1),m=h.match(/^edit-(\d+)$/),mg=h.match(/^mag-(\d+)$/);if(m)return edit(+m[1]);if(mg)return maker(+mg[1]);if(h==='new')return edit(null);
+ return ({authors,cats,media:()=>library(),indie,mags,dist,settings}[h]||list)()}
 window.onpopstate=()=>{if(TOKEN)route()};
 TOKEN?loadMeta().then(route).catch(()=>login()):login();
 

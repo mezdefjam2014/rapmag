@@ -57,6 +57,10 @@ export default {
         return json({ ok: true });
       }
       /* Indie Charts: top 20 ranked by plays (one per song per visitor per day) plus the editor's added plays */
+      /* digital magazine: published issues (archive list) and one issue */
+      if (p === '/api/mags' && req.method === 'GET') { await magTable(env); const rows = await all("SELECT id,slug,title,label,doc,published_at FROM mags WHERE status='published' ORDER BY published_at DESC LIMIT 200"); return json({ mags: rows.map(r => { let d = {}; try { d = JSON.parse(r.doc || '{}') } catch (e) { } return { id: r.id, slug: r.slug, title: r.title, label: r.label, published_at: r.published_at, pages: (d.pages || []).length, cover: (d.pages || [])[0] || null, logo: d.logo || null } }) }, 200, { 'Cache-Control': 'public, max-age=60' }) }
+      const mgm = p.match(/^\/api\/mags\/([a-z0-9-]+)$/);
+      if (mgm && req.method === 'GET') { await magTable(env); const x = await one("SELECT id,slug,title,label,thumb,doc,published_at FROM mags WHERE slug=? AND status='published'", mgm[1]); if (!x) return json({ error: 'not found' }, 404); x.doc = JSON.parse(x.doc || '{}'); return json({ mag: x }, 200, { 'Cache-Control': 'public, max-age=60' }) }
       if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'no-store' }) }
       /* likes: one per visitor per song, tap again to take it back */
       if (p === '/api/indie/like' && req.method === 'POST') {
@@ -202,6 +206,32 @@ export default {
         for (const t of ['indie_plays', 'indie_likes']) { if (keep.length) await DB.prepare(`DELETE FROM ${t} WHERE song NOT IN (${keep.map(() => '?').join(',')})`).bind(...keep).run(); else await DB.prepare(`DELETE FROM ${t}`).run() }
         return json({ ok: true });
       }
+      /* Magazine Maker: drafts autosave here; publish / unpublish; delete erases the issue's images */
+      if (p === '/api/admin/mags' && req.method === 'GET') { await magTable(env); return json({ mags: await all('SELECT id,slug,title,label,thumb,status,updated_at,published_at FROM mags ORDER BY updated_at DESC') }) }
+      if (p === '/api/admin/mags' && req.method === 'POST') {
+        await magTable(env); const title = String(body.title || 'New issue').slice(0, 120), label = String(body.label || '').slice(0, 120);
+        let slug = slugify(title) || 'issue'; if (await one('SELECT id FROM mags WHERE slug=?', slug)) slug += '-' + Date.now().toString(36);
+        const r = await DB.prepare("INSERT INTO mags (slug,title,label,doc,status) VALUES (?,?,?,?, 'draft')").bind(slug, title, label, JSON.stringify(body.doc || { pages: [] })).run();
+        return json({ id: r.meta.last_row_id, slug });
+      }
+      m = p.match(/^\/api\/admin\/mags\/(\d+)$/);
+      if (m) {
+        await magTable(env); const id = +m[1], x = await one('SELECT * FROM mags WHERE id=?', id); if (!x) return json({ error: 'not found' }, 404);
+        if (req.method === 'GET') { x.doc = JSON.parse(x.doc || '{}'); return json({ mag: x }) }
+        if (req.method === 'DELETE') {
+          for (const u of magImages(x.doc)) if (!(await imageUsedElsewhere(env, u, id))) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') }
+          await DB.prepare('DELETE FROM mags WHERE id=?').bind(id).run(); return json({ ok: true });
+        }
+        if (req.method === 'POST') {
+          const doc = body.doc ? JSON.stringify(body.doc) : x.doc; if (doc.length > 900000) return json({ error: 'This issue is too big to save. Split it into two issues.' }, 400);
+          const status = body.status === 'published' || body.status === 'draft' ? body.status : x.status;
+          /* images removed from the issue since the last save are erased */
+          if (body.doc) { const keep = new Set(magImages(doc)); for (const u of magImages(x.doc)) if (!keep.has(u) && !(await imageUsedElsewhere(env, u, id))) { const k = decodeURIComponent(u.slice(5)); await env.IMAGES.delete(k); await env.IMAGES.delete('thumbs/800/' + k.replace(/\.[a-z0-9]+$/, '') + '.webp') } }
+          await DB.prepare("UPDATE mags SET title=?, label=?, thumb=?, doc=?, status=?, updated_at=datetime('now'), published_at=CASE WHEN ?='published' AND published_at IS NULL THEN datetime('now') ELSE published_at END WHERE id=?")
+            .bind(String(body.title ?? x.title).slice(0, 120), String(body.label ?? x.label).slice(0, 120), String(body.thumb ?? x.thumb ?? '').slice(0, 300), doc, status, status, id).run();
+          return json({ ok: true, status });
+        }
+      }
       if (p === '/api/admin/indie/reset' && req.method === 'POST') {
         const c = await indieChart(env); await indieTable(env); await DB.prepare('DELETE FROM indie_plays').run();
         await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, pace: 0, boosts: [], lbonus: 0, lboosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
@@ -245,6 +275,15 @@ export default {
     } catch (e) { return json({ error: String(e && e.message || e) }, 500) }
   }
 };
+
+/* ---------- digital magazine ---------- */
+async function magTable(env) { await env.DB.prepare("CREATE TABLE IF NOT EXISTS mags (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, label TEXT DEFAULT '', thumb TEXT DEFAULT '', doc TEXT DEFAULT '{}', status TEXT NOT NULL DEFAULT 'draft', created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')), published_at TEXT)").run() }
+function magImages(doc) { return [...new Set(String(doc || '').match(/\/img\/images\/[\w\/.%-]+/g) || [])] }
+/* never erase an image an article, the chart, settings or another issue still uses */
+async function imageUsedElsewhere(env, u, magId) {
+  const q = '%' + u + '%', D = env.DB;
+  return !!((await D.prepare('SELECT 1 FROM posts WHERE cover=? OR body LIKE ? LIMIT 1').bind(u, q).first()) || (await D.prepare('SELECT 1 FROM settings WHERE v LIKE ? LIMIT 1').bind(q).first()) || (await D.prepare('SELECT 1 FROM mags WHERE id<>? AND doc LIKE ? LIMIT 1').bind(magId, q).first()));
+}
 
 /* ---------- article likes ---------- */
 async function likeTables(env) { await env.DB.batch([env.DB.prepare('CREATE TABLE IF NOT EXISTS post_likes (post_id INTEGER NOT NULL, who TEXT NOT NULL, PRIMARY KEY (post_id, who))'), env.DB.prepare('CREATE TABLE IF NOT EXISTS post_like_extra (post_id INTEGER PRIMARY KEY, bonus INTEGER NOT NULL DEFAULT 0, auto INTEGER NOT NULL DEFAULT 1)')]) }
