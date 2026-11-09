@@ -55,9 +55,24 @@ async function indie(){const main=$('#main');
  main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>RANKED BY YOUR PLAYS</span><h1>Indie Charts</h1><p>The top 20 indie rap and R&amp;B songs, ranked by plays. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div></div></div>`;
  let d;try{d=await get('/api/indie')}catch(e){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
  if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
- const MV={new:'NEW',up:'▲',down:'▼',same:'–'},n=v=>v>=1e6?(v/1e6).toFixed(1).replace(/\.0$/,'')+'M':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'K':String(v);
- $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row" data-id="${esc(it.id)}">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:`<img class="cr-disc" src="gold-record.webp" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p><small class="cr-pl"><b data-n="${it.plays}">${n(it.plays)}</b> plays${it.last?' · last week #'+it.last:''}</small></div><span class="cr-m ${it.move}">${MV[it.move]}</span><a class="cr-a" href="${esc(img(it.audio))}">Audio</a></div>`).join('');
- const sent=new Set();chart(main,r=>{const id=r.dataset.id;if(!id||sent.has(id))return;sent.add(id);const b=r.querySelector('[data-n]');if(b){b.dataset.n=+b.dataset.n+1;b.textContent=n(+b.dataset.n)}fetch(API+'/api/indie/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{})})}
+ const TROPHY='<svg class="cr-tro" viewBox="0 0 24 24" role="img" aria-label="Number 1"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7zM6 20h12v1H6z"/></svg>';
+ const MV={new:'NEW',up:'▲',down:'▼',same:'–'},n=v=>Number(v).toLocaleString('en-US'),sent=new Set();let ch=null,order=d.items.map(x=>x.id).join(),lastMove=Date.now();
+ /* rows */
+ const html=items=>items.map(it=>`<div class="chart-row" data-id="${esc(it.id)}">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:`<img class="cr-disc" src="gold-record.webp" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`}<div class="cr-t"><h3>${esc(it.title)}${it.rank===1?TROPHY:''}</h3><p>${esc(it.artist)}</p><small class="cr-pl"><b data-n="${it.plays}">${n(it.plays)}</b> plays${it.last?' · last week #'+it.last:''}</small></div><span class="cr-m ${it.move}">${MV[it.move]}</span><a class="cr-a" href="${esc(img(it.audio))}">Audio</a></div>`).join('');
+ /* count up to the new number with a +N pop */
+ const bump=(b,to)=>{const from=+b.dataset.n;if(to<=from)return;b.dataset.n=to;const t0=performance.now(),D=1200;const step=t=>{const k=Math.min(1,(t-t0)/D);b.textContent=n(Math.round(from+(to-from)*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step);
+  const row=b.closest('.chart-row'),pop=document.createElement('em');pop.className='cr-pop';pop.textContent='+'+n(to-from);row.querySelector('.cr-t').appendChild(pop);setTimeout(()=>pop.remove(),1800);row.classList.remove('flash');void row.offsetWidth;row.classList.add('flash')};
+ const listen=r=>{const id=r.dataset.id;if(!id||sent.has(id))return;sent.add(id);const b=r.querySelector('[data-n]');if(b)bump(b,+b.dataset.n+1);fetch(API+'/api/indie/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{})};
+ const draw=items=>{if(ch)ch.kill();$('#rpb').innerHTML=html(items);ch=chart(main,listen)};
+ draw(d.items);
+ /* live: new plays every 30 seconds; songs slide to their new spots at most every 10 minutes (never while a song is playing) */
+ const tick=async()=>{if(!document.body.contains($('#rpb')))return clearInterval(iv);if(document.hidden)return;let nd;try{nd=await get('/api/indie')}catch(e){return}
+  nd.items.forEach(it=>{const b=$('#rpb').querySelector(`.chart-row[data-id="${CSS.escape(it.id)}"] [data-n]`);if(b)bump(b,it.plays)});
+  const no=nd.items.map(x=>x.id).join();if(no===order||Date.now()-lastMove<6e5||(ch&&ch.busy()))return;
+  const old={};$('#rpb').querySelectorAll('.chart-row').forEach(r=>old[r.dataset.id]=r.getBoundingClientRect().top);
+  order=no;lastMove=Date.now();draw(nd.items);
+  $('#rpb').querySelectorAll('.chart-row').forEach(r=>{const o=old[r.dataset.id],dy=o==null?40:o-r.getBoundingClientRect().top;if(!dy)return;r.animate([{transform:`translateY(${dy}px)`,opacity:o==null?0:1},{transform:'none',opacity:1}],{duration:900,easing:'cubic-bezier(.2,.8,.2,1)'});if(o!=null&&dy>0)r.classList.add('rose')})};
+ const iv=setInterval(tick,30000)}
 /* ---------- author page ---------- */
 async function author(){const main=$('#main'),s=qs.get('s')||pathSlug('author');let a;try{a=(await get('/api/authors/'+encodeURIComponent(s||''))).author}catch(e){main.innerHTML='<div class="wrap shell"><div class="empty">Author not found.</div></div>';return}
  setMeta(a.name+' | RAPAECHELON - RAPMAG',a.bio||a.role||a.name,img(a.photo),'profile');
@@ -102,7 +117,8 @@ function chart(root,onListen){const rows=[...root.querySelectorAll('.chart-row')
  A.onended=()=>{const n=rows.findIndex((x,j)=>j>cur&&x.au);if(n>-1)play(n);else{cur=-1;mark(-1)}};
  rows.forEach(({r},i)=>{if(r.querySelector('.cr-p'))return;const w=document.createElement('div');w.className='cr-pw';
   w.innerHTML='<button class="cr-p" aria-label="Play '+esc((r.querySelector('h3')||{}).textContent||'song')+'"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span></button><div class="cr-w" aria-hidden="true">'+'<i></i>'.repeat(14)+'</div>';
-  w.querySelector('button').onclick=e=>{e.stopPropagation();play(i)};r.appendChild(w);if(onListen){r.classList.add('tap');r.onclick=e=>{if(!e.target.closest('a'))play(i)}}})}
+  w.querySelector('button').onclick=e=>{e.stopPropagation();play(i)};r.appendChild(w);if(onListen){r.classList.add('tap');r.onclick=e=>{if(!e.target.closest('a'))play(i)}}});
+ return{busy:()=>cur>-1&&!A.paused,kill:()=>{A.pause();np.remove();document.body.classList.remove('has-np')}}}
 function fix(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,b)=>a+API+b+'" loading="lazy"')}
 
 /* 404.html serves clean links the build has not made yet */

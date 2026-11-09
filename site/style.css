@@ -303,3 +303,14 @@ body.has-np{padding-bottom:80px}
 .rp-page .cr-p{width:44px;height:44px;justify-content:center;padding:0;border-radius:50%}
 .rp-page .cr-w{height:10px}
 }
+/* live plays */
+.rp-page .cr-t{position:relative}
+.cr-pop{position:absolute;right:0;top:0;font:900 13px Inter,sans-serif;color:#13a34a;font-style:normal;animation:crpop 1.8s ease-out forwards;pointer-events:none}
+@keyframes crpop{0%{opacity:0;transform:translateY(8px)}15%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-18px)}}
+.rp-page .chart-row.flash .cr-pl b{animation:crfl 1.2s ease-out}
+@keyframes crfl{0%{color:#13a34a}100%{color:inherit}}
+.rp-page .chart-row.rose{animation:crrose 2.4s ease-out}
+@keyframes crrose{0%,40%{background:#eaf8ee}100%{background:transparent}}
+.rp-page .cr-pl b{font-variant-numeric:tabular-nums}
+.cr-tro{display:inline-block;width:.95em;height:.95em;margin-left:.35em;vertical-align:-.1em;fill:#d4a017;filter:drop-shadow(0 1px 0 #8a6508)}
+.rp-page .chart-row h3{display:flex;align-items:center;min-width:0}.rp-page .chart-row h3 .cr-tro{flex:none}
