@@ -276,7 +276,7 @@ export default {
         return json({ result: out });
       }
       /* Instagram: connect once, then post pictures / Reels / Stories straight from the back office */
-      if (p === '/api/admin/ig/status') { const t = await igTok(env); return json({ configured: !!(env.IG_APP_ID && env.IG_APP_SECRET), connected: !!t, username: t && t.name || '', redirect: url.origin + '/api/ig/callback' }) }
+      if (p === '/api/admin/ig/status') { const t = await igTok(env); return json({ fb: !!(env.FB_PAGE_ID && env.FB_PAGE_TOKEN), configured: !!(env.IG_APP_ID && env.IG_APP_SECRET), connected: !!t, username: t && t.name || '', redirect: url.origin + '/api/ig/callback' }) }
       if (p === '/api/admin/ig/connect') { if (!env.IG_APP_ID) return json({ error: 'Add IG_APP_ID and IG_APP_SECRET to the API first' }, 400); const exp = String(Date.now() + 6e5);
         return json({ url: 'https://www.instagram.com/oauth/authorize?' + new URLSearchParams({ client_id: env.IG_APP_ID, redirect_uri: url.origin + '/api/ig/callback', response_type: 'code', scope: 'instagram_business_basic,instagram_business_content_publish', state: exp + '.' + await sign('ig' + exp, env) }) }) }
       if (p === '/api/admin/ig/disconnect' && req.method === 'POST') { await secret(env, 'ig', null); return json({ ok: true }) }
@@ -295,6 +295,16 @@ export default {
         const r = await fetch(`https://graph.instagram.com/v21.0/${t.uid}/media`, { method: 'POST', body: new URLSearchParams(q) }), d = await r.json();
         if (!r.ok || !d.id) { await env.IMAGES.delete(key); return json({ error: igErr(d) }, 400) }
         return json({ id: d.id, key });
+      }
+      /* Facebook Page: post a picture or video made on the site (uses FB_PAGE_ID + FB_PAGE_TOKEN) */
+      if (p === '/api/admin/fb/post' && req.method === 'POST') {
+        if (!env.FB_PAGE_ID || !env.FB_PAGE_TOKEN) return json({ error: 'Facebook Page is not connected' }, 400);
+        const fd = await req.formData(), f = fd.get('file'), cap = String(fd.get('caption') || '').slice(0, 5000);
+        if (!f || typeof f === 'string') return json({ error: 'No file' }, 400);
+        const vid = /^video\//.test(f.type), out = new FormData(); out.append('source', f, f.name || (vid ? 'video.mp4' : 'post.jpg')); out.append(vid ? 'description' : 'message', cap); out.append('access_token', env.FB_PAGE_TOKEN);
+        const r = await fetch(`https://graph${vid ? '-video' : ''}.facebook.com/v21.0/${env.FB_PAGE_ID}/${vid ? 'videos' : 'photos'}`, { method: 'POST', body: out }), d = await r.json();
+        if (!r.ok || !(d.id || d.post_id)) return json({ error: igErr(d) }, 400);
+        return json({ posted: true, link: 'https://www.facebook.com/' + (d.post_id || d.id) });
       }
       /* the app asks every few seconds: is Instagram done reading the file? then it goes live */
       if (p === '/api/admin/ig/publish' && req.method === 'POST') {

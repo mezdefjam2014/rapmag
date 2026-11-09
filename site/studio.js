@@ -102,8 +102,8 @@ const resHTML=(r,u)=>r.ext==='jpg'?`<img src="${u}">`:`<video src="${u}" control
 window.renderDesign=async(html,H,o)=>{const B=box(o.still||(!o.audio&&!(o.media&&o.media.video))?'MAKING YOUR PICTURE':'MAKING YOUR VIDEO');
  try{const r=await core(html,H,o,B);if(B.stopped)return;const mb=(r.blob.size/1048576).toFixed(1),u=URL.createObjectURL(r.blob),name=`rapaechelon-${slug(o.name)}.${r.ext}`;B.bar(1);
   B.st(`Done: ${mb} MB${r.blob.size>25*1048576?' (over 25 MB, use a shorter cut)':''}.`);
-  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">POST TO INSTAGRAM</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
-  B.m.querySelector('.rb-ig').onclick=()=>window.IG?IG.panel(r.blob,{h:H,name,caption:o.caption||''}):say('Instagram tools did not load. Refresh the page.');
+  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">POST TO INSTAGRAM / FACEBOOK</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
+  B.m.querySelector('.rb-ig').onclick=()=>window.IG?IG.panel(r.blob,{h:H,name,ctx:o.ctx||{}}):say('Instagram tools did not load. Refresh the page.');
   B.m.querySelector('.rb-sh').onclick=async()=>{const f=new File([r.blob],name,{type:r.blob.type});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]}).catch(()=>{});else B.st('Sharing works on phones. On a computer, click SAVE.')}}
  catch(e){B.st('Could not make it: '+(e.message||e))}};
 /* many designs (carousel): renders one after another, then one ZIP with everything */
@@ -124,12 +124,12 @@ window.stuInit=()=>{const $=s=>document.querySelector(s);let rt;const redraw=()=
  $('#dm').onchange=()=>{const f=fresh($('#dm'));if(!f)return;if(DMEDIA)URL.revokeObjectURL(DMEDIA.url);DMEDIA={file:f,url:URL.createObjectURL(f),video:/^video\//.test(f.type)};$('#dmn').textContent=f.name+' ('+(f.size/1048576).toFixed(1)+' MB, stays on this computer)';dtrim.set(DMEDIA);redraw()};
  $('#dclr').onclick=()=>{if(DMEDIA)URL.revokeObjectURL(DMEDIA.url);DMEDIA=null;COVER=null;dtrim.clear();$('#dmn').textContent='Cleared. Add a new song or video.';redraw()};
  const dgo=()=>{if(!DMEDIA)return say('Add the song (MP3/OGG/WAV) or a video (MP4) first.');const [n,,h]=TT()[SEL];
-  renderDesign(fx(h),1920,{name:DART+' '+DSONG,caption:(DART!=='ARTIST NAME'?DART+' - ':'')+(DSONG!=='SONG NAME'?DSONG:'')+'\n\nOut now. #RAPAECHELON',start:dtrim.start,end:dtrim.end,audio:DMEDIA.video?null:DMEDIA,media:DMEDIA.video?DMEDIA:null,S:{x:50,y:50,z:1},place:r=>placeIn(r,st(SEL))})};
+  renderDesign(fx(h),1920,{name:DART+' '+DSONG,ctx:{type:'drop',artist:DART!=='ARTIST NAME'?DART:'',song:DSONG!=='SONG NAME'?DSONG:''},start:dtrim.start,end:dtrim.end,audio:DMEDIA.video?null:DMEDIA,media:DMEDIA.video?DMEDIA:null,S:{x:50,y:50,z:1},place:r=>placeIn(r,st(SEL))})};
  $('#drender').onclick=dgo;
  $('#dprev').onclick=()=>{const [,,h]=TT()[SEL];previewDesign(fx(h),1920,{place:r=>placeIn(r,st(SEL)),audio:DMEDIA&&!DMEDIA.video?DMEDIA:null,start:dtrim.start,end:dtrim.end,go:dgo})};
  const ntrim=Trim($('#ntrim'));window._ntrim=ntrim;
  $('#nclr').onclick=()=>{if(NM)URL.revokeObjectURL(NM);NM=null;NMV=0;ntrim.clear();ndraw()};
- const ngo=()=>{const [,,f]=NT()[NSEL];if(!NM)return say('Add a photo or video first.');renderDesign(f(NSEL),NH(),{name:nt.value,caption:nt.value+(ncap.value?'\n\n'+ncap.value:'')+'\n\n#RAPAECHELON',start:ntrim.start,end:ntrim.end,media:{url:NM,video:NMV},S:ns(NSEL),still:!NMV})};
+ const ngo=()=>{const [,,f]=NT()[NSEL];if(!NM)return say('Add a photo or video first.');renderDesign(f(NSEL),NH(),{name:nt.value,ctx:{type:'news',title:nt.value,cap:ncap.value},start:ntrim.start,end:ntrim.end,media:{url:NM,video:NMV},S:ns(NSEL),still:!NMV})};
  $('#nrender').onclick=ngo;
  $('#nprev').onclick=()=>{const [,,f]=NT()[NSEL];previewDesign(f(NSEL),NH(),{place:r=>r.querySelectorAll('.md').forEach(m=>{const S=ns(NSEL),el=m.querySelector('img,video');if(el){el.style.objectPosition=S.x+'% '+S.y+'%';el.style.transform=`scale(${S.z})`;el.style.transformOrigin=S.x+'% '+S.y+'%'}}),start:ntrim.start,end:ntrim.end,go:ngo})};
 };
