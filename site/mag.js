@@ -33,9 +33,8 @@ const cut=(v,k,st)=>{const o=v[k],u=o&&o.u;if(!u)return EDIT?`<div class="mg-ph 
  return `<img class="mg-cut" data-slot="${k}" src="${esc(abs(u))}" alt="" style="${st};transform:scale(${o.z??1});transform-origin:50% 100%;object-position:${o.x??50}% 100%" draggable="false">`};
 const fit=(s,base,n)=>Math.round(base*Math.max(.42,Math.min(1,Math.sqrt((n||12)/Math.max(1,String(s||'').length)))));
 /* the masthead: always at the top, always big. A logo uploaded in the Maker replaces the built one. */
-const MH=(d,top,w)=>{w=w||900;const l=d&&d.logo&&d.logo.u;
- if(l)return `<div class="mg-mh" style="top:${top}px;width:${w}px;margin-left:-${w/2}px"><img src="${esc(abs(l))}" alt="RAPMAG" style="width:100%"></div>`;
- const k=w/900;return `<div class="mg-mh" style="top:${top}px;width:${w}px;margin-left:-${w/2}px"><div class="mh-row" style="font-size:${190*k}px"><span class="mh-rap">RAP</span><span class="mh-ae" style="font-size:${30*k}px">AECHELON</span><span class="mh-mag">MAG</span></div><div class="mh-tag" style="font-size:${30*k}px">MUSIC · NEWS · CULTURE</div></div>`};
+const MH=(d,top,w)=>{w=w||860;const l=(d&&d.logo&&d.logo.u)||'logo.webp';
+ return `<div class="mg-mh" style="top:${top}px;width:${w}px;margin-left:-${w/2}px"><img src="${esc(abs(l))}" alt="RAPMAG" style="width:100%;height:auto"></div>`};
 const issue=(v,top)=>v.issue?`<div class="mg-iss" style="top:${top}px">${tx(v,'issue')}</div>`:'';
 const foot=(v,t)=>`<div class="mg-handle"${t?` style="${t}"`:''}>${v.handle?tx(v,'handle'):'@RAPAECHELON · RAPAECHELON.COM'}</div>`;
 const circ=(v,i,st,box)=>`<div class="mg-circ${box?' box':''}" style="${st}">${im(v,'p'+i,'cimg')}${v['p'+i+'n']?`<b>${tx(v,'p'+i+'n')}</b>`:EDIT?'<b>NAME</b>':''}</div>`;
@@ -72,7 +71,7 @@ cov('c-row','Featuring Row',['issue','bg','star','name','tag','p1','p1n','p2','p
  <div class="mg-row"><div class="mg-rowh">${tx(v,'l1h')||'FEATURING'}${v.l1?': '+tx(v,'l1'):''}</div>${[1,2,3,4].map(i=>circ(v,i,'position:relative',1)).join('')}</div>${foot(v,'bottom:8px')}`);
 cov('c-split','Split Box',['issue','bg','star','name','tag','l1h','l1','l2h','l2','l3h','l3','p1','p1n','handle'],(v,d)=>`<div class="full" style="background:var(--bg2)"></div>${im(v,'bg','','position:absolute;left:0;top:0;width:560px;height:100%')}${issue(v,22)}${MH(d,60)}
  ${cut(v,'star','position:absolute;left:-20px;width:640px;bottom:0;height:1060px;object-fit:contain')}
- <div class="mg-box" style="left:560px;top:380px;width:400px"><div class="mg-name block" style="position:static;text-align:left;font-size:${fit(v.name,96,9)}px">${tx(v,'name')}</div><div class="mg-tag" style="position:static;text-align:left;margin-top:10px">${tx(v,'tag')}</div></div>
+ <div class="mg-box" style="left:560px;top:420px;width:400px"><div class="mg-name block" style="position:static;text-align:left;font-size:${fit(v.name,96,9)}px">${tx(v,'name')}</div><div class="mg-tag" style="position:static;text-align:left;margin-top:10px">${tx(v,'tag')}</div></div>
  ${[1,2,3].map(i=>line(v,i,`left:600px;top:${760+(i-1)*95}px;width:360px`)).join('')}${circ(v,1,'right:40px;top:1060px')}${foot(v)}`);
 cov('c-exclusive','Exclusive Ribbon',['issue','bg','star','name','tag','badge','l1h','l1','l2h','l2','p1','p1n','handle'],(v,d)=>`${im(v,'bg','full')}<div class="mg-shade"></div>${issue(v,22)}${MH(d,60)}
  ${cut(v,'star','position:absolute;left:130px;width:740px;bottom:0;height:1110px;object-fit:contain')}
@@ -88,7 +87,7 @@ cov('c-minimal','Minimal',['issue','bg','star','name','tag','handle'],(v,d)=>`${
  <div class="mg-name block" style="left:50px;width:900px;text-align:left;top:1010px;font-size:${fit(v.name,130,10)}px">${tx(v,'name')}</div><div class="mg-tag" style="left:50px;width:900px;text-align:left;top:${1020+fit(v.name,130,10)}px">${tx(v,'tag')}</div>${foot(v,'top:24px;bottom:auto;left:auto;right:30px;text-align:right')}`);
 cov('c-chart','Chart Issue',['issue','bg','star','name','tag','chart','handle'],(v,d)=>`${im(v,'bg','full')}<div class="mg-shade l"></div>${issue(v,22)}${MH(d,60)}
  ${cut(v,'star','position:absolute;right:-60px;width:660px;bottom:0;height:1060px;object-fit:contain')}
- <div class="mg-chartbox" style="left:40px;top:400px;width:420px"><h4>THE INDIE CHARTS<br><span>TOP 10</span></h4>${chartRows(v,10,1)}</div>
+ <div class="mg-chartbox" style="left:40px;top:420px;width:420px"><h4>THE INDIE CHARTS<br><span>TOP 10</span></h4>${chartRows(v,10,1)}</div>
  <div class="mg-name block" style="right:40px;left:auto;width:520px;text-align:right;top:1040px;font-size:${fit(v.name,96,9)}px">${tx(v,'name')}</div><div class="mg-tag" style="right:40px;left:auto;width:520px;text-align:right;top:${1046+fit(v.name,96,9)}px">${tx(v,'tag')}</div>${foot(v)}`);
 cov('c-collage','Collage',['issue','bg','star','name','tag','p1','p1n','p2','p2n','p3','p3n','l1h','l1','handle'],(v,d)=>`${im(v,'bg','full')}<div class="mg-shade"></div>${issue(v,22)}${MH(d,60)}
  ${cut(v,'star','position:absolute;left:40px;width:620px;bottom:0;height:1050px;object-fit:contain')}
