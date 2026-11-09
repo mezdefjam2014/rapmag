@@ -197,4 +197,5 @@ button{font:inherit;cursor:pointer}
 }
 
 /* home lead story: excerpt shows on desktop only */
+@media(max-width:860px){.card.lead{grid-template-columns:1fr;gap:0;padding-bottom:36px}.card.lead .im{grid-row:auto;aspect-ratio:16/10;margin-bottom:16px}.card.lead h2,.card.lead.long h2{font-size:clamp(30px,8.5vw,42px);line-height:1}}
 @media(max-width:760px){.card.lead .ldek{display:none}}
