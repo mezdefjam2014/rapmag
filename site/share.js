@@ -89,9 +89,10 @@ const SHARE={buildTags,buildCaption,tagify,
      if(ok.ready){$('.igp-go').disabled=true;st('Sending the email with the file attached…');const fd=new FormData();fd.append('file',blob,name);fd.append('to',to0);fd.append('subject',subj);fd.append('text',text);
       const r=await fetch(API+'/api/admin/mail',{method:'POST',headers:{Authorization:'Bearer '+tk},body:fd}),d=await r.json().catch(()=>({}));$('.igp-go').disabled=false;
       if(r.ok)return st(`<b>Sent!</b> Check ${esc(to0)}. The ${vid?'video':'picture'} is attached, with the caption and hashtags.`);return st('<p class="igp-w">Could not send: '+esc(d.error||'error')+'</p>')}}catch(e){$('.igp-go').disabled=false}}
+   const notReady=!!(tk&&API);
    const a=document.createElement('a');a.href=url;a.download=name;a.click();await copy();
    const to=$('.igp-em').value.trim();window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`,'_blank');
-   st(`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
+   st((notReady?'<p class="igp-w">Real attaching is not switched on yet (the email key is missing on the server), so this opened a Gmail draft instead.</p>':'')+`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
   const close=()=>{URL.revokeObjectURL(url);m.remove()};$('.igp-x').onclick=$('.igp-xx').onclick=close;m.onclick=e=>{if(e.target===m)close()};draw()}
 };
 window.SHARE=SHARE;

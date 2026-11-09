@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=8"></script><script src="share.js?v=3"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=9"></script><script src="share.js?v=4"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -72,7 +72,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <label class="up gr">+ COVER ART<input type="file" id="dc" accept="image/*" hidden></label>
 <label class="up">+ SONG (MP3 / OGG / WAV) OR VIDEO (MP4)<input type="file" id="dm" accept="audio/*,video/*,.ogg,.mp3,.wav,.m4a" hidden></label>
 <button id="dclr" class="rs">CLEAR</button><div class="trim" id="dtrim" hidden></div>
-<button id="dprev" class="go gr2">👁 PREVIEW</button><button id="drender" class="go">RENDER VIDEO</button><small id="dmn">Nothing is uploaded. Your song and video only stay in this tab while the video is made.</small></div>
+<button id="dprev" class="go gr2">👁 PREVIEW</button><button id="drender" class="go">RENDER VIDEO</button><button id="demail" class="go gr2">✉ RENDER + EMAIL</button><small id="dmn">Nothing is uploaded. Your song and video only stay in this tab while the video is made.</small></div>
 <div class="grid" id="g"></div>
 <div class="note"><h3>HOW THE DROP WOULD WORK</h3>
 <b>1.</b> Pick a template, type the artist and song name, drop in the cut-out photo (with the background remover you already have) and the cover art.<br>
@@ -91,7 +91,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <button id="nr" class="rs">RESET</button><small>Your photo or video stays on this computer. The controls only change the design you picked. The title and caption show on every design so you can compare.</small></div>
 <div class="ctl mk"><div class="cur">MAKE IT <span>(uses the design you picked)</span></div>
 <button id="nclr" class="rs">CLEAR PHOTO / VIDEO</button><div class="trim" id="ntrim" hidden></div>
-<button id="nprev" class="go gr2">👁 PREVIEW</button><button id="nrender" class="go">RENDER</button><small>A photo saves as a picture. A video renders as a video, kept under 25 MB.</small></div>
+<button id="nprev" class="go gr2">👁 PREVIEW</button><button id="nrender" class="go">RENDER</button><button id="nemail" class="go gr2">✉ RENDER + EMAIL</button><small>A photo saves as a picture. A video renders as a video, kept under 25 MB.</small></div>
 <div class="grid" id="ng"></div></div>
 
 <script>
