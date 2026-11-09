@@ -46,7 +46,7 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');let of
  setMeta(cat?(CN[cat]||cat)+' News | RAPAECHELON - RAPMAG':q!=null?'Search | RAPAECHELON - RAPMAG':'RAPAECHELON - RAPMAG | Hip-Hop, Rap & Entertainment News',cat?'The latest '+String(CN[cat]||cat).toLowerCase()+' stories in hip-hop and rap from RAPAECHELON - RAPMAG.':'RAPAECHELON - RAPMAG: breaking hip-hop and rap news, new music and entertainment stories, updated daily.');
  main.innerHTML=`<div class="wrap shell">${!cat&&q==null?promo():''}${head}<section class="grid" id="g" aria-label="Published articles"></section><button class="more" id="mo" hidden>LOAD MORE STORIES</button></div>`;
  const load=async()=>{const B=window.RM_BOOT,d=!off&&!cat&&q==null&&B&&B.posts?B.posts:await get('/api/posts?limit='+N+'&offset='+off+(cat?'&cat='+cat:'')+(q?'&q='+encodeURIComponent(q):''));
-  $('#g').insertAdjacentHTML('beforeend',d.posts.map((p,i)=>card(p,!cat&&q==null&&off===0&&i===0)).join(''));off+=d.posts.length;$('#mo').hidden=d.posts.length<N;
+  const shown=!cat&&q==null?d.posts.filter(p=>!/new-music/.test(p.category)):d.posts;$('#g').insertAdjacentHTML('beforeend',shown.map((p,i)=>card(p,!cat&&q==null&&off===0&&i===0)).join(''));off+=d.posts.length;$('#mo').hidden=d.posts.length<N;
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
 /* ---------- author page ---------- */
