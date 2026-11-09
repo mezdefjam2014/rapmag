@@ -34,11 +34,14 @@ window.Trim=function(box){let el=null,A=0,B=0,looping=false;
   <div class="tr-row"><button class="tr-btn r tr-play">▶ PLAY THE CUT</button><label class="tr-lp"><input type="checkbox" class="tr-loop" checked> LOOP IT</label><span class="tr-len"></span></div>`;
   el=document.createElement(media.video?'video':'audio');el.src=media.url;el.controls=true;el.playsInline=true;el.preload='auto';box.querySelector('.tr-pl').appendChild(el);
   const sa=box.querySelector('.tr-sa'),sb=box.querySelector('.tr-sb'),show=()=>{box.querySelector('.tr-a').textContent=fmt(A);box.querySelector('.tr-b').textContent=fmt(B);box.querySelector('.tr-len').textContent='Clip: '+fmt(B-A)+(B-A>60?' (long clips make bigger files)':'');sa.value=A;sb.value=B};
-  el.onloadedmetadata=()=>{const d=isFinite(el.duration)?el.duration:30;sa.max=sb.max=d;A=0;B=Math.min(d,30);show()};
-  sa.oninput=()=>{A=Math.min(+sa.value,B-.5);el.currentTime=A;show()};sb.oninput=()=>{B=Math.max(+sb.value,A+.5);el.currentTime=Math.max(A,B-2);show()};
-  box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const t=el.currentTime;if(b.dataset.s==='a')A=Math.min(t,B-.5);else B=Math.max(t,A+.5);show()});
+  let D=30;el.onloadedmetadata=()=>{D=isFinite(el.duration)?el.duration:30;sa.max=sb.max=D;A=0;B=D;show()};
+  /* the markers go exactly where you put them; only if they would cross does the other one move out of the way */
+  const setA=t=>{A=Math.max(0,Math.min(t,D-.2));if(B<A+.2)B=D;show()},setB=t=>{B=Math.min(D,Math.max(t,.2));if(A>B-.2)A=0;show()};
+  sa.oninput=()=>{looping=false;setA(+sa.value);el.currentTime=A};sb.oninput=()=>{looping=false;setB(+sb.value);el.currentTime=B};
+  box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{looping=false;const t=el.currentTime;b.dataset.s==='a'?setA(t):setB(t)});
   box.querySelector('.tr-play').onclick=()=>{looping=true;el.currentTime=A;el.play()};
-  el.ontimeupdate=()=>{if(looping&&el.currentTime>=B){if(box.querySelector('.tr-loop').checked)el.currentTime=A;else{el.pause();looping=false}}}}
+  el.onseeking=()=>{if(looping&&(el.currentTime>B+.5||el.currentTime<A-.5))looping=false};
+  el.ontimeupdate=()=>{if(looping&&el.currentTime>=B&&el.currentTime<B+.6){if(box.querySelector('.tr-loop').checked)el.currentTime=A;else{el.pause();looping=false}}}}
  clear();return T};
 /* ---------- big preview: the design up close, playing with sound between START and END ---------- */
 window.previewDesign=(html,H,o={})=>{const m=document.createElement('div');m.className='pv';const k=Math.min((innerHeight-130)/H,(innerWidth-32)/1080);
