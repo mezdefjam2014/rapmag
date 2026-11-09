@@ -169,7 +169,7 @@ export default {
       }
       if (p === '/api/admin/indie/reset' && req.method === 'POST') {
         const c = await indieChart(env); await indieTable(env); await DB.prepare('DELETE FROM indie_plays').run();
-        await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, boosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
+        await saveIndie(env, { songs: c.cfg.songs.map(x => ({ ...x, bonus: 0, pace: 0, boosts: [] })), prev: Object.fromEntries(c.items.map(x => [x.id, x.rank])), prevAt: Date.now() });
         return json({ ok: true });
       }
       /* settings */
@@ -213,7 +213,7 @@ export default {
 
 /* ---------- Indie Charts ---------- */
 const httpsOnly = u => /^https:\/\//.test(String(u || '')) || /^\/img\/(audio|images)\//.test(String(u || '')) ? String(u) : '';
-function indieSong(v) { return { id: /^[\w-]{1,40}$/.test(v.id) ? v.id : '', title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), bonus: Math.max(0, Math.min(1e9, Math.round(+v.bonus || 0))), lock: Math.max(0, Math.min(20, Math.round(+v.lock || 0))), boosts: (Array.isArray(v.boosts) ? v.boosts : []).slice(0, 20).map(b => ({ a: Math.max(0, Math.min(1e9, Math.round(+b.a || 0))), s: +b.s || 0, e: +b.e || 0 })).filter(b => b.a && b.e > b.s) } }
+function indieSong(v) { return { id: /^[\w-]{1,40}$/.test(v.id) ? v.id : '', title: String(v.title || '').slice(0, 160), artist: String(v.artist || '').slice(0, 160), cover: httpsOnly(v.cover), audio: httpsOnly(v.audio), bonus: Math.max(0, Math.min(1e9, Math.round(+v.bonus || 0))), lock: Math.max(0, Math.min(20, Math.round(+v.lock || 0))), hold: v.hold ? 1 : 0, pace: Math.max(0, Math.round(+v.pace || 0)), boosts: (Array.isArray(v.boosts) ? v.boosts : []).slice(0, 20).map(b => ({ a: Math.max(0, Math.min(1e9, Math.round(+b.a || 0))), s: +b.s || 0, e: +b.e || 0 })).filter(b => b.a && b.e > b.s) } }
 /* autoplay: each boost adds its plays evenly from start to end */
 /* each hour gets an uneven share (busier evenings, quieter nights, random swings) so the plays look like real listening; the total lands exactly on the target at the end */
 function boostEarned(b, t = Date.now()) {
@@ -233,7 +233,10 @@ async function saveIndie(env, c) { await env.DB.prepare("INSERT INTO settings (k
 async function indieChart(env) {
   await indieTable(env);
   const cfg = await indieCfg(env), rows = (await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_plays GROUP BY song').all()).results, real = Object.fromEntries(rows.map(r => [r.song, r.n]));
-  const list = cfg.songs.map(x => { const auto = boosted(x); return { ...x, boosts: x.boosts.map(b => ({ ...b, got: boostEarned(b) })), real: real[x.id] || 0, auto, plays: (real[x.id] || 0) + x.bonus + auto } });
+  const list = cfg.songs.map(x => { const auto = boosted(x); return { ...x, boosts: x.boosts.map(b => ({ ...b, got: boostEarned(b) })), real: real[x.id] || 0, auto, plays: (real[x.id] || 0) + x.bonus + auto + x.pace } });
+  /* STAY #1: the held song earns just enough plays to stay a little ahead of the next song (kept, so its count never drops) */
+  const held = list.find(x => x.hold && !x.lock);
+  if (held) { const best = Math.max(0, ...list.filter(x => x !== held).map(x => x.plays)); if (held.plays <= best) { const add = best - held.plays + Math.max(1, Math.ceil(best * (0.02 + Math.random() * 0.03))); held.pace += add; held.plays += add; const c = cfg.songs.find(x => x.id === held.id); c.pace = held.pace; await saveIndie(env, cfg) } }
   const free = list.filter(x => !x.lock).sort((a, b) => b.plays - a.plays), out = [];
   for (const x of list.filter(x => x.lock).sort((a, b) => a.lock - b.lock)) out[x.lock - 1] ? free.unshift(x) : (out[x.lock - 1] = x);
   for (let i = 0; free.length; i++) if (!out[i]) out[i] = free.shift();
