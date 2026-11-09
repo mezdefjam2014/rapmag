@@ -10,7 +10,7 @@ const LIST = `p.id,p.slug,p.title,p.dek,p.cover,p.cover_alt,p.category,p.tags,p.
 const FROM = `FROM posts p LEFT JOIN authors a ON a.id=p.author_id`;
 
 export default {
-  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieChart(env).catch(() => { }));ctx.waitUntil(igKeepAlive(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
+  async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieChart(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
   async fetch(req, env, ctx) {
     const url = new URL(req.url), p = url.pathname, origin = req.headers.get('Origin') || '';
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim());
@@ -105,7 +105,6 @@ export default {
         const exp = Date.now() + 1000 * 60 * 60 * 24 * 7;
         return json({ token: exp + '.' + await sign(String(exp), env) });
       }
-      if (p === '/api/ig/callback') return igCallback(url, env);
       if (!p.startsWith('/api/admin/')) return json({ error: 'Not found' }, 404);
       if (!(await authed(req, env))) return json({ error: 'Not logged in' }, 401);
       const body = req.method === 'POST' && !(req.headers.get('Content-Type') || '').startsWith('multipart') ? await req.json().catch(() => ({})) : null;
@@ -275,50 +274,6 @@ export default {
         if (out.x === 'posted') await DB.prepare(`UPDATE posts SET social_x=datetime('now') WHERE id=?`).bind(post.id).run();
         return json({ result: out });
       }
-      /* Instagram: connect once, then post pictures / Reels / Stories straight from the back office */
-      if (p === '/api/admin/ig/status') { const t = await igTok(env); return json({ fb: !!(env.FB_PAGE_ID && env.FB_PAGE_TOKEN), configured: !!(env.IG_APP_ID && env.IG_APP_SECRET), connected: !!t, username: t && t.name || '', redirect: url.origin + '/api/ig/callback' }) }
-      if (p === '/api/admin/ig/connect') { if (!env.IG_APP_ID) return json({ error: 'Add IG_APP_ID and IG_APP_SECRET to the API first' }, 400); const exp = String(Date.now() + 6e5);
-        return json({ url: 'https://www.instagram.com/oauth/authorize?' + new URLSearchParams({ client_id: env.IG_APP_ID, redirect_uri: url.origin + '/api/ig/callback', response_type: 'code', scope: 'instagram_business_basic,instagram_business_content_publish', state: exp + '.' + await sign('ig' + exp, env) }) }) }
-      if (p === '/api/admin/ig/disconnect' && req.method === 'POST') { await secret(env, 'ig', null); return json({ ok: true }) }
-      if (p === '/api/admin/ig/post' && req.method === 'POST') {
-        const t = await igTok(env); if (!t) return json({ error: 'Instagram is not connected' }, 400);
-        const fd = await req.formData(), f = fd.get('file'), kind = String(fd.get('kind') || 'feed'), cap = String(fd.get('caption') || '').slice(0, 2200);
-        if (!f || typeof f === 'string') return json({ error: 'No file' }, 400);
-        const vid = /^video\//.test(f.type); if (vid && !/mp4|quicktime/.test(f.type)) return json({ error: 'Instagram needs an MP4 video. Render in Chrome or Edge.' }, 400);
-        if (!vid && f.type !== 'image/jpeg') return json({ error: 'Instagram needs a JPG picture.' }, 400);
-        if (f.size > 95e6) return json({ error: 'File is too big' }, 400);
-        const key = 'ig/' + crypto.randomUUID() + (vid ? '.mp4' : '.jpg'); await env.IMAGES.put(key, f.stream(), { httpMetadata: { contentType: vid ? 'video/mp4' : 'image/jpeg' } });
-        const src = url.origin + '/img/' + key, q = { access_token: t.t };
-        if (kind === 'story') Object.assign(q, { media_type: 'STORIES' }, vid ? { video_url: src } : { image_url: src });
-        else if (vid) Object.assign(q, { media_type: 'REELS', video_url: src, caption: cap, share_to_feed: 'true' });
-        else Object.assign(q, { image_url: src, caption: cap });
-        const r = await fetch(`https://graph.instagram.com/v21.0/${t.uid}/media`, { method: 'POST', body: new URLSearchParams(q) }), d = await r.json();
-        if (!r.ok || !d.id) { await env.IMAGES.delete(key); return json({ error: igErr(d) }, 400) }
-        return json({ id: d.id, key });
-      }
-      /* Facebook Page: post a picture or video made on the site (uses FB_PAGE_ID + FB_PAGE_TOKEN) */
-      if (p === '/api/admin/fb/post' && req.method === 'POST') {
-        if (!env.FB_PAGE_ID || !env.FB_PAGE_TOKEN) return json({ error: 'Facebook Page is not connected' }, 400);
-        const fd = await req.formData(), f = fd.get('file'), cap = String(fd.get('caption') || '').slice(0, 5000);
-        if (!f || typeof f === 'string') return json({ error: 'No file' }, 400);
-        const vid = /^video\//.test(f.type), out = new FormData(); out.append('source', f, f.name || (vid ? 'video.mp4' : 'post.jpg')); out.append(vid ? 'description' : 'message', cap); out.append('access_token', env.FB_PAGE_TOKEN);
-        const r = await fetch(`https://graph${vid ? '-video' : ''}.facebook.com/v21.0/${env.FB_PAGE_ID}/${vid ? 'videos' : 'photos'}`, { method: 'POST', body: out }), d = await r.json();
-        if (!r.ok || !(d.id || d.post_id)) return json({ error: igErr(d) }, 400);
-        return json({ posted: true, link: 'https://www.facebook.com/' + (d.post_id || d.id) });
-      }
-      /* the app asks every few seconds: is Instagram done reading the file? then it goes live */
-      if (p === '/api/admin/ig/publish' && req.method === 'POST') {
-        const t = await igTok(env); if (!t) return json({ error: 'Instagram is not connected' }, 400);
-        const id = String(body.id || '').replace(/\D/g, ''), key = String(body.key || ''); if (!id) return json({ error: 'bad id' }, 400);
-        const cleanup = () => /^ig\/[\w-]+\.(mp4|jpg)$/.test(key) ? env.IMAGES.delete(key) : 0;
-        const s1 = await (await fetch(`https://graph.instagram.com/v21.0/${id}?fields=status_code,status&access_token=${encodeURIComponent(t.t)}`)).json();
-        if (s1.status_code === 'ERROR' || s1.status_code === 'EXPIRED') { await cleanup(); return json({ error: 'Instagram could not use that file: ' + (s1.status || s1.status_code) }, 400) }
-        if (s1.status_code && s1.status_code !== 'FINISHED') return json({ pending: true, status: s1.status_code });
-        const r = await fetch(`https://graph.instagram.com/v21.0/${t.uid}/media_publish`, { method: 'POST', body: new URLSearchParams({ creation_id: id, access_token: t.t }) }), d = await r.json();
-        if (!r.ok || !d.id) { if (/not ready|9007/i.test(JSON.stringify(d))) return json({ pending: true }); await cleanup(); return json({ error: igErr(d) }, 400) }
-        await cleanup(); const pl = await (await fetch(`https://graph.instagram.com/v21.0/${d.id}?fields=permalink&access_token=${encodeURIComponent(t.t)}`)).json().catch(() => ({}));
-        return json({ posted: true, link: pl.permalink || '' });
-      }
       return json({ error: 'Not found' }, 404);
     } catch (e) { return json({ error: String(e && e.message || e) }, 500) }
   }
@@ -465,27 +420,3 @@ async function sign(s, env) { const b = await crypto.subtle.sign('HMAC', await h
 async function same(a, b) { const [x, y] = await Promise.all([a, b].map(v => crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)))); const u = new Uint8Array(x), w = new Uint8Array(y); let d = 0; for (let i = 0; i < u.length; i++) d |= u[i] ^ w[i]; return d === 0 }
 async function authed(req, env) { const t = (req.headers.get('Authorization') || '').replace(/^Bearer /, ''), [exp, sig] = t.split('.'); if (!exp || !sig || +exp < Date.now()) return false; return same(sig, await sign(exp, env)) }
 
-/* ---------- Instagram (Instagram API with Instagram Login) ----------
-   The login is kept in its own table, never in the public settings. Secrets on the API: IG_APP_ID, IG_APP_SECRET. */
-async function secret(env, k, v) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS vault (k TEXT PRIMARY KEY, v TEXT)').run();
-  if (v === undefined) { const r = await env.DB.prepare('SELECT v FROM vault WHERE k=?').bind(k).first(); return r ? JSON.parse(r.v) : null }
-  if (v === null) return env.DB.prepare('DELETE FROM vault WHERE k=?').bind(k).run();
-  return env.DB.prepare('INSERT INTO vault (k,v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').bind(k, JSON.stringify(v)).run() }
-const igTok = env => secret(env, 'ig');
-const igErr = d => (d && d.error && (d.error.error_user_msg || d.error.message)) || 'Instagram said no';
-const page = (t, m) => new Response(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#0b0b0b;color:#fff;font:16px system-ui;display:grid;place-items:center;height:100vh;margin:0;text-align:center"><div><h1 style="font:900 34px system-ui">${t}</h1><p style="color:#aaa">${m}</p><p>You can close this tab and go back to the back office.</p></div>`, { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
-async function igCallback(url, env) {
-  const [exp, sig] = String(url.searchParams.get('state') || '').split('.'), code = url.searchParams.get('code');
-  if (!exp || +exp < Date.now() || !same(sig || '', await sign('ig' + exp, env))) return page('Link expired', 'Click CONNECT INSTAGRAM in the back office again.');
-  if (!code) return page('Not connected', url.searchParams.get('error_description') || 'Instagram did not allow it.');
-  const r = await fetch('https://api.instagram.com/oauth/access_token', { method: 'POST', body: new URLSearchParams({ client_id: env.IG_APP_ID, client_secret: env.IG_APP_SECRET, grant_type: 'authorization_code', redirect_uri: url.origin + '/api/ig/callback', code }) }), a = await r.json();
-  if (!a.access_token) return page('Not connected', igErr(a));
-  const l = await (await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(env.IG_APP_SECRET)}&access_token=${encodeURIComponent(a.access_token)}`)).json();
-  const tok = l.access_token || a.access_token, me = await (await fetch(`https://graph.instagram.com/v21.0/me?fields=user_id,username&access_token=${encodeURIComponent(tok)}`)).json();
-  await secret(env, 'ig', { t: tok, uid: me.user_id || a.user_id, name: me.username || '', at: Date.now() });
-  return page('Instagram connected', '@' + (me.username || '') + ' is now linked to RAPAECHELON.');
-}
-/* the login lasts 60 days; refresh it every week so it never runs out, and clear any leftover files */
-async function igKeepAlive(env) { const t = await igTok(env); if (!t) return;
-  if (Date.now() - (t.at || 0) > 7 * 864e5) { const d = await (await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(t.t)}`)).json(); if (d.access_token) await secret(env, 'ig', { ...t, t: d.access_token, at: Date.now() }) }
-  const l = await env.IMAGES.list({ prefix: 'ig/' }); for (const o of l.objects) if (Date.now() - new Date(o.uploaded) > 864e5) await env.IMAGES.delete(o.key) }

@@ -102,8 +102,8 @@ const resHTML=(r,u)=>r.ext==='jpg'?`<img src="${u}">`:`<video src="${u}" control
 window.renderDesign=async(html,H,o)=>{const B=box(o.still||(!o.audio&&!(o.media&&o.media.video))?'MAKING YOUR PICTURE':'MAKING YOUR VIDEO');
  try{const r=await core(html,H,o,B);if(B.stopped)return;const mb=(r.blob.size/1048576).toFixed(1),u=URL.createObjectURL(r.blob),name=`rapaechelon-${slug(o.name)}.${r.ext}`;B.bar(1);
   B.st(`Done: ${mb} MB${r.blob.size>25*1048576?' (over 25 MB, use a shorter cut)':''}.`);
-  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">POST TO INSTAGRAM / FACEBOOK</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
-  B.m.querySelector('.rb-ig').onclick=()=>window.IG?IG.panel(r.blob,{h:H,name,ctx:o.ctx||{}}):say('Instagram tools did not load. Refresh the page.');
+  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">✉ SHARE / EMAIL</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
+  B.m.querySelector('.rb-ig').onclick=()=>window.SHARE?SHARE.panel(r.blob,{h:H,name,ctx:o.ctx||{}}):say('The share box did not load. Refresh the page.');
   B.m.querySelector('.rb-sh').onclick=async()=>{const f=new File([r.blob],name,{type:r.blob.type});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]}).catch(()=>{});else B.st('Sharing works on phones. On a computer, click SAVE.')}}
  catch(e){B.st('Could not make it: '+(e.message||e))}};
 /* many designs (carousel): renders one after another, then one ZIP with everything */

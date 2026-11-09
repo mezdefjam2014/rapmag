@@ -1,10 +1,7 @@
-/* Share anything made on the site to Instagram and the Facebook Page, with an auto caption, auto hashtags and a preview.
-   The file goes to our API for a moment, Instagram / Facebook pick it up, then the API deletes it. */
+/* Share box for anything made on the site: preview, an auto caption and auto hashtags (researched), then EMAIL IT,
+   COPY or SAVE. Nothing is uploaded: the file stays on this computer. */
 (function(){
-const API=()=>window.RM_API||'',tok=()=>{try{return localStorage.getItem('rm_tok')||''}catch(e){return ''}};
-const call=async(p,o={})=>{const r=await fetch(API()+p,{...o,headers:{...(o.body instanceof FormData?{}:{'Content-Type':'application/json'}),Authorization:'Bearer '+tok()}});const d=await r.json().catch(()=>({}));if(r.status===401)throw new Error('Log in to the back office first, then try again.');if(!r.ok)throw new Error(d.error||'Something went wrong');return d};
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* ---------- hashtags ---------- */
 const BRAND=['RAPAECHELON'];
@@ -53,53 +50,45 @@ function buildCaption(c,dest){const L=[],link=dest==='fb'&&c.link?c.link:'';
 /* any picture becomes a JPG (Instagram only takes JPG) */
 async function toJpg(blob){if(blob.type==='image/jpeg'||/^video/.test(blob.type))return blob;const im=new Image();const u=URL.createObjectURL(blob);im.src=u;await im.decode();const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0);URL.revokeObjectURL(u);return new Promise(r=>c.toBlob(b=>r(new File([b],'post.jpg',{type:'image/jpeg'})),'image/jpeg',.93))}
 
-const IG={buildTags,buildCaption,tagify,
- status:()=>call('/api/admin/ig/status'),
- connect:async()=>{const d=await call('/api/admin/ig/connect');window.open(d.url,'_blank')},
- disconnect:()=>call('/api/admin/ig/disconnect',{method:'POST',body:'{}'}),
- post:async(blob,{caption='',kind='feed',name='post'},say=()=>{})=>{const fd=new FormData();fd.append('file',blob,name);fd.append('kind',kind);fd.append('caption',caption);
-  say('Sending the file…');const c=await call('/api/admin/ig/post',{method:'POST',body:fd});
-  for(let i=0;i<90;i++){say(i?'Instagram is getting it ready… ('+i*4+' s)':'Instagram is getting it ready…');const d=await call('/api/admin/ig/publish',{method:'POST',body:JSON.stringify(c)});if(d.posted)return d;await wait(4000)}
-  throw new Error('Instagram is taking too long. Check your profile in a few minutes.')},
- postFb:async(blob,{caption='',name='post'})=>{const fd=new FormData();fd.append('file',blob,name);fd.append('caption',caption);return call('/api/admin/fb/post',{method:'POST',body:fd})},
- /* the share box. o: {h, w, name, caption, ctx:{type:'drop'|'news'|'article'|'mag'|'file', artist, song, title, dek, cap, category, section, head, link}} */
- panel:async(blob0,o={})=>{const vid=/^video/.test(blob0.type);const blob=await toJpg(blob0).catch(()=>blob0);const url=URL.createObjectURL(blob);const c={...(o.ctx||{}),video:vid};
-  const tall=o.h&&o.h/(o.w||1080)>1.3;let kind=tall&&!vid?'story':'feed';const on={ig:true,fb:false};
-  const T={ig:buildTags(c,'ig'),fb:buildTags(c,'fb')},C={ig:o.caption||buildCaption(c,'ig'),fb:buildCaption(c,'fb')};let tab='ig';
+const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}};
+const SHARE={buildTags,buildCaption,tagify,
+ /* blob: the finished picture or video. o: {h, w, name, ctx:{type:'drop'|'news'|'article'|'mag'|'file', artist, song, title, dek, cap, category, section, head, link}} */
+ panel:async(blob0,o={})=>{const vid=/^video/.test(blob0.type);const blob=vid?blob0:await toJpg(blob0).catch(()=>blob0);const url=URL.createObjectURL(blob);const c={...(o.ctx||{}),video:vid};
+  const ext=vid?(/mp4/.test(blob.type)?'mp4':'webm'):'jpg',name=(o.name||'rapaechelon-post').replace(/\.[a-z0-9]+$/i,'')+'.'+ext;
+  const T={ig:buildTags(c,'ig'),fb:buildTags(c,'fb')},C={ig:buildCaption(c,'ig'),fb:buildCaption(c,'fb')};let tab='ig';
   const m=document.createElement('div');m.className='igp';
-  m.innerHTML=`<div class="igp-pn"><button class="igp-xx" aria-label="Close">×</button><h3>SHARE IT</h3><div class="igp-who">Checking the connections…</div>
+  m.innerHTML=`<div class="igp-pn"><button class="igp-xx" aria-label="Close">×</button><h3>SHARE IT</h3><div class="igp-who">Caption and hashtags are made for you. Change anything, then email it to yourself or copy it.</div>
   <div class="igp-cols"><div class="igp-pv">${vid?`<video src="${url}" controls playsinline loop></video>`:`<img src="${url}">`}</div>
-  <div class="igp-ed"><div class="igp-dest"><label><input type="checkbox" data-on="ig" checked> INSTAGRAM</label><span class="igp-k"><button data-k="feed">${vid?'REEL':'POST'}</button><button data-k="story">STORY</button></span><label><input type="checkbox" data-on="fb"> FACEBOOK PAGE</label></div>
-  <div class="igp-tabs"><button data-t="ig">INSTAGRAM TEXT</button><button data-t="fb">FACEBOOK TEXT</button></div>
+  <div class="igp-ed"><div class="igp-tabs"><button data-t="ig">FOR INSTAGRAM</button><button data-t="fb">FOR FACEBOOK</button></div>
   <textarea class="igp-cap" placeholder="Caption"></textarea>
-  <div class="igp-hl"><b>HASHTAGS</b> <span class="igp-cnt"></span><button class="igp-auto">↻ AUTO CAPTION + HASHTAGS</button></div>
+  <div class="igp-hl"><b>HASHTAGS</b> <span class="igp-cnt"></span><button class="igp-auto">↻ NEW CAPTION + HASHTAGS</button></div>
   <div class="igp-tags"></div><input class="igp-add" placeholder="+ add a hashtag and press Enter">
-  <div class="igp-look"><b>HOW IT WILL LOOK</b><div class="igp-mock"></div></div></div></div>
-  <div class="igp-act"><button class="igp-go">POST NOW</button><button class="igp-x">CLOSE</button></div><div class="igp-st"></div></div>`;
+  <div class="igp-look"><b>HOW IT WILL LOOK</b><div class="igp-mock"></div></div>
+  <div class="igp-to"><b>EMAIL TO</b><input type="email" class="igp-em" placeholder="your@email.com (remembered on this computer)"></div></div></div>
+  <div class="igp-act"><button class="igp-go">✉ EMAIL IT</button><button class="igp-cp">COPY CAPTION</button><a class="igp-sv" href="${url}" download="${name}">SAVE FILE</a><button class="igp-x">CLOSE</button></div><div class="igp-st"></div></div>`;
   document.body.appendChild(m);const $=s=>m.querySelector(s),st=h=>$('.igp-st').innerHTML=h;
   const full=d=>C[d].trim()+(T[d].length?'\n\n'+T[d].map(t=>'#'+t).join(' '):'');
-  const draw=()=>{m.querySelectorAll('[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k===kind));m.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-   const story=tab==='ig'&&kind==='story';$('.igp-cap').value=C[tab];$('.igp-cap').disabled=story;$('.igp-cap').placeholder=story?'Instagram Stories have no caption.':'Caption';
+  const mock=()=>$('.igp-mock').innerHTML=`<b>rapaechelon</b> ${esc(full(tab)).replace(/\n/g,'<br>').replace(/#(\w+)/g,'<span>#$1</span>')}`;
+  const draw=()=>{m.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));$('.igp-cap').value=C[tab];
    $('.igp-tags').innerHTML=T[tab].map((t,i)=>`<span class="igp-tag">#${esc(t)}<button data-x="${i}">×</button></span>`).join('');
-   $('.igp-cnt').textContent=`${T[tab].length} of ${LIMIT[tab]} (${tab==='ig'?'Instagram':'Facebook'} works best with ${LIMIT[tab]} or fewer)`;
-   $('.igp-mock').innerHTML=story?'<i>No caption on a Story.</i>':`<b>${tab==='ig'?'rapaechelon':'RAPAECHELON'}</b> ${esc(full(tab)).replace(/\n/g,'<br>').replace(/#(\w+)/g,'<span>#$1</span>')}`;
-   const warn=on.ig&&kind==='feed'&&!vid&&tall?'<p class="igp-w">This picture is Story size (9:16). Instagram posts must be 4:5 or wider, so pick STORY or render the POST 4:5 size.</p>':'';st(warn)};
-  m.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{kind=b.dataset.k;draw()});m.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
-  m.querySelectorAll('[data-on]').forEach(b=>b.onchange=()=>{on[b.dataset.on]=b.checked;if(b.checked){tab=b.dataset.on;draw()}});
-  $('.igp-cap').oninput=()=>{C[tab]=$('.igp-cap').value;$('.igp-mock').innerHTML=`<b>rapaechelon</b> ${esc(full(tab)).replace(/\n/g,'<br>').replace(/#(\w+)/g,'<span>#$1</span>')}`};
+   $('.igp-cnt').textContent=`${T[tab].length} of ${LIMIT[tab]} (${tab==='ig'?'Instagram allows 5':'Facebook works best with 3 or fewer'})`;mock()};
+  m.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+  $('.igp-cap').oninput=()=>{C[tab]=$('.igp-cap').value;mock()};
   $('.igp-tags').onclick=e=>{const b=e.target.closest('[data-x]');if(b){T[tab].splice(+b.dataset.x,1);draw()}};
-  $('.igp-add').onkeydown=e=>{if(e.key!=='Enter'&&e.key!==',')return;e.preventDefault();String($('.igp-add').value).split(/[\s,#]+/).map(tagify).filter(Boolean).forEach(t=>{if(!T[tab].includes(t))T[tab].push(t)});$('.igp-add').value='';draw()};
+  $('.igp-add').onkeydown=e=>{if(e.key!=='Enter'&&e.key!==',')return;e.preventDefault();String($('.igp-add').value).split(/[\s,#]+/).map(tagify).filter(Boolean).forEach(t=>{if(!T[tab].includes(t)&&!AVOID.test(t))T[tab].push(t)});if(tab==='ig'&&T.ig.length>5)st('<p class="igp-w">Instagram only allows 5 hashtags. Remove one.</p>');$('.igp-add').value='';draw()};
   $('.igp-auto').onclick=()=>{T[tab]=buildTags(c,tab);C[tab]=buildCaption(c,tab);draw()};
-  const close=()=>{URL.revokeObjectURL(url);m.remove()};$('.igp-x').onclick=$('.igp-xx').onclick=close;draw();
-  let S={};try{S=await IG.status();$('.igp-who').innerHTML=`Instagram: <b>${S.connected?'@'+esc(S.username):'not connected'}</b> · Facebook Page: <b>${S.fb?'connected':'not connected'}</b>${!S.connected||!S.fb?' · <a href="admin.html#dist" target="_blank">set up</a>':''}`}catch(e){$('.igp-who').textContent=e.message}
-  $('.igp-go').onclick=async()=>{if(!on.ig&&!on.fb)return st('Tick Instagram or Facebook.');if(on.ig&&kind==='feed'&&!vid&&tall)return st('<p class="igp-w">Pick STORY for this tall picture, or untick Instagram.</p>');
-   if(on.ig&&!S.connected)return st('Instagram is not connected yet. <a href="admin.html#dist" target="_blank">Connect it</a>.');if(on.fb&&!S.fb)return st('The Facebook Page is not connected yet.');
-   $('.igp-go').disabled=true;const res={};const show=()=>st(Object.entries(res).map(([k,v])=>`<div>${k==='ig'?'Instagram':'Facebook'}: ${v}</div>`).join(''));const nm=o.name||(vid?'video.mp4':'post.jpg');
-   await Promise.all([on.ig&&IG.post(blob,{caption:kind==='story'?'':full('ig'),kind,name:nm},t=>{res.ig=esc(t);show()}).then(d=>res.ig=`<b>posted!</b> ${d.link?`<a href="${esc(d.link)}" target="_blank">see it</a>`:''}`,e=>res.ig='could not post: '+esc(e.message)),
-    on.fb&&(res.fb='sending…',IG.postFb(blob,{caption:full('fb'),name:nm}).then(d=>res.fb=`<b>posted!</b> <a href="${esc(d.link)}" target="_blank">see it</a>`,e=>res.fb='could not post: '+esc(e.message)))]);
-   show();$('.igp-go').disabled=false;$('.igp-go').textContent='POST AGAIN'}}
+  $('.igp-em').value=LS('rm_mailto');$('.igp-em').onchange=()=>LS('rm_mailto',$('.igp-em').value.trim());
+  const copy=async()=>{try{await navigator.clipboard.writeText(full(tab));return true}catch(e){const t=$('.igp-cap');t.value=full(tab);t.select();document.execCommand('copy');t.value=C[tab];return true}};
+  $('.igp-cp').onclick=async()=>{await copy();st('Caption and hashtags copied. Paste them into Instagram or Facebook.')};
+  /* phones: the share sheet attaches the file to the email for you. computers: the file is saved, the email opens with the caption */
+  $('.igp-go').onclick=async()=>{const text=full(tab),subj='RAPAECHELON '+(c.type==='drop'?'drop':c.type==='mag'?'magazine page':'post')+(c.title||c.song?': '+(c.title||c.song):''),f=new File([blob],name,{type:blob.type});
+   if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){await navigator.share({files:[f],title:subj,text}).catch(()=>{});return}
+   const a=document.createElement('a');a.href=url;a.download=name;a.click();await copy();
+   const to=$('.igp-em').value.trim();location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`;
+   st(`Your email opened with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
+  const close=()=>{URL.revokeObjectURL(url);m.remove()};$('.igp-x').onclick=$('.igp-xx').onclick=close;m.onclick=e=>{if(e.target===m)close()};draw()}
 };
-window.IG=IG;
+window.SHARE=SHARE;
 const css=document.createElement('style');css.textContent=`.igp{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:grid;place-items:center;padding:12px}
 .igp-pn{position:relative;background:#141414;border:1px solid #333;width:min(900px,100%);max-height:96vh;overflow:auto;padding:22px;color:#fff;font:14px Inter,system-ui,sans-serif;box-sizing:border-box}
 .igp-xx{position:absolute;right:10px;top:6px;background:none;border:0;color:#fff;font-size:30px;cursor:pointer}
@@ -115,6 +104,8 @@ const css=document.createElement('style');css.textContent=`.igp{position:fixed;i
 .igp-add{width:100%;margin-top:8px;background:#0b0b0b;border:1px solid #333;color:#fff;padding:9px;font:13px Inter,sans-serif;box-sizing:border-box}
 .igp-look{margin-top:12px;font-size:12px}.igp-look b{letter-spacing:.12em}.igp-mock{background:#fff;color:#111;padding:12px;margin-top:6px;font:14px/1.45 system-ui,sans-serif;max-height:180px;overflow:auto}.igp-mock span{color:#00376b}
 .igp-act{display:flex;gap:8px;justify-content:center;margin-top:16px}.igp-act button{border:0;font:800 13px Inter,sans-serif;letter-spacing:.14em;padding:14px 24px;cursor:pointer;color:#fff;background:#e11d2a}.igp-act .igp-x{background:#333}.igp-act button:disabled{opacity:.4;cursor:default}
+.igp-to{margin-top:12px;font-size:12px}.igp-to b{letter-spacing:.12em;display:block;margin-bottom:6px}.igp-em{width:100%;background:#0b0b0b;border:1px solid #333;color:#fff;padding:9px;font:13px Inter,sans-serif;box-sizing:border-box}
+.igp-act .igp-cp,.igp-act .igp-sv{background:#2b2b2b}.igp-sv{border:0;font:800 13px Inter,sans-serif;letter-spacing:.14em;padding:14px 24px;color:#fff;text-decoration:none;display:inline-block}.igp-act{flex-wrap:wrap}
 .igp-st{color:#ccc;min-height:20px;text-align:center;margin-top:10px;line-height:1.7}.igp-w{color:#e8a33a;margin:6px 0}`;
 document.head.appendChild(css);
 })();

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=7"></script><script src="ig.js?v=2"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=2"></script><script src="studio.js?v=8"></script><script src="share.js?v=1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -50,6 +50,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 .ap-l{text-align:left}.ap-l button{display:flex;gap:12px;align-items:center;width:100%;background:#1c1c1c;border:1px solid #2a2a2a;color:#fff;padding:10px;margin-bottom:8px;cursor:pointer;text-align:left}.ap-l img{width:90px;height:60px;object-fit:cover;background:#333;flex:none}.ap-l b{font:700 14px Inter}.ap-l small{display:block;color:#999;font:12px Inter;margin-top:3px}
 .ap-pn input{width:100%;background:#0b0b0b;border:1px solid #333;color:#fff;padding:11px;font:600 14px Inter;margin-bottom:12px}
 .cover.has::after{display:none}
+.pvb{display:block;width:100%;margin-top:8px;background:#1c1c1c;color:#fff;border:1px solid #333;font:800 12px Inter,sans-serif;letter-spacing:.14em;padding:10px;cursor:pointer}.pvb:hover{background:#e11d2a;border-color:#e11d2a}
 .go.gr2{background:#2b2b2b}.trim{flex-basis:100%;background:#0b0b0b;border:1px solid #333;padding:12px}.tr-pl video,.tr-pl audio{width:100%;max-height:300px;background:#000;display:block}
 .tr-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font:800 12px Inter;letter-spacing:.1em;color:#bbb}.tr-row b{color:#fff;min-width:56px;display:inline-block}.tr-row input[type=range]{flex:1;min-width:140px;accent-color:#e11d2a}
 .tr-btn{background:#222;color:#fff;border:1px solid #333;font:800 11px Inter;letter-spacing:.1em;padding:9px 12px;cursor:pointer}.tr-btn.r{background:#e11d2a;border-color:#e11d2a}.tr-lp{display:flex;gap:6px;align-items:center}.tr-len{color:#888;font-weight:600;letter-spacing:0}
@@ -128,8 +129,8 @@ const TT=()=>[
 ];
 /* one design at a time: click a design to pick it, the controls only change that one */
 const ST={};let SEL=0;const st=i=>ST[i]||(ST[i]={body:'full',x:0,y:0,s:1});
-const draw=()=>{document.getElementById('g').innerHTML=TT().map(([n,d,h],i)=>`<div class="it${i===SEL?' sel':''}" data-i="${i}"><div class="fr"><div class="v">${fx(h)}</div></div><b>${n}</b><small>${d}</small></div>`).join('');
- document.querySelectorAll('#g .it').forEach(e=>e.onclick=()=>{SEL=+e.dataset.i;document.querySelectorAll('#g .it').forEach(x=>x.classList.toggle('sel',x===e));sync()});place();sync()};
+const draw=()=>{document.getElementById('g').innerHTML=TT().map(([n,d,h],i)=>`<div class="it${i===SEL?' sel':''}" data-i="${i}"><div class="fr"><div class="v">${fx(h)}</div></div><b>${n}</b><small>${d}</small><button class="pvb">👁 PREVIEW</button></div>`).join('');
+ document.querySelectorAll('#g .it').forEach(e=>e.onclick=ev=>{SEL=+e.dataset.i;document.querySelectorAll('#g .it').forEach(x=>x.classList.toggle('sel',x===e));sync();if(ev.target.closest('.pvb'))document.getElementById('dprev').click()});place();sync()};
 function placeIn(root,S){root.querySelectorAll('.az').forEach(z=>{const [l,t,w,b]=z.dataset.z.split(',').map(Number),h=b-t,im=z.querySelector('img'),half=S.body==='half';
  const H=h*(half?1.7:1)*S.s,Wd=w*(half?1.7:1)*S.s;
  let top=half?t+S.y:b-H+S.y;top=Math.max(t,top);/* the head never goes above the safe line under the logo */
@@ -188,8 +189,8 @@ const NT=()=>[
 ['CINEMA','Movie bars, centered title',i=>`${MEDIA(i)}<div style="position:absolute;left:0;right:0;top:0;height:${P()?200:300}px;background:#000"></div><div style="position:absolute;left:0;right:0;bottom:0;height:${B(520)}px;background:#000"></div>${LG()}${TI(`left:60px;right:60px;bottom:${B(270)}px;text-align:center;letter-spacing:.04em`,96)}${CA(`left:90px;right:90px;bottom:${B(100)}px;text-align:center`,32,'color:#bbb')}`],
 ['RED WASH','Red-tinted fade, white type',i=>`${MEDIA(i)}${TOPF(340)}${BOTF(B(900),'rgba(150,8,18,.95)')}${LG()}${TI(`left:60px;right:60px;bottom:${B(300)}px`,116)}${CA(`left:60px;right:60px;bottom:${B(110)}px`)}`]
 ];
-const ndraw=()=>{const L=NT(),h=NH();document.getElementById('ng').innerHTML=L.map(([n,d,f],i)=>`<div class="it${i===NSEL?' sel':''}" data-n="${i}"><div class="fr" style="height:${h*.2}px"><div class="v" style="height:${h}px">${f(i)}</div></div><b>${n}</b><small>${d}</small></div>`).join('');
- document.querySelectorAll('#ng .it').forEach(x=>x.onclick=()=>{NSEL=+x.dataset.n;document.querySelectorAll('#ng .it').forEach(y=>y.classList.toggle('sel',y===x));nsync()});nplace();nsync()};
+const ndraw=()=>{const L=NT(),h=NH();document.getElementById('ng').innerHTML=L.map(([n,d,f],i)=>`<div class="it${i===NSEL?' sel':''}" data-n="${i}"><div class="fr" style="height:${h*.2}px"><div class="v" style="height:${h}px">${f(i)}</div></div><b>${n}</b><small>${d}</small><button class="pvb">👁 PREVIEW</button></div>`).join('');
+ document.querySelectorAll('#ng .it').forEach(x=>x.onclick=ev=>{NSEL=+x.dataset.n;document.querySelectorAll('#ng .it').forEach(y=>y.classList.toggle('sel',y===x));nsync();if(ev.target.closest('.pvb'))document.getElementById('nprev').click()});nplace();nsync()};
 const nplace=()=>document.querySelectorAll('#ng .md').forEach(m=>{const S=ns(+m.dataset.n),el=m.querySelector('img,video');if(el){el.style.objectPosition=S.x+'% '+S.y+'%';el.style.transform=`scale(${S.z})`;el.style.transformOrigin=S.x+'% '+S.y+'%'}});
 const nsync=()=>{const S=ns(NSEL);ncn.textContent=NT()[NSEL][0];nx.value=S.x;ny.value=S.y;nz.value=Math.round(S.z*100)};
 nx.oninput=ny.oninput=nz.oninput=()=>{const S=ns(NSEL);S.x=+nx.value;S.y=+ny.value;S.z=nz.value/100;nplace()};nr.onclick=()=>{delete NS[NSEL];nsync();nplace()};
