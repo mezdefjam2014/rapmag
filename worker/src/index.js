@@ -65,7 +65,7 @@ export default {
       /* Hall of Fame: every song that reached #1, with its dates and days on top */
       if (p === '/api/indie/fame' && req.method === 'GET') { await heatTables(env); const r = await all('SELECT song,title,artist,cover,first,last,days FROM indie_fame ORDER BY first DESC LIMIT 200'); return json({ fame: r }, 200, { 'Cache-Control': 'public, max-age=120' }) }
       /* Next Up: the published monthly classes, newest first */
-      if (p === '/api/nextup' && req.method === 'GET') { await heatTables(env); const r = await all('SELECT month,picks FROM nextup WHERE published=1 ORDER BY month DESC LIMIT 36'); return json({ classes: r.map(x => ({ month: x.month, picks: JSON.parse(x.picks || '[]') })) }, 200, { 'Cache-Control': 'public, max-age=120' }) }
+      if (p === '/api/nextup' && req.method === 'GET') { await heatTables(env); const r = await all('SELECT month,picks FROM nextup WHERE published=1 ORDER BY month DESC LIMIT 36'); return json({ classes: r.map(x => ({ month: x.month, ...nuParse(x.picks) })) }, 200, { 'Cache-Control': 'public, max-age=120' }) }
       /* likes: one per visitor per song, tap again to take it back */
       if (p === '/api/indie/like' && req.method === 'POST') {
         const { id, on } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
@@ -243,15 +243,15 @@ export default {
       if (p === '/api/admin/nextup' && req.method === 'GET') {
         await heatTables(env); await indieDaily(env); const month = /^\d{4}-\d{2}$/.test(url.searchParams.get('month') || '') ? url.searchParams.get('month') : new Date().toISOString().slice(0, 7);
         const rows = await all(`SELECT song, MAX(title) title, MAX(artist) artist, MAX(cover) cover, ROUND(AVG(heat)) heat, MAX(heat) peak, MIN(rank) best, COUNT(*) days FROM indie_hist WHERE day LIKE ? GROUP BY song ORDER BY AVG(heat)*MIN(1.0,COUNT(*)/7.0) DESC LIMIT 40`, month + '-%');
-        const past = await all('SELECT month,picks FROM nextup WHERE month<>?', month), used = {}; for (const c of past) for (const k of JSON.parse(c.picks || '[]')) used[String(k.artist).toLowerCase()] = c.month;
+        const past = await all('SELECT month,picks FROM nextup WHERE month<>?', month), used = {}; for (const c of past) for (const k of nuParse(c.picks).picks) used[String(k.artist).toLowerCase()] = c.month;
         const seen = new Set(), list = []; for (const r of rows) { const a = String(r.artist).toLowerCase(); if (seen.has(a)) continue; seen.add(a); list.push({ ...r, was: used[a] || null }) }
         const cur = await one('SELECT picks,published FROM nextup WHERE month=?', month);
-        return json({ month, shortlist: list.slice(0, 20), picks: cur ? JSON.parse(cur.picks || '[]') : [], published: !!(cur && cur.published), months: (await all('SELECT month,published FROM nextup ORDER BY month DESC')) });
+        return json({ month, shortlist: list.slice(0, 20), ...nuParse(cur && cur.picks), published: !!(cur && cur.published), months: (await all('SELECT month,published FROM nextup ORDER BY month DESC')) });
       }
       if (p === '/api/admin/nextup' && req.method === 'POST') {
         await heatTables(env); if (!/^\d{4}-\d{2}$/.test(body.month || '')) return json({ error: 'bad month' }, 400);
-        const picks = (Array.isArray(body.picks) ? body.picks : []).slice(0, 10).map(k => ({ song: String(k.song || '').slice(0, 40), artist: String(k.artist || '').slice(0, 160), title: String(k.title || '').slice(0, 160), cover: httpsOnly(k.cover), heat: +k.heat || 0 })).filter(k => k.artist);
-        await DB.prepare('INSERT INTO nextup (month,picks,published) VALUES (?,?,?) ON CONFLICT(month) DO UPDATE SET picks=excluded.picks, published=excluded.published').bind(body.month, JSON.stringify(picks), body.publish ? 1 : 0).run();
+        const picks = (Array.isArray(body.picks) ? body.picks : []).slice(0, 10).map(k => ({ song: String(k.song || '').slice(0, 40), artist: String(k.artist || '').slice(0, 160), title: String(k.title || '').slice(0, 160), cover: httpsOnly(k.cover), photo: httpsOnly(k.photo), heat: +k.heat || 0 })).filter(k => k.artist), style = ['lineup', 'yearbook', 'cover'].includes(body.style) ? body.style : 'lineup';
+        await DB.prepare('INSERT INTO nextup (month,picks,published) VALUES (?,?,?) ON CONFLICT(month) DO UPDATE SET picks=excluded.picks, published=excluded.published').bind(body.month, JSON.stringify({ style, picks }), body.publish ? 1 : 0).run();
         return json({ ok: true });
       }
       if (p === '/api/admin/indie/reset' && req.method === 'POST') {
@@ -365,12 +365,14 @@ async function indieChart(env) {
 async function heatTables(env) { await env.DB.batch([env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_hist (song TEXT NOT NULL, day TEXT NOT NULL, rank INTEGER, heat INTEGER, title TEXT, artist TEXT, cover TEXT, PRIMARY KEY (song, day))'),
   env.DB.prepare('CREATE TABLE IF NOT EXISTS indie_fame (song TEXT PRIMARY KEY, title TEXT, artist TEXT, cover TEXT, first TEXT, last TEXT, days INTEGER DEFAULT 0)'),
   env.DB.prepare('CREATE TABLE IF NOT EXISTS nextup (month TEXT PRIMARY KEY, picks TEXT, published INTEGER DEFAULT 0)')]) }
+/* a class is stored as {style, picks}; older ones were just the list */
+function nuParse(v) { try { const d = JSON.parse(v || '[]'); return Array.isArray(d) ? { style: 'lineup', picks: d } : { style: d.style || 'lineup', picks: d.picks || [] } } catch (e) { return { style: 'lineup', picks: [] } } }
 const heatLabel = h => h >= 85 ? 'BLAZING' : h >= 65 ? 'ON FIRE' : h >= 40 ? 'HOT' : 'WARM';
 function heatOf(x, days, top) { const spot = Math.max(0, (21 - x.rank) / 20) * 60, climb = x.last && x.last > x.rank ? Math.min(15, (x.last - x.rank) * 3) : x.move === 'new' ? 6 : 0;
   return Math.max(1, Math.min(100, Math.round(spot + climb + Math.min(days, 28) / 28 * 15 + Math.min(top, 10)))) }
 async function withHeat(env, items) { await heatTables(env);
   const d = Object.fromEntries((await env.DB.prepare('SELECT song, COUNT(*) n FROM indie_hist GROUP BY song').all()).results.map(r => [r.song, r.n])), f = Object.fromEntries((await env.DB.prepare('SELECT song, days FROM indie_fame').all()).results.map(r => [r.song, r.days]));
-  const m = new Date().toISOString().slice(0, 7), nu = await env.DB.prepare('SELECT picks FROM nextup WHERE month=? AND published=1').bind(m).first(), cls = new Set((nu ? JSON.parse(nu.picks || '[]') : []).map(k => String(k.artist).toLowerCase()));
+  const m = new Date().toISOString().slice(0, 7), nu = await env.DB.prepare('SELECT picks FROM nextup WHERE month=? AND published=1').bind(m).first(), cls = new Set(nuParse(nu && nu.picks).picks.map(k => String(k.artist).toLowerCase()));
   return items.map(x => { const heat = heatOf(x, d[x.id] || 0, f[x.id] || 0); return { ...x, heat, heatLabel: heatLabel(heat), days: d[x.id] || 0, top: f[x.id] || 0, nextup: cls.has(String(x.artist).toLowerCase()) } }) }
 async function indieDaily(env) { await heatTables(env); const day = new Date().toISOString().slice(0, 10), c = await indieChart(env);
   if (!c.items.length || await env.DB.prepare('SELECT 1 FROM indie_hist WHERE day=? LIMIT 1').bind(day).first()) return;
