@@ -55,14 +55,3 @@ for (const f of ['index.html', 'article.html', 'page.html', 'author.html', '404.
 /* custom domain: GitHub Pages reads the CNAME file */
 const host = new URL(SITE).hostname; if (!host.endsWith('github.io')) fs.writeFileSync(path.join(OUT, 'CNAME'), host + '\n');
 console.log(`built ${posts.length} posts, ${(data.authors || []).length} authors, ${recent.length} in news sitemap -> ${SITE}`);
-
-/* Rap Picks: Apple Music's most-played US songs, rap and R&B only, with 30-second previews -> rap-picks.json (the page reads it;
-   the editor's own order from the back office is added on top by the API once the worker has Rap Picks) */
-try {
-  const d = await (await fetch('https://rss.marketingtools.apple.com/api/v2/us/music/most-played/100/songs.json')).json();
-  const keep = ((d.feed || {}).results || []).filter(x => (x.genres || []).some(g => /^(Hip-Hop\/Rap|R&B\/Soul|Rap)$/.test(g.name)));
-  const lk = keep.length ? await (await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id=' + keep.map(x => x.id).join(','))).json() : {};
-  const pv = Object.fromEntries((lk.results || []).filter(r => r.trackId).map(r => [String(r.trackId), r.previewUrl]));
-  const items = keep.map(x => ({ id: 'a:' + x.id, title: x.name, artist: x.artistName, cover: (x.artworkUrl100 || '').replace(/\/\d+x\d+bb\./, '/600x600bb.'), audio: pv[x.id] || '', link: x.url || '' })).slice(0, 50);
-  if (items.length) { fs.writeFileSync(path.join(OUT, 'rap-picks.json'), JSON.stringify({ items, updated: Date.now() })); console.log(`rap picks: ${items.length} songs`) }
-} catch (e) { console.log('rap picks skipped: ' + e.message) }

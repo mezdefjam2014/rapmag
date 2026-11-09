@@ -22,7 +22,7 @@ const pathSlug=k=>{const m=location.pathname.match(new RegExp('/'+k+'/([a-z0-9-]
 function chrome(){const cat=qs.get('c'),here=page==='home'&&!cat&&qs.get('q')==null;
  document.body.insertAdjacentHTML('afterbegin',`<div class="prog" id="prog"></div>
  <header class="mast"><div class="wrap"><a class="brand" href="./" aria-label="Rapaechelon home"><img src="${esc(SET.logo?img(SET.logo):'logo.webp')}" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a>
- <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}<a href="index.html?c=rap-picks"${cat==='rap-picks'?' class="on"':''}>Rap Picks</a></nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
+ <div class="menu"><button class="hbtn" id="mb" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button><nav class="links" id="nav"><a href="./"${here?' class="on"':''}>Home</a>${CATS.map(([k,n])=>`<a href="index.html?c=${k}"${cat===k?' class="on"':''}>${esc(n)}</a>`).join('')}</nav><button class="sbtn" id="sb" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg></button></div></div></header>
  <div class="search" id="sr"><div class="wrap"><input id="si" placeholder="Search RAPMAG…" value="${esc(qs.get('q')||'')}"></div></div>`);
  const pl=s=>PRETTY?'page/'+s+'/':'page.html?s='+s;
  document.body.insertAdjacentHTML('beforeend',`<footer class="foot"><div class="wrap"><div><a class="brand sm" href="./"><img src="logo.webp" alt="RAPAECHELON - RAPMAG" width="2000" height="770"></a><p>${esc(SET.tagline||'Music, entertainment, culture and breaking stories.')}</p>
@@ -50,12 +50,10 @@ async function home(){const main=$('#main'),cat=qs.get('c'),q=qs.get('q');if(cat
   if(!off)$('#g').innerHTML='<div class="empty">No stories here yet.</div>';reveal()};$('#mo').onclick=load;return load()}
 
 /* ---------- Rap Picks: Apple's Hip-Hop/Rap chart + the editor's picks, 30-second previews play with no video ---------- */
-/* Rap Picks without the server: the site build saves Apple Music's rap + R&B chart as rap-picks.json every 10 minutes */
-async function appleDirect(){const r=await fetch('rap-picks.json?t='+Math.floor(Date.now()/6e5));if(!r.ok)throw new Error('no chart');return r.json()}
 async function rapPicks(){const main=$('#main');
  setMeta('Rap Picks: Top Rap Songs Right Now | RAPAECHELON - RAPMAG','The top rap and R&B songs right now, picked and ranked by RAPMAG. Hit play to hear each one.');
  main.innerHTML=`<div class="wrap shell"><header class="nmf"><span>UPDATED ALL THE TIME</span><h1>Rap Picks</h1><p>The most-played rap and R&B songs right now, ranked by RAPMAG. Hit play and run the whole chart.</p></header><div class="story rp-page"><div class="body" id="rpb"><div class="empty">Loading the chart…</div></div><p class="rp-src">Song previews courtesy of Apple Music.</p></div></div>`;
- let d;try{d=await get('/api/rap-picks')}catch(e){try{d=await appleDirect()}catch(e2){$('#rpb').innerHTML='<div class="empty">The chart could not load. Try again in a minute.</div>';return}}
+ let d;try{d=await get('/api/rap-picks')}catch(e){$('#rpb').innerHTML='<div class="empty">Rap Picks is coming soon.</div>';return}
  if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The chart is being updated. Check back soon.</div>';return}
  $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p>${it.link?`<a class="cr-am" href="${esc(it.link)}" target="_blank" rel="noopener">Listen on Apple Music</a>`:''}</div>${it.pick?'<span class="cr-m new">PICK</span>':''}${it.audio?`<a class="cr-a" href="${esc(img(it.audio))}">Audio</a>`:''}</div>`).join('');
  chart(main)}
