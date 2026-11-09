@@ -211,11 +211,11 @@ async function appleChart(env, ctx, fresh) {
   const row = await env.DB.prepare("SELECT v FROM settings WHERE k='rp_auto'").first(); let cache = null; try { cache = JSON.parse(row && row.v || 'null') } catch (e) { }
   if (cache && !fresh && Date.now() - cache.at < 3600e3) return cache;
   try {
-    /* Hip-Hop/Rap (genre 18) and R&B/Soul (genre 15) charts, merged by chart position: rap #1, R&B #1, rap #2, R&B #2… */
-    const feeds = await Promise.all([18, 15].map(g => fetch(`https://itunes.apple.com/us/rss/topsongs/limit=50/genre=${g}/json`, { cf: { cacheTtl: 900 } }).then(r => r.ok ? r.json() : {}).catch(() => ({}))));
-    const lists = feeds.map(d => [].concat((d.feed || {}).entry || [])), merged = [];
-    for (let i = 0; i < 50; i++) for (const l of lists) if (l[i] && !merged.some(e => e.id.attributes['im:id'] === l[i].id.attributes['im:id'])) merged.push(l[i]);
-    const items = merged.map(e => { const L = [].concat(e.link || []), img = [].concat(e['im:image'] || []).pop(); return rpItem({ title: e['im:name'].label, artist: e['im:artist'].label, cover: img ? img.label.replace(/\/\d+x\d+bb\./, '/600x600bb.') : '', audio: (L.find(l => (l.attributes.type || '').startsWith('audio')) || { attributes: {} }).attributes.href, link: (L.find(l => l.attributes.rel === 'alternate') || { attributes: {} }).attributes.href }, 'a:' + e.id.attributes['im:id']) });
+    /* Apple Music's most-played songs in the US, keeping only Hip-Hop/Rap and R&B/Soul; 30-second previews come from Apple's lookup */
+    const d = await (await fetch('https://rss.marketingtools.apple.com/api/v2/us/music/most-played/100/songs.json', { cf: { cacheTtl: 900 } })).json();
+    const keep = ((d.feed || {}).results || []).filter(x => (x.genres || []).some(g => /^(Hip-Hop\/Rap|R&B\/Soul|Rap)$/.test(g.name)));
+    const lk = keep.length ? await (await fetch('https://itunes.apple.com/lookup?country=us&entity=song&id=' + keep.map(x => x.id).join(','))).json().catch(() => ({})) : {}, pv = Object.fromEntries((lk.results || []).filter(r => r.trackId).map(r => [String(r.trackId), r.previewUrl]));
+    const items = keep.map(x => rpItem({ title: x.name, artist: x.artistName, cover: (x.artworkUrl100 || '').replace(/\/\d+x\d+bb\./, '/600x600bb.'), audio: pv[x.id], link: x.url }, 'a:' + x.id));
     if (!items.length) throw new Error('empty');
     cache = { at: Date.now(), items };
     await env.DB.prepare("INSERT INTO settings (k,v) VALUES ('rp_auto',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v").bind(JSON.stringify(cache)).run();
