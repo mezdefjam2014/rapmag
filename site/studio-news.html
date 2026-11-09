@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=9"></script><script src="share.js?v=5"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=10"></script><script src="share.js?v=5"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -149,10 +149,10 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.query
 /* every tab has its own link: studio.html#drop, #news, #car */
 const openTab=()=>{let t=/studio-news/.test(location.pathname)?'news':/studio(\.html)?$/.test(location.pathname)&&!location.hash?'drop':location.hash.slice(1);if(!t)try{t=localStorage.getItem('stu_tab')||''}catch(e){}const b=document.querySelector(`[data-tab="${t==='carousel'?'car':t}"]`);if(b)b.click()};addEventListener('hashchange',openTab);
 /* ---------- NEWS: 20 full-screen designs, Story 9:16 or Post 4:5 ---------- */
-let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
+let NLIVE=0,NPOSTER='';let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
 const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 const NH=()=>NSZ==='post'?1350:1920,P=()=>NSZ==='post';
-const M1=(i,st)=>`<div class="md" data-n="${i}" style="${st}">${NM?(NMV?`<video src="${NM}" autoplay muted loop playsinline></video>`:`<img src="${NM}">`):'<div class="ph">PHOTO / VIDEO</div>'}</div>`;
+const M1=(i,st)=>`<div class="md" data-n="${i}" style="${st}">${NM?(NMV?(NLIVE||!NPOSTER?`<video src="${NM}" ${NLIVE?'autoplay':'preload="metadata"'} muted loop playsinline></video>`:`<img src="${NPOSTER}">`):`<img src="${NM}">`):'<div class="ph">PHOTO / VIDEO</div>'}</div>`;
 /* MIDDLE: the photo sits between the logo and the words (faces stay clear), with a blurred copy of it filling the screen */
 const MEDIA=(i,st)=>st||NFIT==='full'?M1(i,st||'inset:0'):M1(i,'inset:-80px;filter:blur(36px) brightness(.55)')+M1(i,`left:0;right:0;top:${P()?200:290}px;height:${P()?560:900}px;box-shadow:0 30px 60px rgba(0,0,0,.5)`);
 const TOPF=(h,c)=>`<div style="position:absolute;left:0;right:0;top:0;height:${h}px;background:linear-gradient(${c||'rgba(0,0,0,.95)'} 30%,transparent)"></div>`;
@@ -197,7 +197,7 @@ nx.oninput=ny.oninput=nz.oninput=()=>{const S=ns(NSEL);S.x=+nx.value;S.y=+ny.val
 nt.oninput=ncap.oninput=nk.oninput=nn.oninput=()=>{clearTimeout(window._nt);window._nt=setTimeout(ndraw,250)};
 document.querySelectorAll('[data-nfit]').forEach(b=>b.onclick=()=>{NFIT=b.dataset.nfit;document.querySelectorAll('[data-nfit]').forEach(x=>x.classList.toggle('on',x===b));ndraw()});
 document.querySelectorAll('[data-nsz]').forEach(b=>b.onclick=()=>{NSZ=b.dataset.nsz;document.querySelectorAll('[data-nsz]').forEach(x=>x.classList.toggle('on',x===b));ndraw()});
-nf.onchange=()=>{const f=stuFresh(nf);if(!f)return;if(NM)URL.revokeObjectURL(NM);NM=URL.createObjectURL(f);NMV=/^video\//.test(f.type);window._ntrim&&_ntrim.set(NMV?{url:NM,video:1}:null);ndraw()};
+nf.onchange=()=>{const f=stuFresh(nf);if(!f)return;if(NM)URL.revokeObjectURL(NM);NM=URL.createObjectURL(f);NMV=/^video\//.test(f.type);NPOSTER='';window._ntrim&&_ntrim.set(NMV?{url:NM,video:1}:null);if(NMV){const u=NM;stuPoster(u).then(p=>{if(NM===u){NPOSTER=p;ndraw()}})}else ndraw()};
 ndraw();
 /* pick a posted article: its photo goes in the middle, its headline and summary become the title and caption */
 nart.onclick=async()=>{const API=window.RM_API||window.API||'';const m=document.createElement('div');m.className='ap';m.innerHTML='<div class="ap-pn"><h3>USE AN ARTICLE</h3><input placeholder="Search your articles"><div class="ap-l">Loading…</div><button class="rb-x">CLOSE</button></div>';document.body.appendChild(m);m.querySelector('.rb-x').onclick=()=>m.remove();
@@ -205,7 +205,7 @@ nart.onclick=async()=>{const API=window.RM_API||window.API||'';const m=document.
  const abs=u=>!u?'':/^https?:/.test(u)?u:API+u;
  const show=q=>{const f=L.filter(p=>!q||p.title.toLowerCase().includes(q.toLowerCase()));m.querySelector('.ap-l').innerHTML=f.length?f.map(p=>`<button data-id="${p.id}"><img src="${e(abs(p.cover))}" alt=""><span><b>${e(p.title)}</b><small>${e(p.dek||'')}</small></span></button>`).join(''):'No articles found.';
   m.querySelectorAll('[data-id]').forEach(b=>b.onclick=async()=>{const p=L.find(x=>x.id==+b.dataset.id);nt.value=p.title;ncap.value=p.dek||'';if(p.category)nk.value=String(p.category).toUpperCase();
-   if(p.cover){try{const bl=await fetch(abs(p.cover)).then(r=>{if(!r.ok)throw 0;return r.blob()});NM=URL.createObjectURL(bl);NMV=0;_ntrim.clear()}catch(er){say('Could not load that article photo.')}}else say('That article has no photo. Add one with + YOUR OWN PHOTO OR VIDEO.');
+   if(p.cover){try{const bl=await fetch(abs(p.cover)).then(r=>{if(!r.ok)throw 0;return r.blob()});NM=URL.createObjectURL(bl);NMV=0;NPOSTER='';_ntrim.clear()}catch(er){say('Could not load that article photo.')}}else say('That article has no photo. Add one with + YOUR OWN PHOTO OR VIDEO.');
    m.remove();ndraw()})};
  show('');m.querySelector('input').oninput=ev=>show(ev.target.value)};
 stuInit();openTab();

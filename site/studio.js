@@ -7,8 +7,11 @@ let DSONG='SONG NAME',DART='ARTIST NAME',COVER=null,DMEDIA=null; /* drop inputs 
 window.STU={get song(){return DSONG},get art(){return DART},get cover(){return COVER}};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 /* fill the drop design with the real song, artist and cover */
-window.fx=h=>{h=h.replace(/SONG NAME/g,esc(DSONG)).replace(/ARTIST NAME/g,esc(DART));if(COVER)h=h.replace(/class="cover" style="/g,`class="cover has" style="background:url(${COVER}) center/cover;`);
- if(DMEDIA&&DMEDIA.video)h=h.replace(/<div class="vid" style="([^"]*)">YOUR VIDEO<\/div>/g,`<div class="vid md" data-media="1" style="$1"><video src="${DMEDIA.url}" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></div>`);return h};
+window.fx=(h,live)=>{h=h.replace(/SONG NAME/g,esc(DSONG)).replace(/ARTIST NAME/g,esc(DART));if(COVER)h=h.replace(/class="cover" style="/g,`class="cover has" style="background:url(${COVER}) center/cover;`);
+ if(DMEDIA&&DMEDIA.video)h=h.replace(/<div class="vid" style="([^"]*)">YOUR VIDEO<\/div>/g,`<div class="vid md" data-media="1" style="$1">${live||!DMEDIA.poster?`<video src="${DMEDIA.url}" ${live?'autoplay':'preload="metadata"'} muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>`:`<img src="${DMEDIA.poster}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`}</div>`);return h};
+/* one still frame of a video, so the design grid does not have to play 20 videos at once */
+window.stuPoster=url=>new Promise(res=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.src=url;let done=0;const end=d=>{if(done)return;done=1;v.removeAttribute('src');v.load();res(d)};
+ v.onloadedmetadata=()=>{v.currentTime=Math.min(1,(v.duration||2)/2)};v.onseeked=()=>{try{const k=Math.min(1,720/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=v.videoWidth*k;c.height=v.videoHeight*k;c.getContext('2d').drawImage(v,0,0,c.width,c.height);end(c.toDataURL('image/jpeg',.8))}catch(e){end('')}};v.onerror=()=>end('');setTimeout(()=>end(''),6000)});
 const load=(src,ok,no)=>{const x=document.createElement('script');x.src=src;x.onload=ok;x.onerror=no;document.head.appendChild(x)};
 const lib=()=>window.htmlToImage?Promise.resolve():new Promise((ok,no)=>load('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js',ok,no));
 const zipLib=()=>window.JSZip?Promise.resolve():new Promise((ok,no)=>load('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',ok,no));
@@ -122,17 +125,17 @@ window.stuInit=()=>{const $=s=>document.querySelector(s);let rt;const redraw=()=
  $('#ds').oninput=()=>{DSONG=$('#ds').value||'SONG NAME';redraw()};$('#da').oninput=()=>{DART=$('#da').value||'ARTIST NAME';redraw()};
  $('#dc').onchange=()=>{const f=fresh($('#dc'));if(f){if(COVER)URL.revokeObjectURL(COVER);COVER=URL.createObjectURL(f);redraw()}};
  const dtrim=Trim($('#dtrim'));
- $('#dm').onchange=()=>{const f=fresh($('#dm'));if(!f)return;if(DMEDIA)URL.revokeObjectURL(DMEDIA.url);DMEDIA={file:f,url:URL.createObjectURL(f),video:/^video\//.test(f.type)};$('#dmn').textContent=f.name+' ('+(f.size/1048576).toFixed(1)+' MB, stays on this computer)';dtrim.set(DMEDIA);redraw()};
+ $('#dm').onchange=()=>{const f=fresh($('#dm'));if(!f)return;if(DMEDIA)URL.revokeObjectURL(DMEDIA.url);DMEDIA={file:f,url:URL.createObjectURL(f),video:/^video\//.test(f.type)};$('#dmn').textContent=f.name+' ('+(f.size/1048576).toFixed(1)+' MB, stays on this computer)';dtrim.set(DMEDIA);const M=DMEDIA;if(M.video)stuPoster(M.url).then(p=>{if(DMEDIA===M){M.poster=p;redraw()}});else redraw()};
  $('#dclr').onclick=()=>{if(DMEDIA)URL.revokeObjectURL(DMEDIA.url);DMEDIA=null;COVER=null;dtrim.clear();$('#dmn').textContent='Cleared. Add a new song or video.';redraw()};
  const dgo=share=>{if(!DMEDIA)return say('Add the song (MP3/OGG/WAV) or a video (MP4) first.');const [n,,h]=TT()[SEL];
   renderDesign(fx(h),1920,{share:share===true,name:DART+' '+DSONG,ctx:{type:'drop',artist:DART!=='ARTIST NAME'?DART:'',song:DSONG!=='SONG NAME'?DSONG:''},start:dtrim.start,end:dtrim.end,audio:DMEDIA.video?null:DMEDIA,media:DMEDIA.video?DMEDIA:null,S:{x:50,y:50,z:1},place:r=>placeIn(r,st(SEL))})};
  $('#drender').onclick=()=>dgo();$('#demail').onclick=()=>dgo(true);
- $('#dprev').onclick=()=>{const [,,h]=TT()[SEL];previewDesign(fx(h),1920,{place:r=>placeIn(r,st(SEL)),audio:DMEDIA&&!DMEDIA.video?DMEDIA:null,start:dtrim.start,end:dtrim.end,go:dgo})};
+ $('#dprev').onclick=()=>{const [,,h]=TT()[SEL];previewDesign(fx(h,true),1920,{place:r=>placeIn(r,st(SEL)),audio:DMEDIA&&!DMEDIA.video?DMEDIA:null,start:dtrim.start,end:dtrim.end,go:dgo})};
  const ntrim=Trim($('#ntrim'));window._ntrim=ntrim;
- $('#nclr').onclick=()=>{if(NM)URL.revokeObjectURL(NM);NM=null;NMV=0;ntrim.clear();ndraw()};
+ $('#nclr').onclick=()=>{if(NM)URL.revokeObjectURL(NM);NM=null;NMV=0;NPOSTER='';ntrim.clear();ndraw()};
  const ngo=share=>{const [,,f]=NT()[NSEL];if(!NM)return say('Add a photo or video first.');renderDesign(f(NSEL),NH(),{share:share===true,name:nt.value,ctx:{type:'news',title:nt.value,cap:ncap.value},start:ntrim.start,end:ntrim.end,media:{url:NM,video:NMV},S:ns(NSEL),still:!NMV})};
  $('#nrender').onclick=()=>ngo();$('#nemail').onclick=()=>ngo(true);
- $('#nprev').onclick=()=>{const [,,f]=NT()[NSEL];previewDesign(f(NSEL),NH(),{place:r=>r.querySelectorAll('.md').forEach(m=>{const S=ns(NSEL),el=m.querySelector('img,video');if(el){el.style.objectPosition=S.x+'% '+S.y+'%';el.style.transform=`scale(${S.z})`;el.style.transformOrigin=S.x+'% '+S.y+'%'}}),start:ntrim.start,end:ntrim.end,go:ngo})};
+ $('#nprev').onclick=()=>{const [,,f]=NT()[NSEL];NLIVE=1;const html=f(NSEL);NLIVE=0;previewDesign(html,NH(),{place:r=>r.querySelectorAll('.md').forEach(m=>{const S=ns(NSEL),el=m.querySelector('img,video');if(el){el.style.objectPosition=S.x+'% '+S.y+'%';el.style.transform=`scale(${S.z})`;el.style.transformOrigin=S.x+'% '+S.y+'%'}}),start:ntrim.start,end:ntrim.end,go:ngo})};
 };
 /* ---------- CAROUSEL: a cover slide plus 2-10 slides, each with its own picture/video, sound and cut ---------- */
 function carInit(){const $=s=>document.querySelector(s),list=$('#cslides');const SL=[];let CD=0;
