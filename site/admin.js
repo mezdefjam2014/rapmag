@@ -248,6 +248,7 @@ async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" 
  const earned=b=>b.got!=null?b.got:0,auto=x=>(x.boosts||[]).reduce((n,b)=>n+earned(b),0),N=v=>Number(v).toLocaleString(),
   left=ms=>{ms=Math.max(0,ms);const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.ceil(ms%36e5/6e4);return d?d+'d '+h+'h':h?h+'h '+m+'m':m+'m'};
  const fromName=n=>{const b=n.replace(/\.[^.]+$/,'').replace(/^\d+\s*-\s*/,''),i=b.lastIndexOf(' - ');return i>0?{title:b.slice(0,i).trim(),artist:b.slice(i+3).trim()}:{title:b.trim(),artist:''}};
+ let busy=0;const commit=async(msg)=>{const t=Date.now();d.songs.forEach(x=>[...(x.boosts||[]),...(x.lboosts||[])].forEach(b=>{if(b.n){b.s=t;b.e=t+b.e;delete b.n}}));busy=1;try{await api('/api/admin/indie',{method:'POST',body:JSON.stringify({songs:d.songs})});await load();if(msg)ms(msg)}catch(er){ms(er.message)}busy=0};
  const draw=()=>{const S=d.songs,opt=x=>`<option value="0"${!x.lock&&!x.hold?' selected':''}>By plays</option><option value="h"${!x.lock&&x.hold?' selected':''}>Stay #1 (earns plays)</option>`+Array.from({length:20},(_,i)=>`<option value="${i+1}"${+x.lock===i+1?' selected':''}>Lock #${i+1}</option>`).join('');
   const tot=x=>(x.real||0)+(+x.bonus||0)+auto(x)+(+x.pace||0);
   pg.innerHTML=`<div class="ic-help"><b>HOW IT WORKS</b>
@@ -255,7 +256,7 @@ async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" 
    <p><span>2</span><b>+ PLAYS</b> adds plays right now. <b>AUTOPLAY</b> adds plays slowly over the hours or days you pick.</p>
    <p><span>3</span><b>LIKES</b> follow the plays on their own (each song 22% to 36%) and never pass 40% of plays. <b>+ LIKES</b> and <b>AUTO-LIKES</b> add more. <b>TAKE BACK</b> removes plays or likes you gave a song.</p>
    <p><span>4</span><b>SPOT</b>: "By plays" is normal. "Stay #1" keeps it on top by earning plays. "Lock #" pins it to a spot.</p>
-   <p><span>5</span>Click <b>SAVE</b> when you are done. <b>NEW WEEK</b> starts every song back at 0.</p></div>
+   <p><span>5</span>Every button <b>saves right away</b> and the chart re-ranks. <b>NEW WEEK</b> starts every song back at 0.</p></div>
   ${dirty?'<div class="ic-dirty">You have changes that are not live yet. Click SAVE.</div>':''}<div class="st" id="icm"></div>
   ${S.length?S.map((x,i)=>`<div class="ic-card${i>=20?' off':''} ic-row" data-i="${i}">
    <div class="ic-top"><b class="rp-n">${x.rank||'–'}</b>${x.cover?`<img src="${esc(img(x.cover))}" data-a="cover" title="Change cover">`:'<img src="gold-record.webp" data-a="cover" title="Gold record (default). Click to use your own cover." class="ic-disc">'}
@@ -267,14 +268,14 @@ async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" 
    <div class="ic-act"><button class="b" data-a="add">+ PLAYS</button><button class="b" data-a="boost">AUTOPLAY</button><button class="b" data-a="addl">+ LIKES</button><button class="b" data-a="lboost">AUTO-LIKES</button><button class="b" data-a="back"${(+x.bonus||0)+auto(x)+(+x.pace||0)+(+x.lbonus||0)||(x.boosts||[]).length||(x.lboosts||[]).length?'':' disabled'}>TAKE BACK</button>
     <label class="ic-spot">SPOT <select data-f="lock">${opt(x)}</select></label><span class="ic-gap"></span><button class="b" data-a="play">▶ LISTEN</button><button class="b" data-a="del">REMOVE SONG</button></div></div>`).join(''):'<div class="st">No songs yet. Click + ADD SONGS and pick your audio files (you can pick 20 at once).</div>'}`;
  };
- pg.oninput=e=>{const f=e.target.dataset.f,r=e.target.closest('.ic-row');if(!f||!r)return;const x=d.songs[+r.dataset.i];if(f==='lock'&&e.target.value==='h'){d.songs.forEach(o=>o.hold=0);x.hold=1;x.lock=0}else if(f==='lock'){x.hold=0;x.lock=Math.max(0,+e.target.value||0)}else x[f]=f==='bonus'?Math.max(0,+e.target.value||0):e.target.value;if(!dirty){dirty=1;if(!pg.querySelector('.ic-dirty'))pg.querySelector('.ic-help').insertAdjacentHTML('afterend','<div class="ic-dirty">You have changes that are not live yet. Click SAVE.</div>')}};
- pg.onchange=e=>{if(e.target.dataset.f==='lock')draw()};
+ pg.oninput=e=>{const f=e.target.dataset.f,r=e.target.closest('.ic-row');if(!f||!r)return;const x=d.songs[+r.dataset.i];if(f==='lock'&&e.target.value==='h'){d.songs.forEach(o=>o.hold=0);x.hold=1;x.lock=0}else if(f==='lock'){x.hold=0;x.lock=Math.max(0,+e.target.value||0)}else x[f]=f==='bonus'?Math.max(0,+e.target.value||0):e.target.value;};
+ pg.onchange=e=>{const f=e.target.dataset.f;if(f==='lock')commit('Spot saved. The chart is re-ranked.');else if(f==='title'||f==='artist')commit('Saved.')};
  pg.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=+b.closest('.ic-row').dataset.i,x=d.songs[i],a=b.dataset.a;
   if(a==='play'){let au=$('#ica');if(!au){au=new Audio();au.id='ica';document.body.appendChild(au)}if(au.dataset.i==i&&!au.paused){au.pause();return}au.dataset.i=i;au.src=img(x.audio);au.play();return}
-  if(a==='del'){if(!await confirmBox('Remove "'+x.title+'"?\n\nIts audio and cover are erased from storage when you click SAVE.'))return;d.songs.splice(i,1);dirty=1;draw()}
-  if(a==='addl'){const v=Math.round(+((await askBox('How many likes to add to "'+x.title+'" right now? (Likes never show more than 40% of its plays.)','500',{num:1,yes:'ADD LIKES',chips:[50,100,250,500,1000,5000]}))||'').replace(/[^\d]/g,''));if(v>0){x.lbonus=(+x.lbonus||0)+v;dirty=1;draw()}return}
-  if(a==='lauto'){x.lauto=x.lauto===0?1:0;dirty=1;draw();return}
-  if(a==='add'){const v=Math.round(+((await askBox('How many plays to add to "'+x.title+'" right now?','1,000',{num:1,yes:'ADD PLAYS',chips:[100,500,1000,5000,10000,50000]}))||'').replace(/[^\d]/g,''));if(v>0){x.bonus=(+x.bonus||0)+v;dirty=1;draw()}return}
+  if(a==='del'){if(!await confirmBox('Remove "'+x.title+'"?\n\nIts audio and cover are erased from storage when you click SAVE.'))return;d.songs.splice(i,1);commit('Song removed and its files erased.')}
+  if(a==='addl'){const v=Math.round(+((await askBox('How many likes to add to "'+x.title+'" right now? (Likes never show more than 40% of its plays.)','500',{num:1,yes:'ADD LIKES',chips:[50,100,250,500,1000,5000]}))||'').replace(/[^\d]/g,''));if(v>0){x.lbonus=(+x.lbonus||0)+v;commit('Added '+v.toLocaleString()+' likes.')}return}
+  if(a==='lauto'){x.lauto=x.lauto===0?1:0;commit(x.lauto?'Likes follow plays again.':'Likes from plays turned off.');return}
+  if(a==='add'){const v=Math.round(+((await askBox('How many plays to add to "'+x.title+'" right now?','1,000',{num:1,yes:'ADD PLAYS',chips:[100,500,1000,5000,10000,50000]}))||'').replace(/[^\d]/g,''));if(v>0){x.bonus=(+x.bonus||0)+v;commit('Added '+v.toLocaleString()+' plays.')}return}
   if(a==='back'){const m=modal(`<h1 style="font-size:30px">TAKE BACK PLAYS</h1>`,`<div style="min-width:min(440px,80vw)"><div class="st" style="margin-top:0">Pick what to take off <b>${esc(x.title)}</b>. Real listener plays and real likes stay.</div>
     <label class="ic-ck"><input type="checkbox" id="tb1" ${+x.bonus?'checked':'disabled'}> Plays you added (${N(+x.bonus||0)})</label>
     <label class="ic-ck"><input type="checkbox" id="tb2" ${(x.boosts||[]).length?'checked':'disabled'}> Stop autoplay and remove its plays (${N(auto(x))})</label>
@@ -284,8 +285,8 @@ async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" 
     <label class="ic-ck"><input type="checkbox" id="tb6" ${(x.lboosts||[]).length?'checked':'disabled'}> Stop auto-likes and remove their likes</label>
     <button class="b r" id="tbok" style="margin-top:12px">TAKE BACK</button></div>`),q=t=>m.querySelector(t);
    q('#tb2').onchange=()=>{if(q('#tb2').checked)q('#tb3').checked=false};q('#tb3').onchange=()=>{if(q('#tb3').checked)q('#tb2').checked=false};
-   q('#tbok').onclick=()=>{if(q('#tb1').checked)x.bonus=0;if(q('#tb3').checked){x.bonus=(+x.bonus||0)+auto(x);x.boosts=[]}if(q('#tb2').checked)x.boosts=[];if(q('#tb4').checked){x.pace=0;x.hold=0}if(q('#tb5').checked)x.lbonus=0;if(q('#tb6').checked)x.lboosts=[];dirty=1;m.remove();draw()};return}
-  if(a==='bstop'){const j=+b.dataset.j,bo=x.boosts[j];x.bonus=(+x.bonus||0)+earned(bo);x.boosts.splice(j,1);dirty=1;draw();return}
+   q('#tbok').onclick=()=>{if(q('#tb1').checked)x.bonus=0;if(q('#tb3').checked){x.bonus=(+x.bonus||0)+auto(x);x.boosts=[]}if(q('#tb2').checked)x.boosts=[];if(q('#tb4').checked){x.pace=0;x.hold=0}if(q('#tb5').checked)x.lbonus=0;if(q('#tb6').checked)x.lboosts=[];m.remove();commit('Taken back. The chart is re-ranked.')};return}
+  if(a==='bstop'){const j=+b.dataset.j,bo=x.boosts[j];x.bonus=(+x.bonus||0)+earned(bo);x.boosts.splice(j,1);commit('Autoplay stopped.');return}
   if(a==='boost'||a==='lboost'){const LK=a==='lboost',K=LK?'lboosts':'boosts',W=LK?'likes':'plays';const P=[['1 hour',1],['6 hours',6],['12 hours',12],['1 day',24],['3 days',72],['7 days',168],['14 days',336],['30 days',720]];let hrs=24;
    const m=modal(`<h1 style="font-size:30px">${LK?'AUTO-LIKES':'AUTOPLAY'}</h1>`,`<div style="min-width:min(460px,80vw)"><div class="st" style="margin-top:0"><b>${esc(x.title)}</b> gets these ${W} a little at a time${LK?'. Likes never go over 40% of the song\'s plays, so give it plays too.':', so it climbs the chart smoothly.'}</div>
    <label>How many ${W}</label><input type="number" id="bpa" min="1" step="100" value="${LK?1000:10000}">
@@ -295,14 +296,14 @@ async function indie(){const pg=shell('indie','INDIE CHARTS','<button class="b" 
    const q=t=>m.querySelector(t),sum=()=>{const a=Math.round(+q('#bpa').value||0);q('#bpm').textContent=a>0?`${N(a)} ${W} over ${hrs>=24&&hrs%24===0?hrs/24+' day(s)':hrs+' hour(s)'}: about ${N(Math.max(1,Math.round(a/hrs)))} ${W} an hour on average, busier some hours and slower others, like real listeners. Starts when you click SAVE.`:'Type how many '+W+'.'};
    m.querySelectorAll('[data-h]').forEach(k=>k.onclick=()=>{hrs=+k.dataset.h;m.querySelectorAll('[data-h]').forEach(o=>o.classList.toggle('r',o===k));sum()});
    const cus=()=>{hrs=Math.max(1,+q('#bpn').value||1)*+q('#bpu').value;m.querySelectorAll('[data-h]').forEach(o=>o.classList.toggle('r',+o.dataset.h===hrs));sum()};q('#bpn').oninput=q('#bpu').onchange=cus;q('#bpa').oninput=sum;sum();
-   q('#bpok').onclick=()=>{const a=Math.round(+q('#bpa').value||0);if(a<1){sum();return}x[K]=x[K]||[];x[K].push({a,s:0,e:hrs*36e5,n:1});dirty=1;m.remove();draw()};return}
-  if(a==='cover'){const [fl]=await pick('image/*',false);if(!fl)return;try{x.cover=(await upload(fl)).url;dirty=1;draw()}catch(er){ms(er.message)}}};
+   q('#bpok').onclick=()=>{const a=Math.round(+q('#bpa').value||0);if(a<1){sum();return}x[K]=x[K]||[];x[K].push({a,s:0,e:hrs*36e5,n:1});m.remove();commit((LK?'Auto-likes':'Autoplay')+' started.')};return}
+  if(a==='cover'){const [fl]=await pick('image/*',false);if(!fl)return;try{x.cover=(await upload(fl)).url;commit('Cover saved.')}catch(er){ms(er.message)}}};
  $('#icadd').onclick=async()=>{const fs=await pick('audio/*',true);if(!fs||!fs.length)return;let k=0;
   for(const fl of fs){$('#icm').textContent=`Uploading ${++k} of ${fs.length}: ${fl.name}…`;try{const u=await upload(fl),t=fromName(fl.name);d.songs.push({id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...t,cover:'',audio:u.url,bonus:0,lock:0,real:0})}catch(er){ms(fl.name+': '+er.message)}}
-  dirty=1;draw();$('#icm').textContent=`Added ${k} song(s). Check the titles, then click SAVE.`};
+  await commit(`Added ${k} song(s).`)};
  $('#icsv').onclick=async()=>{const t=Date.now();d.songs.forEach(x=>[...(x.boosts||[]),...(x.lboosts||[])].forEach(b=>{if(b.n){b.s=t;b.e=t+b.e;delete b.n}}));try{await api('/api/admin/indie',{method:'POST',body:JSON.stringify({songs:d.songs})});await load();ms('Indie Charts saved. It shows on the site right away.')}catch(er){ms(er.message)}};
- $('#icrst').onclick=async()=>{if(dirty){ms('Click SAVE first.');return}if(!await confirmBox('Start a new week? All plays and added plays go back to 0, and this week\'s ranks are kept for the ▲▼ arrows.'))return;try{await api('/api/admin/indie/reset',{method:'POST',body:'{}'});await load();ms('New week started.')}catch(er){ms(er.message)}};
- const iv=setInterval(()=>{if(!document.body.contains(pg)||location.hash!=='#indie')return clearInterval(iv);if(!dirty&&!document.querySelector('.modal')&&!pg.contains(document.activeElement))load().catch(()=>{})},30000);
+ $('#icrst').onclick=async()=>{if(!await confirmBox('Start a new week? All plays and added plays go back to 0, and this week\'s ranks are kept for the ▲▼ arrows.'))return;try{await api('/api/admin/indie/reset',{method:'POST',body:'{}'});await load();ms('New week started.')}catch(er){ms(er.message)}};
+ const iv=setInterval(()=>{if(!document.body.contains(pg)||location.hash!=='#indie')return clearInterval(iv);if(!busy&&!document.querySelector('.modal')&&!pg.contains(document.activeElement))load().catch(()=>{})},30000);
  try{await load()}catch(er){pg.innerHTML=`<div class="st">${esc(er.message)}</div>`}}
 
 })();

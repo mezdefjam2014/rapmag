@@ -57,7 +57,7 @@ export default {
         return json({ ok: true });
       }
       /* Indie Charts: top 20 ranked by plays (one per song per visitor per day) plus the editor's added plays */
-      if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'public, max-age=30' }) }
+      if (p === '/api/indie' && req.method === 'GET') { const c = await indieChart(env); return json({ items: c.items.slice(0, 20), week: c.prevAt }, 200, { 'Cache-Control': 'no-store' }) }
       /* likes: one per visitor per song, tap again to take it back */
       if (p === '/api/indie/like' && req.method === 'POST') {
         const { id, on } = await req.json().catch(() => ({})), cfg = await indieCfg(env);
@@ -288,7 +288,7 @@ async function indieChart(env) {
   const held = list.find(x => x.hold && !x.lock);
   if (held) { const best = Math.max(0, ...list.filter(x => x !== held).map(x => x.plays)); if (held.plays <= best) { const add = best - held.plays + Math.max(1, Math.ceil(best * (0.02 + Math.random() * 0.03))); held.pace += add; held.plays += add; const c = cfg.songs.find(x => x.id === held.id); c.pace = held.pace; await saveIndie(env, cfg) } }
   for (const x of list) { const lb = x.lboosts.reduce((n, b) => n + boostEarned(b), 0), mine = (lreal[x.id] || 0) + x.lbonus + lb, ratio = x.lauto ? Math.floor(x.plays * likeRatio(x.id)) : 0;
-    x.lreal = lreal[x.id] || 0; x.lboosted = lb; x.lratio = x.lauto ? ratio : 0; x.likes = Math.min(Math.max(mine, ratio), Math.floor(x.plays * 0.4)); x.lboosts = x.lboosts.map(b => ({ ...b, got: boostEarned(b) })) }
+    x.lreal = lreal[x.id] || 0; x.lboosted = lb; x.lratio = x.lauto ? ratio : 0; x.likes = Math.min(Math.max(x.lbonus + lb, ratio), Math.floor(x.plays * 0.4)) + x.lreal; x.lboosts = x.lboosts.map(b => ({ ...b, got: boostEarned(b) })) }
   const free = list.filter(x => !x.lock).sort((a, b) => b.plays - a.plays), out = [];
   for (const x of list.filter(x => x.lock).sort((a, b) => a.lock - b.lock)) out[x.lock - 1] ? free.unshift(x) : (out[x.lock - 1] = x);
   for (let i = 0; free.length; i++) if (!out[i]) out[i] = free.shift();
