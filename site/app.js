@@ -56,8 +56,8 @@ async function indie(){const main=$('#main');
  let d;try{d=await get('/api/indie')}catch(e){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
  if(!d.items.length){$('#rpb').innerHTML='<div class="empty">The Indie Charts are coming soon.</div>';return}
  const MV={new:'NEW',up:'▲',down:'▼',same:'–'},n=v=>v>=1e6?(v/1e6).toFixed(1).replace(/\.0$/,'')+'M':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'K':String(v);
- $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row" data-id="${esc(it.id)}">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:'<span class="cr-noimg"></span>'}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p><small class="cr-pl">${n(it.plays)} plays${it.last?' · last week #'+it.last:''}</small></div><span class="cr-m ${it.move}">${MV[it.move]}</span><a class="cr-a" href="${esc(img(it.audio))}">Audio</a></div>`).join('');
- const sent=new Set();chart(main,r=>{const id=r.dataset.id;if(!id||sent.has(id))return;sent.add(id);fetch(API+'/api/indie/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{})})}
+ $('#rpb').innerHTML=d.items.map(it=>`<div class="chart-row" data-id="${esc(it.id)}">${it.cover?`<img src="${esc(img(it.cover))}" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`:`<img class="cr-disc" src="gold-record.webp" alt="${esc(it.title+' by '+it.artist)}" loading="lazy">`}<div class="cr-t"><h3>${esc(it.title)}</h3><p>${esc(it.artist)}</p><small class="cr-pl"><b data-n="${it.plays}">${n(it.plays)}</b> plays${it.last?' · last week #'+it.last:''}</small></div><span class="cr-m ${it.move}">${MV[it.move]}</span><a class="cr-a" href="${esc(img(it.audio))}">Audio</a></div>`).join('');
+ const sent=new Set();chart(main,r=>{const id=r.dataset.id;if(!id||sent.has(id))return;sent.add(id);const b=r.querySelector('[data-n]');if(b){b.dataset.n=+b.dataset.n+1;b.textContent=n(+b.dataset.n)}fetch(API+'/api/indie/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{})})}
 /* ---------- author page ---------- */
 async function author(){const main=$('#main'),s=qs.get('s')||pathSlug('author');let a;try{a=(await get('/api/authors/'+encodeURIComponent(s||''))).author}catch(e){main.innerHTML='<div class="wrap shell"><div class="empty">Author not found.</div></div>';return}
  setMeta(a.name+' | RAPAECHELON - RAPMAG',a.bio||a.role||a.name,img(a.photo),'profile');
@@ -93,11 +93,16 @@ function chart(root,onListen){const rows=[...root.querySelectorAll('.chart-row')
  const play=i=>{const x=rows[i];if(!x.au)return yt(i);closeMp();
   if(cur===i&&A.src){A.paused?A.play():A.pause();return}
   cur=i;A.src=x.au;A.play().catch(()=>{});mark(i)};
- A.onplay=A.onpause=()=>mark(cur);if(onListen)A.ontimeupdate=()=>{if(cur>-1&&A.currentTime>=10)onListen(rows[cur].r)};
+ /* now-playing bar: cover (record spins), song, prev / play / next, progress */
+ const np=document.createElement('div');np.id='np';np.hidden=true;np.innerHTML='<div class="np-bar"><i></i></div><div class="np-in"><img alt=""><div class="np-t"><b></b><span></span></div><button data-k="p" aria-label="Previous">⏮</button><button data-k="t" class="np-pp" aria-label="Play or pause"></button><button data-k="n" aria-label="Next">⏭</button></div>';document.body.appendChild(np);
+ const nb=()=>{if(cur<0){np.hidden=true;document.body.classList.remove('has-np');return}const r=rows[cur].r,im=r.querySelector('img');np.hidden=false;document.body.classList.add('has-np');np.querySelector('img').src=im?im.src:'';np.querySelector('img').className=im&&im.classList.contains('cr-disc')?'disc':'';np.classList.toggle('on',!A.paused);np.querySelector('b').textContent='#'+(cur+1)+'  '+((r.querySelector('h3')||{}).textContent||'');np.querySelector('span').textContent=(r.querySelector('.cr-t p')||{}).textContent||'';np.querySelector('.np-pp').textContent=A.paused?'▶':'❚❚'};
+ np.onclick=e=>{const k=(e.target.closest('[data-k]')||{}).dataset;if(!k)return;const au=rows.map((x,j)=>x.au?j:-1).filter(j=>j>-1),at=au.indexOf(cur);if(k.k==='t')play(cur);else if(k.k==='n'&&at<au.length-1)play(au[at+1]);else if(k.k==='p')at>0&&A.currentTime<3?play(au[at-1]):(A.currentTime=0)};
+ A.addEventListener('timeupdate',()=>{np.querySelector('.np-bar i').style.width=(A.duration?A.currentTime/A.duration*100:0)+'%'});
+ A.onplay=A.onpause=()=>{mark(cur);nb()};if(onListen)A.ontimeupdate=()=>{if(cur>-1&&A.currentTime>=10)onListen(rows[cur].r)};
  A.onended=()=>{const n=rows.findIndex((x,j)=>j>cur&&x.au);if(n>-1)play(n);else{cur=-1;mark(-1)}};
  rows.forEach(({r},i)=>{if(r.querySelector('.cr-p'))return;const w=document.createElement('div');w.className='cr-pw';
   w.innerHTML='<button class="cr-p" aria-label="Play '+esc((r.querySelector('h3')||{}).textContent||'song')+'"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>PLAY</span></button><div class="cr-w" aria-hidden="true">'+'<i></i>'.repeat(14)+'</div>';
-  w.querySelector('button').onclick=()=>play(i);r.appendChild(w)})}
+  w.querySelector('button').onclick=e=>{e.stopPropagation();play(i)};r.appendChild(w);if(onListen){r.classList.add('tap');r.onclick=e=>{if(!e.target.closest('a'))play(i)}}})}
 function fix(h){return String(h||'').replace(/(<img[^>]*src=")(\/img\/[^"]+)"/g,(m,a,b)=>a+API+b+'" loading="lazy"')}
 
 /* 404.html serves clean links the build has not made yet */

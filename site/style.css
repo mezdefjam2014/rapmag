@@ -269,3 +269,37 @@ button{font:inherit;cursor:pointer}
 .body .chart-row:has(.cr-noimg)::before{align-self:center}
 
 .body .cr-pl{display:block;margin-top:4px;font:700 11px Inter,sans-serif;letter-spacing:.06em;color:var(--mut);text-transform:uppercase}
+/* Indie Charts: gold record cover spins while its song plays */
+.body .chart-row img.cr-disc{border-radius:50%;background:transparent;object-fit:contain;box-shadow:none}
+.body .chart-row.playing img.cr-disc{animation:crspin 1.8s linear infinite}
+@keyframes crspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.body .chart-row.playing img.cr-disc{animation-duration:6s}}
+/* now-playing bar */
+#np{position:fixed;left:0;right:0;bottom:0;z-index:210;background:#0b0b0b;color:#fff;box-shadow:0 -8px 30px rgba(0,0,0,.35);padding-bottom:env(safe-area-inset-bottom)}
+#np[hidden]{display:none}
+.np-bar{height:3px;background:#333}.np-bar i{display:block;height:100%;width:0;background:#f5c518;transition:width .25s linear}
+.np-in{display:flex;align-items:center;gap:12px;max-width:900px;margin:0 auto;padding:10px 14px}
+.np-in img{width:44px;height:44px;object-fit:cover;flex:none;background:#222}.np-in img.disc{border-radius:50%;background:transparent;object-fit:contain}
+#np.on .np-in img.disc{animation:crspin 1.8s linear infinite}
+.np-t{flex:1;min-width:0;display:flex;flex-direction:column}.np-t b{font:800 14px Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np-t span{font:500 12px Inter,sans-serif;color:#9a9a9a}
+.np-in button{background:none;border:0;color:#fff;font-size:18px;width:40px;height:40px;cursor:pointer;flex:none}
+.np-in .np-pp{background:#f5c518;color:#000;border-radius:50%;font-size:15px;font-weight:900}
+body.has-np{padding-bottom:80px}
+/* Indie Charts rows: tap anywhere, gold #1 */
+.body .chart-row.tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rp-page .chart-row.top{background:linear-gradient(90deg,#fff7d6,transparent 70%)}
+.rp-page .chart-row.top::before{color:#b8860b}
+.rp-page .chart-row.on{background:#fff2f2}
+@media(max-width:600px){
+.nmf{padding:22px 18px!important}.nmf h1{font-size:48px;margin:8px 0 8px}.nmf p{font-size:14px}
+.rp-page .chart-row,.rp-page .chart-row.top{grid-template-columns:34px 52px minmax(0,1fr) 44px;gap:10px;padding:10px 4px}
+.rp-page .chart-row::before{font-size:26px}.rp-page .chart-row.top::before{font-size:36px}
+.rp-page .chart-row img,.rp-page .chart-row.top img{width:52px;height:52px}
+.rp-page .chart-row.top img{width:64px;height:64px}.rp-page .chart-row.top{grid-template-columns:34px 64px minmax(0,1fr) 44px;padding:14px 4px}
+.rp-page .chart-row h3{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-page .chart-row .cr-t p{font-size:13px}
+.rp-page .cr-pl{font-size:10px!important;margin-top:2px!important}
+.rp-page .chart-row .cr-m{grid-column:1;grid-row:2;justify-self:center;margin-top:-6px;padding:2px 4px;font-size:9px;min-width:0}
+.rp-page .cr-p{width:44px;height:44px;justify-content:center;padding:0;border-radius:50%}
+.rp-page .cr-w{height:10px}
+}
