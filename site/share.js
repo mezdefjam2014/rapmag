@@ -84,8 +84,8 @@ const SHARE={buildTags,buildCaption,tagify,
   $('.igp-go').onclick=async()=>{const text=full(tab),subj='RAPAECHELON '+(c.type==='drop'?'drop':c.type==='mag'?'magazine page':'post')+(c.title||c.song?': '+(c.title||c.song):''),f=new File([blob],name,{type:blob.type});
    if(navigator.canShare&&navigator.canShare({files:[f]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){await navigator.share({files:[f],title:subj,text}).catch(()=>{});return}
    const a=document.createElement('a');a.href=url;a.download=name;a.click();await copy();
-   const to=$('.igp-em').value.trim();location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`;
-   st(`Your email opened with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
+   const to=$('.igp-em').value.trim();window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(text+'\n\n(Attached: '+name+')')}`,'_blank');
+   st(`Gmail opened in a new tab with the caption and hashtags. <b>${esc(name)}</b> was saved to your Downloads, so drag it into the email to attach it. (Email apps don't let a website attach files by itself.)`)};
   const close=()=>{URL.revokeObjectURL(url);m.remove()};$('.igp-x').onclick=$('.igp-xx').onclick=close;m.onclick=e=>{if(e.target===m)close()};draw()}
 };
 window.SHARE=SHARE;
