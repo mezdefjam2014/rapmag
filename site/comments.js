@@ -1556,7 +1556,7 @@ function make(S,n,mix){const used=loadUsed(),sk=norm([S.topic,S.a,S.s,S.k].join(
   if(tone==='E'&&S.only){dead.add('E');continue}
   if(tone==='E'){const e=emo(S),h=hash(sk+'|'+e);if(seen.has(e)||used.has(h)){if(++miss.E>400)dead.add('E');continue}seen.add(e);used.add(h);got.E++;out.push({t:e,tone:'E'});continue}
   const bad=()=>{if(++miss[tone]>(S.only?300:2500))dead.add(tone)};
-  let tpl,src='';const ex=extra[tone]||[],al=sad?[]:(ai[tone]||[]);
+  let tpl,src='';const ex=extra[tone]||[],al=ai[tone]||[];
   if(al.length&&(S.only||R(.55))){tpl=pick(al);src='ai'}else if(S.only){bad();continue}else if(!sad&&ex.length&&R(.12)){tpl=pick(ex);src='own'}
   else if(hasF&&FACT[sad?'sad':tone]&&R(.14)){tpl=pick(FACT[sad?'sad':tone]);src='fact'}else tpl=wpick(pool(S.topic,tone));
   if(!tpl){bad();continue}const proper=tpl[0]==='^';
@@ -1593,8 +1593,8 @@ const names=s=>String(s||'').split(/\s*(?:,|&|\bx\b|\bft\.?|\bfeat\.?|\bfeaturin
 /* asks the site's server, where Claude reads the story and writes lines that fit what actually happened */
 async function aiLines(S,o,st){let tok='';try{tok=localStorage.getItem('rm_tok')||''}catch(e){}
  if(!tok)throw new Error('Log in to the back office first (open admin.html in this browser), then come back and press it again.');
- st('The AI is reading the story…');
- const r=await fetch((window.RM_API||'')+'/api/admin/comments',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({from:o.from,kind:S.topic,headline:o.headline,caption:o.caption,artist:S.a+(S.a2?' ft. '+S.a2:''),song:S.s,who:S.a,each:30})}),d=await r.json().catch(()=>({}));
+ st('The AI is reading the story (about 20 seconds)…');
+ const r=await fetch((window.RM_API||'')+'/api/admin/comments',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({from:o.from,kind:S.topic,headline:o.headline,caption:o.caption,artist:S.a+(S.a2?' ft. '+S.a2:''),song:S.s,who:S.a,each:20})}),d=await r.json().catch(()=>({}));
  if(r.status===401)throw new Error('Your back office login ran out. Log in again at admin.html, then come back.');
  if(r.status===404)throw new Error('The server update for the AI is not live yet.');
  if(!r.ok)throw new Error(d.error||'The AI did not answer');
