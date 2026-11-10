@@ -436,7 +436,7 @@ L:bank(`
 (the|) (system|feds|courts) (been|always|stay) (targeting|after|on) (rappers|us|our people)
 (they|) (using|use) (lyrics|rap lyrics|music) (as evidence|in court) (again|and that's crazy|)
 (keep|keeping) {a} in (my|our) prayers
-(stay|hold) (strong|ya head|your head up) {a}
+(stay strong|hold ya head|hold it down) {a}
 (they|) (don't|never) want to see (us|{a}|a rapper) (win|winning|doing good)
 (get|hope {he} got|{he} need) a good lawyer
 (not|i'm not) (believing|buying) (it|this) (until|til) (i see proof|the facts come out|the trial)
@@ -516,7 +516,7 @@ L:bank(`
 (playing|running|bumping) {his} (music|songs|catalog) all (day|week|night)
 long live {a}
 (fly|fly high|sleep well) {a}
-(we|) (lost|losing) (another|a) (one|legend|good one|real one)
+(lost another one|we lost a legend|we lost a good one|losing another real one|we keep losing the real ones)
 (give|gotta give) (people|them|folks) (they|their) flowers while (they|they're) (here|still here)
 (tomorrow|life) (is|) (not|ain't) promised(, hug your people|, tell your people you love them|)
 (heartbreaking|so sad|tragic|devastating)(, prayers up| news|, no words|)
@@ -538,7 +538,7 @@ long live {a}
 (one|1) of the (greats|good ones|realest|best to do it)
 (saw|seen) {him} (live|perform) (once|years ago|last year)(, will never forget it|, so glad i did|)
 (hug|call|text) (your|ya) (people|family|friends|mom) (today|tonight|while you can)
-(still|i'm still) (in shock|processing this|can't process this)
+(still in shock|still processing this|i can't process this|still can't wrap my head around it)
 (lost|we lost) a (great one|good one|giant|legend) (today|)
 (praying|prayers) for (peace|comfort|strength) for (the|{his}) (family|loved ones)
 the (music|songs|verses) (will|gonna) (live|play) forever
@@ -823,8 +823,656 @@ N:bank(`
 (how much|price) (are|for) (tickets|floor|vip)
 (is|) (it|this) (all ages|18+|21+)(?|)
 (any|is there any|are there) (international|overseas|canada|uk|west coast|east coast|southern) dates
-(is|) (there|) (a|) (second|2nd) (leg|round of dates|show) (coming|)(?|)
+(is there a second leg coming|second round of dates coming|any chance of a second show)
 `)};
+/* ------------------------------------------------ second bank: many more lines, more voices.
+   A line starting with ^ is someone who types properly. [asp] [ver] [bad] pull from the lists in G.
+   T = said to somebody. E (emojis only) is made by emo() below. */
+const G={
+asp:`the beat|the hook|the flow|the second verse|the first verse|the production|the bridge|the intro|the outro|the chorus|the sample|the bass|the drums|the 808s|the melody|the ad libs|the cadence|the delivery|the wordplay|the pen|the mix|the vocals|the energy|the beat switch|the opening line|the last verse|the pocket|the bounce|the tempo|the storytelling|that first bar|the way {he} came in|the way {he} rode the beat|{his} voice|{his} tone|the whole song|every single bar|the last 30 seconds|the build up|the breakdown|the harmonies|the layering|the snare|the piano|the guitar|the strings|the low end|the transition|that pause before the drop|the rhyme scheme`.split('|'),
+ver:`is crazy|went stupid|is on another level|got me in a chokehold|need to be studied|is undefeated|had no business being this good|is doing something to me|deserve an award|living rent free in my head|caught me off guard|is different|is hard as nails|is disgusting in the best way|is pure butter|is filthy|is a problem|is too clean|hit me in the chest|is elite|is top tier|is next level|is outrageous|is beautiful|is wicked|is menacing|gave me chills|is smooth like water|is exactly what i needed|is sick|is vicious|is immaculate|scratched an itch i ain't know i had|is criminal|should be illegal|is diabolical|is nuts|is serious|woke me up|is silly|got my head nodding|is certified|is ruthless|is gorgeous|made my whole morning|is unreal|is so satisfying|is a cheat code|is sharp|is something special|is perfect|is A1|is five stars|is premium|is luxury|is expensive sounding|is mean|is rude|is lethal|sound like money|is God tier|is addictive|is haunting|is so tough|is cold blooded|is flawless|aged well already|is wild|is bananas|got replay value|is timeless`.split('|'),
+bad:`is weak|is lazy|ruined it|threw me off|is all over the place|is giving nothing|needed more work|is off beat|is painful|is drowning everything out|sound cheap|sound rushed|is basic|is dated|is messy|is flat|is annoying|got old fast|is doing too much|is doing too little|is distracting|sound like a demo|is copy and paste|lost me|is not hitting|fell apart|is rough on the ears|sound unfinished|is tired|is recycled|is stale|is empty|is forgettable|put me to sleep|killed the whole vibe`.split('|')};
+const add=(k,t,x)=>{(T[k]=T[k]||{})[t]=((T[k]||{})[t]||[]).concat(bank(x))};
+add('music','L',`
+[asp] [ver]
+[asp] [ver]
+[asp] [ver]
+{a} came through with it
+{a} understood the assignment
+{a} cooking with grease
+{a} really outside with this one
+{a} got the juice
+{a} locked in
+{a} ain't letting up
+{a} on a run right now
+{a} got a classic on {his} hands
+{a} making it look easy
+{a} in rare form
+{a} sound hungry
+{a} sound comfortable on this
+{a} found {his} sound
+{a} leveled up
+{a} stepping
+{a} too consistent
+{a} got my attention now
+{a} just earned a new fan
+{a} about to have a big year
+{a} deserve a bigger stage
+{a} got next, i'm calling it
+{a} putting on for the independents
+{s} is a certified slapper
+{s} got me moving
+{s} is a whole mood
+{s} going straight to the top of my playlist
+{s} about to be everywhere
+{s} is my new alarm
+{s} is the soundtrack to my week
+{s} deserve a spot on the charts
+{s} gonna age like wine
+{s} got that feeling
+{s} belong on the radio
+{s} is an earworm
+{s} for the summer playlist
+{s} on loop till further notice
+somebody's cousin put me on to this and i owe them
+my whole commute is this song now
+shazam brought me here, staying for the catalog
+heard this at the barbershop and had to find it
+heard this in somebody's story and went looking
+walked in the house singing this
+this gonna be stuck with me all weekend
+had to pause and run that back
+rewound it before the first verse ended
+did not expect to like this as much as i do
+came in skeptical, leaving a believer
+pleasantly surprised
+this what the game been missing
+they don't make them like this no more
+music like this is why i still dig for new artists
+this got soul
+you can hear the hunger
+you can tell {he} mean every word
+this got that old school feel with a new sound
+quality over everything
+everything about this is right
+clean from start to finish
+zero complaints from me
+nothing to fix here
+this one special
+timeless record
+certified
+stamped
+approved
+big tune
+anthem
+gas
+smooth
+my type of music right here
+exactly my lane
+this the energy i needed today
+mood lifted
+day made
+motivation music
+hustle music
+cruising music
+cookout approved
+car test passed
+headphone test passed
+passed the vibe check
+speakers happy
+subwoofers thanking you
+trunk rattling
+this in the whip is dangerous
+bass hitting right in the car
+salute
+respect
+well done
+bravo, seriously
+keep them coming
+more of this please
+another one for the collection
+catalog getting strong
+three for three with the last few drops
+hasn't missed all year
+consistency is scary
+^This is honestly one of the best songs I have heard all year.
+^I was not familiar with {a} before this, but I am definitely a fan now.
+^The production on this is excellent. Whoever engineered it did a great job.
+^Really impressive work. The writing stands out to me the most.
+^I keep coming back to this one. It gets better every time.
+^Great song. I would love to hear this performed live.
+^You can hear how much effort went into this. Well done, {a}.
+^This deserves far more attention than it is getting.
+^I do not usually comment, but this one earned it.
+^Excellent record from start to finish.
+^The hook has been stuck in my head since yesterday.
+^{a} keeps getting better with every release.
+^Adding this to my playlist right now. Thank you for sharing it.
+^My husband and I have had this on all morning.
+^My daughter showed me this and I have to admit, it is very good.
+^Solid release. Looking forward to the full project.
+^This is a very polished record for an independent artist.
+^I appreciate artists who still care about lyrics. Great job.
+^What a pleasant surprise this was.
+^Wonderful song. The melody is beautiful.
+`);
+add('music','H',`
+[asp] [bad]
+[asp] [bad]
+nothing here for me
+couldn't finish it
+made it halfway
+lost interest quick
+this ain't for me
+not my cup of tea
+gonna have to pass on this one
+hard pass
+respectfully, no
+i'm good on this
+don't see it
+don't hear it
+whatever yall hearing, i'm not
+must be an acquired taste
+maybe i'm too old for this
+my ears deserve better
+give me my three minutes back
+waste of a good beat
+the beat deserved a better verse
+somebody lied to {him}
+{his} friends should have said something
+{a} need new people in the studio
+{a} can do better than this
+{a} sound bored on {his} own song
+{a} mailed this one in
+{a} getting lazy
+{a} lost the hunger
+{a} been dropping the same song for a year
+heard better from soundcloud rappers
+heard better in a freestyle
+my little cousin got better songs
+radio filler
+elevator music
+background noise
+playlist filler at best
+B side material
+throwaway track
+demo quality
+needs a remix to save it
+no hook, no hit
+where's the substance
+all vibe no content
+style over substance
+nothing memorable about it
+in one ear out the other
+already skipped
+won't be revisiting
+disappointing
+underwhelming
+letdown
+meh
+it's giving nothing
+flop
+^I wanted to enjoy this, but it did not hold my attention.
+^Not a fan of this one. The earlier work was much stronger.
+^The mixing needs work. The vocals are buried.
+^I do not understand the appeal, to be honest.
+^This feels unfinished to me.
+^Unfortunately this one is not for me. Maybe the next release.
+^It is fine, but nothing about it stands out.
+^I expected more after all the promotion.
+`);
+add('music','S',`
+{a} already better than half the people on the radio
+{a} would wash most of the freshman list
+{a} need a feature from nobody, keep it solo
+{a} one co-sign away from being everywhere
+{a} deserve the spot they giving to industry plants
+put {a} on a festival lineup and watch
+sign {a} today or regret it tomorrow
+the majors gonna copy this sound in six months
+somebody bigger gonna steal this flow, watch
+this type of music don't get pushed and we all know why
+if this had a tiktok dance it would be number one
+this a hit with the right budget
+great song, terrible rollout
+good song but the title ain't it
+cover art don't match how hard this is
+real ones know this better than the single everybody posting
+this better than the last three songs yall called classics
+song of the year and it won't even get nominated
+awards mean nothing if this don't get one
+the charts are rigged and this is the proof
+playlist editors sleeping on purpose
+blogs won't post this cause nobody paid them
+critics gonna hate it, streets gonna love it
+streets love it, internet gonna hate it
+older heads will hate this, younger crowd will run it up
+this ain't for the tiktok crowd and that's a good thing
+lyrics matter again or nah
+vibes over bars, and i'm fine with it
+bars over vibes every time, this proves it
+producer deserve more credit than the artist here
+the beat did 70 percent of the work, still a good song
+would this still hit with a different beat tho
+take the hook off and it's a perfect song
+needed a second verse more than a feature
+two minutes is too short for a song this good
+songs getting shorter every year and it's ruining music
+this is good, calling it great is a stretch
+7 at best, the comments acting like it's a 10
+half of yall ain't even listen all the way through
+everybody in here a day one all of a sudden
+where was all this love on the last drop
+same people praising this ignored {him} last year
+yall gonna switch up the second {he} get big
+gatekeeping this one, sorry
+don't let this go mainstream, they'll ruin it
+this the type of song a label would shelve
+independent artists eating better than signed ones now
+proof you don't need a deal anymore
+no features needed, argue with yourself
+top three song out this month and the other two ain't close
+^I think this is better than most of what is on the charts right now, and I will stand by that.
+^Unpopular opinion, but the verses are stronger than the hook.
+^It is a good song. I am just not convinced it is as great as everyone here says.
+^If a major label artist had released this, it would be everywhere.
+^I honestly think people will look back on this as underrated.
+`);
+add('music','F',`
+i need a minute
+sat in the driveway to finish the song
+missed my exit listening to this
+my steering wheel is now a drum set
+i'm in the shower giving a full performance
+my mirror just watched a whole concert
+did the whole verse in my rearview
+my dog left the room when i started rapping
+my roommate knocked on the wall twice already
+landlord gonna raise my rent over this volume
+my airpods begged for mercy
+phone got hot from the replays
+spotify wrapped gonna expose me
+i'm not okay
+somebody come get me
+had to sit down
+took my glasses off for this one
+face been scrunched for three minutes straight
+my eyebrows hurt
+walked different after this
+left the house feeling six foot five
+feel like i can fight a bear
+feel like i owe somebody money and don't care
+paid my bills late feeling good about it
+about to text my boss something crazy
+quit my job in my head twice
+felt rich for three minutes then checked my account
+my bank account don't match this energy
+driving a corolla like it's a maybach
+turned my honda into a studio
+stop light concert, sold out
+the lady next to me at the light looked concerned
+grandma asked who that is and started nodding
+my mom said turn that down then asked for the name
+my kid know the hook already and that's a problem
+my toddler requested this by name
+cat been staring at me since i pressed play
+gym got an extra 20 minutes out of me
+ran an extra mile by accident
+deadlifted my problems to this
+cleaned my whole house to this song
+washed dishes like a professional
+this got me folding laundry aggressively
+alexa been playing this against her will
+siri tired of me
+my uber rating dropped cause i wouldn't stop singing
+almost threw my phone when the beat dropped
+almost fought the air
+shadowboxed in the kitchen
+hit the steering wheel so hard the horn went off
+`);
+add('music','N',`
+how old is {a}
+is {a} dropping a project this year
+who mixed this
+who's on the hook
+who did the cover art
+what's the bpm on this
+what studio was this recorded in
+any shows coming up
+merch link
+does {a} have a youtube channel
+where can i buy this
+is there a slowed version
+is there a remix coming
+who would sound good on the remix
+what's {his} best song besides this
+how did i just find out about {a}
+how long this been out
+this new or am i late
+just getting here, what i miss
+what's the story behind this song
+what does the title mean
+is this a single or off a project
+what's the album called
+anybody seen {him} live
+how's the rest of the catalog
+similar artists, anybody
+if i like this who else should i check
+playlist with more like this
+saving this for later
+bookmarked
+listening now
+checking this out on my lunch break
+came back for a second listen
+back again
+day two of playing this
+still here
+^Does anyone know who produced this?
+^Is this available on streaming services yet?
+^When is the full project expected?
+^Where is {a} based? I would like to see a show.
+^Could someone recommend more songs by {a}?
+`);
+add('music','T',`
+whoever put me on to this, i owe you lunch
+to whoever sent me this, thank you
+to the person who posted this, you did the lord's work
+sending this to my brother right now
+sending this to my sister, she gonna love it
+sending this to my cousin, he been asking for new music
+group chat getting this immediately
+my homeboy been telling me about {a} for months, he was right
+my girl been playing {a} all week, now i get it
+my man put me on and i apologize for doubting him
+bro you were right about {a}
+sis you gotta hear this one
+twin come listen to this
+babe this the song i was telling you about
+ma this the artist i was talking about
+somebody tag {a} so {he} see the love
+tag somebody who need to hear this
+tag a friend who sleeping on {a}
+show this to anybody who say {genre} is dead
+show this to your favorite {rapper}
+play this for whoever said nobody make good music anymore
+to everybody saying mid, get your ears checked
+to the people hating in the comments, drop your song then
+whoever disliked this, explain yourself
+whoever said skip, we can't be friends
+to the person below me, you got good taste
+person above me don't know music
+if you scrolling the comments, just press play
+if you reading this, add it to your playlist
+if you here before a million, you got taste
+to my future self coming back to this, you still got taste
+{a} if you see this, keep going
+{a} if you reading this, we need the album
+{a} come to my city
+{a} drop the video please
+{a} don't change nothing
+{a} you got a supporter in (texas|ohio|georgia|michigan|florida|new york|california|chicago|the uk|canada|virginia|the carolinas|st louis|memphis|jersey|philly|detroit|houston)
+shoutout to the producer, you did that
+shoutout to the engineer
+shoutout to whoever runs this page for the find
+dj, if you reading this, add it to the set
+radio people, wake up
+playlist curators, where yall at
+label people in the comments, we see you
+dear algorithm, more like this
+note to self, check the rest of the catalog
+reminder to come back to this tomorrow
+my coworker gonna hear this all shift, sorry in advance
+neighbors, i apologize for what's about to happen
+^To whoever recommended this, thank you. I really enjoyed it.
+^I am sharing this with my son. He will love it.
+^{a}, if you read these, please keep making music like this.
+`);
+/* safe on any news post that is not tragic */
+add('uni','F',`
+came straight to the comments
+the comments never disappoint
+my screen time gonna be crazy today
+i should be working
+reading this on the clock
+lunch break entertainment
+the internet stays undefeated
+what a week and it's only (monday|tuesday|wednesday)
+this app is free and that's wild
+never logging off
+i love it here
+wasn't on my bingo card
+the timeline is moving fast today
+another day another headline
+saw this in three group chats before i saw it here
+the plot thickens
+season finale energy
+who writing this season
+the writers been busy
+roll the credits
+to be continued
+tune in next week
+`);
+add('uni','N',`
+wait what
+hold on, what
+is this confirmed
+source?
+where did this come from
+first i'm hearing of this
+how am i just seeing this
+somebody catch me up
+need more details
+more info please
+full story where
+is there a video
+any updates
+following for updates
+following
+commenting to come back later
+interesting
+hmm
+well then
+oh wow
+dang
+welp
+noted
+that's crazy
+big if true
+^Thank you for the update.
+^Is there a link to the full story?
+^I had not heard about this until now.
+`);
+add('uni','S',`
+there's more to this story
+we only getting half the story
+waiting on the other side
+believe half of what you see
+blogs will post anything for clicks
+headline doing a lot of work
+read past the headline, people
+nobody read the article, just the title
+everybody got an opinion and no facts
+this gonna age badly
+screenshot this comment section for later
+bookmark this, it's gonna get worse
+people only care when it's trending
+selective outrage as usual
+if it was somebody yall liked the comments would be different
+funny how the story change depending on who posting it
+somebody benefiting from this
+`);
+add('uni','H',`
+who cares
+slow news day
+this ain't news
+why is this on my feed
+nobody asked
+tired of seeing this
+enough already
+we got bigger problems
+post something that matter
+old news
+this been out for days
+late
+moving on
+scrolling
+not interested
+couldn't care less
+this what we talking about today
+the bar for news is in the floor
+`);
+add('uni','T',`
+sending this to the group chat
+sending this to my cousin, he needs to see this
+tag somebody who called this
+whoever told me about this last week, i'm sorry i doubted you
+my homegirl called this months ago
+to everybody arguing in the replies, go outside
+to the person about to type a paragraph, save it
+somebody check on the fans
+somebody call my mom, she love this type of news
+admin, we need the follow up
+admin stay with the tea
+whoever run this page be on it
+thanks for keeping us posted
+to whoever commented first, you fast
+if you came from the story post, hey
+person above me got a point
+person below me is wrong, respectfully
+everybody in the comments calm down
+not yall fighting in the replies
+reply section about to be a war zone
+`);
+add('beef','L',`(this the type of smoke that make good music|somebody had to say it|finally some action in hip hop|been boring lately, we needed this|the gloves off now|no more subliminals, say names|respect for saying it with {his} chest|at least {a} said it out loud|{a} never been scared of nobody|{a} been quiet too long|{a} different when {he} mad|angry {a} make the best music|about to get a classic diss out of this|studio session going crazy tonight|pen about to be on fire|whoever drop first got the advantage|this gonna be a fun week|friday can't come fast enough|setting my alarm for the response|i'm tuned in|locked in for this|front row seat|best thing to happen to hip hop all year|iron sharpen iron)`);
+add('legal','L',`(hope {he} got a good team around {him}|hoping for the best outcome|praying the truth come out|not judging until the facts drop|everybody deserve a fair trial|let {him} have {his} day in court|media already convicted {him}|the comments already convicted {him}|don't believe everything you read|been a fan too long to turn on {him} now|still riding with {a}|loyalty don't switch over a headline|keep your head up {a}|thinking about {his} kids|thinking about {his} mother right now|hope the family doing ok|this hurt to see|hate seeing this for {him}|was just starting to win too|come home and get back to the music|music gonna hit different when {he} home|we need {him} home|the city need {him}|whole city behind {a})`);
+add('wild','L',`(front row seat to chaos|i have never clicked so fast|did a double take|blinked and missed half of it|rewatching for details|caught something new every replay|the longer you watch the crazier it get|second half even crazier|zero to a hundred real quick|nobody saw that coming|plot twist at the end|the ending tho|jaw on the floor|eyes wide the whole time|hand over my mouth|i yelled|audibly gasped|had to pause and breathe|my whole body tensed up|adrenaline through the phone|this going viral for sure|million views by tomorrow|everybody about to repost this|already seen this five times today and still watched)`);
+add('funnyvid','L',`(i needed this today|laughing way too hard at this|woke up and chose laughter|best thing on my feed today|instant mood booster|bad day fixed|cackling|giggling like a child|wheezing|howling|laughed out loud for real|not a fake lol, a real one|laughed before the punchline|lost it at the end|lost it halfway|the first two seconds already had me|every time i think it's over it get funnier|somebody give this person a show|this deserve a million likes|whoever thought of this is a genius|certified funny|goated clip|undefeated video|ten out of ten|sharing this everywhere)`);
+add('tour','L',`(counting down the days|marking my calendar|setting a reminder for the sale|refreshing the ticket page already|group chat planning now|taking the whole week off|flying out for this one|driving four hours, don't care|birthday gift to myself|anniversary plans handled|bucket list show|been waiting years to see {him}|finally get to hear the old songs live|hope {he} do the whole first album|bring out the special guests|merch line gonna be crazy|need that tour hoodie|floor seats or i'm staying home|see yall at the barricade|voice gonna be gone the next day)`);
+add('general','L',`(good to see|nice to see something positive|that's what's up|respect where it's due|credit where it's due|hard work paying off|blessings on blessings|more blessings to {a}|nothing but growth|grown moves only|chess not checkers|playing the long game|setting an example|the culture need more of this|young artists take notes|this how you move|flowers while {he} here|been deserved this|overdue recognition|keep shining {a}|sky the limit|the glow up is real|from the bottom to this, inspiring|everybody eat when one of us win)`);
+/* ------------------------------------------------ video games, beats, history, indie artists */
+G.gasp=`the graphics|the gameplay|the story|the map|the online|the servers|the soundtrack|the controls|the campaign|the multiplayer|the physics|the loading times|the character creator|the open world|the combat|the side missions|the cutscenes|the voice acting|the gunplay|the driving|the customization|the boss fights|the ending|the trailer|the lighting|the animations|the frame rate|the menus|the ai|the career mode`.split('|');
+G.gver=`look unreal|is smooth as butter|is the best in the series|got me hooked|feel next gen for real|is a huge step up|is so detailed|is worth the price alone|is addictive|blew me away|is on point|feel perfect|is clean|is crazy good|is what i been asking for|had me smiling like a kid|is top tier|is a big improvement`.split('|');
+G.gbad=`look dated|is clunky|is a downgrade|is broken|feel unfinished|is laggy|is a mess|is boring|ruined it for me|is copy and paste|feel cheap|got worse somehow|is stuck in 2015|is full of bugs|is a joke|need a patch already|feel rushed|is the worst in the series`.split('|');
+G.basp=`the drums|the 808s|the melody|the bass line|the sample chop|the hi hats|the bounce|the swing|the snare|the kick|the piano|the keys|the strings|the low end|the mix|the arrangement|the drop|the intro|the switch up|the synths|the chords|the percussion|the loop|the bridge section|the outro`.split('|');
+add('game','L',`
+[gasp] [gver]
+[gasp] [gver]
+[gasp] [gver]
+(game of the year, easy|day one buy for me|pre ordered already|taking a week off work for this|cancel my plans|been waiting years for this|childhood coming back|they actually listened to the fans|finally a game that respect my time|finally a finished game at launch|worth every dollar|worth full price|already 40 hours in|can't put the controller down|one more mission turned into 4am|haven't slept since it dropped|this what gaming supposed to feel like|reminds me why i love games|instant classic|easy 10 out of 10|masterpiece and i don't say that often|the devs cooked|devs deserve a raise|studio redeemed themselves|best in the series|better than the last one by far|trailer gave me chills|trailer alone better than most games|the hype is real|lived up to the hype|exceeded every expectation|my whole squad getting this|squad up tonight|split screen memories unlocked|couch co op is back|soundtrack going crazy too|whoever picked the soundtrack deserve a bonus|they put real hip hop in the soundtrack, respect)
+{a} (is a masterpiece|about to take over my whole year|got me acting like a kid again|is everything i wanted|about to break the internet|is the reason i bought a console|is back and better|still the king|never disappoint|got the best community|deserve every award|is what a sequel should be)
+^This looks fantastic. I will be buying it on release day.
+^The developers clearly put a lot of care into this.
+^I am very impressed with how polished this is.
+^I have been playing games for twenty years and this is one of the best I have seen.
+`);
+add('game','H',`
+[gasp] [gbad]
+[gasp] [gbad]
+[gasp] [gbad]
+(not paying 70 dollars for this|wait for a sale|wait for the reviews|never pre order, people|another unfinished game|launch gonna be a mess, watch|servers gonna be down day one|bugs on bugs|same game as last year with a new number|copy and paste sequel|they got lazy|dev team lost the plot|the old ones were better|nostalgia bait|cash grab|battle pass simulator|pay to win garbage|micro transactions in a full price game is crazy|looks like a mobile game|ps3 graphics in 2026|downgraded from the trailer|trailer lied again|refunded already|uninstalled after an hour|returned it the same day|bored after two missions|dead game in three months|nobody gonna be playing this by summer|overhyped again|biggest letdown of the year|my backlog more interesting than this|gaming is cooked|this why i stick to old games|skip)
+{a} (fell off after the last update|been dead for years|is carried by nostalgia|ain't been good since the second one|is a scam at this price|lost me at the battle pass|is the most overrated game out|needed another year in development|is just a reskin|community is the worst part)
+^I am disappointed. This does not look ready for release.
+^The price is too high for what is being offered.
+^I will wait for reviews before spending money on this.
+`);
+add('game','S',`
+(graphics don't matter if the gameplay trash|gameplay over graphics every time|story games better than online games and it's not close|single player gaming is dead and online killed it|game pass is ruining how people value games|80 dollar games is the reason piracy coming back|exclusives are bad for gaming, there i said it|console wars is the dumbest argument on the internet|pc players act like they better than everybody|reviewers get paid to give 9s|review scores mean nothing anymore|review bombing is just fans being honest|yall complain then buy it anyway|same people crying gonna pre order|gamers are the most entitled fans alive|developers get blamed for what publishers decide|crunch is why games come out broken|delays are a good thing, let them cook|a delayed game is eventually good, a rushed one is bad forever|remakes are lazy and yall keep rewarding it|we need new ideas not another remaster|the old one only seem better cause you was a kid|nostalgia got yall lying about old games|difficulty sliders don't ruin nothing, relax|easy mode ain't hurting nobody|this wouldn't get half the hate with a different name on the box|streamers decide what's popular now, not players|influencers got early copies so of course they love it|game of the year or just the loudest fanbase|microtransactions only exist cause yall keep buying skins|sports games been the same for ten years and still sell|violence in games ain't the problem, parenting is|kids shouldn't be on this game, parents need to read the rating|rap in game soundtracks used to be way better|licensed music made the old ones classic)
+{a} (is overrated and yall not ready to hear it|was never as good as people remember|is better than the game everybody compare it to|fans can't take criticism|deserve the hate it get|don't deserve the hate it get|peaked years ago|only popular cause of streamers)
+`);
+add('game','F',`(my sleep schedule is already ruined|my boss about to get a sick email|coughing practice started|telling my girl i'm busy for the next three months|my wallet saw the price and fainted|my backlog watching me buy another game|bought it, gonna play it in two years|downloading for six hours to play for one|100 gig update just to fix a hat|my console sound like a jet engine|controller about to meet the wall|rage quit speedrun|died to the tutorial boss|been on the character creator for two hours|spent more time in the menu than the game|my k d is a war crime|carried by my little cousin again|lobby full of twelve year olds talking crazy|got cooked by a kid named something i can't repeat|blaming lag every time|it's the controller, not me|my thumbs filed a complaint|grown man yelling at a tv, that's me|wife said it's her or the game, i'll miss her|the npc got more personality than me|side quests over my real responsibilities)`);
+add('game','N',`(release date|what platforms|is it on game pass|crossplay or nah|how many gigs|how much is it|is there a physical copy|offline mode|is there split screen|can you play solo|how long is the campaign|is it open world|any dlc planned|worth it at full price|who's on the soundtrack|is the online free|pc port when|switch version|does progress carry over|what's the rating|early access when|is there a demo|any gameplay footage yet|who developing this one|same studio as the last one)`);
+add('game','T',`(sending this to the squad|tagging my duo|group chat, we playing tonight|bro we getting this day one|somebody tell my cousin it finally dropped|to my boys who said it was cancelled, look|whoever said this would never come out, apologize|to the devs, thank you|to the devs, fix the servers|dear publisher, lower the price|to everybody pre ordering, yall the problem|to my wife, i'm sorry in advance|somebody gift me this|who trying to run it tonight|add me, i need a squad|looking for a team, no sweats|to the person who spoiled the ending, i hope your controller drift|if you still play the old one, respect|pc players stay out the lobby please|to whoever picked the soundtrack, good ears)`);
+add('beats','L',`
+[basp] [ver]
+[basp] [ver]
+[basp] [ver]
+(this beat need a verse on it asap|somebody gonna make a hit on this|i can already hear the hook|freestyling to this in my car|wrote 16 bars in ten minutes to this|this beat writing the song for me|producer tag alone hard|whoever buy this first is winning|need the stems|need this exclusive|leasing this tonight|how much for the exclusive, i'm serious|this deserve a big artist on it|placement worthy|this a placement waiting to happen|type beat channels can't touch this|sound like a movie score|sound expensive|headphones on, eyes closed|this instrumental don't even need vocals|could listen to this with no rapper on it|study music and gym music at the same time|loop this for an hour|been running this instrumental all day|the kind of beat that make you rap better|instant inspiration|got my pen moving|this what a real producer sound like|no loops from a pack, you can tell|sound selection crazy|mixing on this is clean|simple but it hit|less is more and this proves it)
+{a} (on the beat and it show|don't miss behind the boards|got the hardest drums out|is the most slept on producer|need a producer of the year nod|been cooking lately|got a sound nobody else got|deserve more placements)
+^The arrangement on this is excellent. Very professional work.
+^I produce as well, and the drum programming here is impressive.
+`);
+add('beats','H',`
+[basp] [bad]
+[basp] [bad]
+(sound like every type beat on youtube|same melody loop everybody using|stock sounds|preset beat|heard this exact loop in five other beats|drums too quiet|808 clipping|mix is muddy|too busy, no room for a rapper|too empty, nothing going on|two bar loop for three minutes|no bounce|no switch up, got boring|nobody rapping on this|tag is louder than the beat|too many tags|sound like a ringtone|sound like 2016|dated sound|off key melody|needs a real mix|generic trap beat number one million|ai could make this|made in ten minutes and it show)
+`);
+add('beats','S',`(producers deserve half the song, period|the beat is 80 percent of a hit and producers get 5 percent of the credit|rappers nothing without producers|type beat producers are real producers, argue|using loops ain't producing|using loops is fine, the greats sampled|sampling is art, not stealing|sample snitching need to stop|ai beats gonna take over and nobody ready|ai can't replace feel|fl studio or nothing|the daw don't matter, the ear do|beats getting simpler cause rappers can't ride hard ones|rappers ruin good beats every day|this beat better than whatever rapper end up on it|free beats killed the market|stop giving beats away for free|producers charging too much for mp3 leases|exclusive rights should be standard|producer tags are corny now|every producer need a tag, don't argue|drumless beats overrated|boom bap never left|melody loops made everybody sound the same)`);
+add('beats','F',`(i can't rap but i'm about to try|wrote a verse, deleted it, the beat deserve better|my freestyle did not do this justice|rapping in my head and still off beat|made the stank face with no vocals on it|my neck hurt and nobody even rapped yet|beat so hard i forgot there's no words|caught myself humming a hook that don't exist|my speakers asked what's my problem|the 808 moved my furniture|neighbors think i'm a producer now|played this for my dog and he started nodding|downloaded fl studio after this then closed it|respect to producers, i tried once and made a doorbell sound)`);
+add('beats','N',`(what's the bpm|what key is this in|what daw|what vst is that melody|is that a sample|what drum kit|is this for sale|price for a lease|is the exclusive still available|stems included|where can i buy this|free for non profit|do you take custom orders|who's this for|who should hop on this|what's the beat called|tutorial on the drums please|how long this take to make)`);
+add('beats','T',`(rappers in the comments, who want this|somebody tag a rapper who need this|to whoever buy this, don't waste it|producers in here, how he do that bounce|{a} check your dms|{a} drop the kit|{a} teach a class|sending this to my engineer|sending this to my artist right now|to my producer, step it up|shoutout to every producer reading this|artists stop sleeping on this page|if you rap, this your sign|my homie need to hear this before he book studio time|to the rapper who get this, we need the song asap)`);
+add('history','L',`
+(they don't make them like this anymore|golden era|this era was different|what a time for hip hop|music had soul back then|i remember exactly where i was|this took me back|my whole childhood right here|high school memories unlocked|my older brother put me on to this|my pops used to play this every sunday|wore the tape out|had the cd in the car for a year straight|bought this the day it came out|still got the vinyl|still in rotation to this day|aged like fine wine|timeless|still sound fresh|ahead of its time|changed the game forever|paved the way for everybody after|the blueprint|respect the pioneers|give the legends their flowers|real hip hop history|the culture needed this reminder|young people need to see this|this should be taught in school|love when this page post history|more history posts please|learned something today|never knew that, thanks for posting|crazy how long ago that was|time flying)
+{a} (changed everything|is forever|never got enough credit|influenced everybody you listen to now|was ahead of the whole game|is a legend, no debate|is the reason i love hip hop|still untouchable|deserve a statue|is top five of all time, easy)
+^Thank you for posting this. People forget how important this was.
+^This was a defining moment for the culture.
+^I was there for this era, and it truly was special.
+`);
+add('history','H',`
+(overrated then, overrated now|nostalgia got yall lying|it wasn't that good, yall was just young|didn't age well|sound dated now|couldn't sit through this today|respect it but can't listen to it|old heads need to let it go|every era got trash, yall just forgot the bad songs|tired of hearing how the 90s was better|nobody under 30 care about this|let the past stay in the past|this the same story they post every year|history lesson nobody asked for|hip hop moved on|classics get called classics too easy)
+{a} (is overrated, sorry|got carried by the era|wouldn't survive today|been living off one album|is not top ten and never was|fans act like nobody else existed)
+`);
+add('history','S',`
+(the old days wasn't better, you was just younger|today's artists couldn't last a week in that era|that era couldn't keep up with today's work rate|lyricism died when streaming started|the south saved hip hop and new york still mad|the west coast never got its full credit|the midwest been the most slept on region forever|women in rap been carrying since day one and got written out|producers of that era deserve more credit than the rappers|the labels robbed that whole generation|half those classics would get cancelled today|hip hop was better when it was regional|the internet ruined the mystery of the artist|mixtape era was the real peak|blog era was better than the golden era, i said it|ringtone era get too much hate|top five lists are just age tests|your goat depend on what year you was 16|history written by whoever got the documentary|this story been cleaned up, the real one is wilder|who really started it depends who you ask|the real pioneers never got paid|biggest what if in hip hop history|if this dropped today it would flop|if this dropped today it would still go number one)
+{a} (vs anybody from today ain't close|would get exposed today|is better than your goat|got erased from the conversation on purpose|is the most important and least credited)
+`);
+add('history','F',`(my knees hurt just remembering this|i'm old, don't remind me|not this being 20 years ago|that can't be right, check the math|i still think 2010 was five years ago|had this on a burned cd with sharpie on it|downloaded this off limewire and got a virus|my ringtone for a whole school year|taped this off the radio with the dj talking over it|my mom threw this cd out the window|got in trouble for knowing every word|baggy jeans flashback|the outfits tho|we really dressed like that|tall tees era was a time|my durag collection remember this|the video budget was a honda civic|unc status confirmed|kids in the comments like who is this)`);
+add('history','N',`(what year was this|how old was {a} here|who produced this back then|what album is this from|where was this recorded|is there a documentary on this|where can i watch the full interview|who else was there|what happened after this|what label was this under|was this before or after the first album|who's that in the background|is this the original version|what was number one that week|any more photos from this day|part two please)`);
+add('history','T',`(showing this to my son so he know real music|sending this to my pops, he gonna love it|sending this to my uncle who swear he was there|to the young ones, go listen to the whole album|to the old heads, yall was right about this one|kids, ask your parents about this|tag somebody who remember this|whoever was outside for this era, speak up|to my day ones who had the mixtape, we old|somebody tell the youngins who this is|my big cousin put me on, forever grateful|to whoever kept the footage, thank you|admin, more of these|shoutout to everybody who bought it in stores|if you know every word, your back hurt too)`);
+add('indie','L',`
+(independent and winning|no label, no problem|doing it without a machine behind {him}|this what ownership look like|own your masters|built it from the ground up|self made for real|the grind is showing|consistency paying off|been watching the come up, proud|small artist, big talent|big artist sound on a small budget|underground won't hold {him} long|about to outgrow the underground|about to be a household name|get in early on this one|remember where you heard it first|this page stay finding real talent|new favorite artist unlocked|following immediately|going through the whole catalog tonight|adding everything to my playlist|booking {him} for a show asap|need to see this live|support independent music|buy the merch, stream the music|put your city on|the hunger is different when you independent|you can hear the work ethic|nobody handed {him} nothing|future star|next up for real|one song away|talent can't be denied|quality rising every drop)
+{a} (is the one to watch|about to have a moment|deserve a bigger audience|is proof you don't need a label|got the whole city behind {him}|been working, it show|is a problem|next up, no question|got star quality|is built different)
+^It is great to see independent artists getting this kind of recognition.
+^I just listened to three songs by {a}. Very impressed.
+`);
+add('indie','H',`
+(another one|everybody a rapper now|never heard of {him}|who|not seeing the hype|sound like everybody else coming up|need more work before the spotlight|not ready yet|raw talent but no songs|potential ain't enough|give it a few years|paid for this post probably|promo post|page will post anybody now|my cousin rap better and he got 12 followers|independent cause no label wanted it|there's a reason nobody signed {him}|next up to what|won't remember the name next month|one hit away from one hit)
+{a} (ain't it|need better beats|need a real engineer|sound unfinished|got a long way to go|is getting hyped too early)
+`);
+add('indie','S',`(independent artists outworking the whole industry right now|labels are scared of artists like this|signing a deal in 2026 is a mistake|a deal would ruin {him}|a deal would take {him} to the next level, be real|independent is cool till you need a budget|ownership don't mean much with no audience|every artist say they independent till the check come|most independent artists got a silent investor, don't be fooled|the algorithm is the new label|tiktok is the new a and r|numbers matter more than talent now|talent with no marketing is a hobby|marketing with no talent is the whole industry|yall say support indie artists then stream the same five people|local support is a myth, your own city hate first|blogs only post independent artists who pay|being underground ain't a personality|underrated or just not that good, be honest|better than half the signed artists and making a tenth of the money|the next star coming from a small page like this, not a label|industry plants be calling themselves independent|real independent artists can't afford this much promo|if {he} blow up yall gonna say {he} changed)`);
+add('indie','F',`(me acting like {his} manager after one song|about to claim i'm from {his} city|telling everybody i knew {him} first|day one fan as of four minutes ago|already drafting my i told yall post|gonna be insufferable when {he} blow up|bought merch before the song ended|my mom asked why i'm promoting somebody i never met|street team volunteer reporting for duty|unpaid intern for {a} starting today|gatekeeping failed, i told everybody|posting this like i get a commission)`);
+add('indie','N',`(where is {a} from|how long {he} been making music|what's the best song to start with|is there an album out|any shows coming up|where can i stream this|is {he} on all platforms|who produce for {him}|what city|how old is {a}|any features coming|what's the ig|is there merch|who put you on to {him}|what song is in the post|is {he} touring this year)`);
+add('indie','T',`({a} keep going, we watching|{a} don't sign nothing without a lawyer|{a} come perform in my city|{a} drop the tape|to the labels in the comments, back off|to the labels in the comments, hurry up|a and rs wake up|tag somebody who need a new artist to listen to|sending this to my cousin who say there's no good new music|to everybody saying who, press play first|show love to the small artists, it's free|whoever run this page, keep spotlighting indies|bookers, get {him} on a stage|djs, this the one to break|to my city, we got one|playlist people, add {him})`);
+add('music','N',`(this is weird and i think i like it|strange song, can't stop playing it|don't know what genre this is but ok|experimental and it work|weird in a good way|took three listens to get it|different from what's out, i respect it|not sure how i feel yet)`);
+/* ------------------------------------------------ celebrity + relationship posts (blog style) */
+add('gossip','L',`
+(love this for {him}|{he} look happy and that's all that matter|happy looking good on {him}|glowing|unbothered and thriving|living {his} best life|as {he} should|mind the business that pay you, {a} doing fine|let {him} live|{he} don't owe nobody an explanation|protect {his} peace|{he} been through enough, let {him} be happy|good for {him}, period|here for it|rooting for {him}|this made me smile|we love to see growth|soft life looking good|booked and busy|{he} look amazing|the glow up real|aging backwards|whatever {he} doing, it's working|grown and minding {his} own|{he} handled that with class|classy response|took the high road, respect)
+{a} (stay winning|been that|never miss with the looks|is unproblematic and i love it|deserve all the love|can do no wrong in my book|always keep it real|stay unbothered)
+`);
+add('gossip','H',`
+(why do we need to know this|some things should stay private|oversharing again|chasing headlines again|the attention seeking is loud|log off|put the phone down|embarrassing|grown and still doing this|tired of this storyline|new week same drama|famous for being messy|do something productive|we don't care, pay your taxes|this ain't cute|doing too much as always|pick me behavior|the internet ain't your diary|go to therapy, not live|second hand embarrassment|weird behavior)
+{a} (stay in some mess|love the drama|need a publicist|need a hobby|is always the victim|can't stay out the blogs|been falling off|is exhausting)
+`);
+add('gossip','S',`(pr relationship, calling it now|contract couple|this won't last six months|something to promote, watch|both of them wrong|it's always the ones preaching loyalty|the ex was right the whole time|we only ever hear one side|the receipts gonna come out|somebody lying and the timeline don't add up|yall was just dragging {him} last week|the internet forgive whoever they find attractive|if the roles was reversed the comments would be different|double standards in these comments is crazy|famous people problems ain't real problems|they post it then ask for privacy|you can't sell your life then complain people watching|blogs build them up to tear them down|money can't buy peace clearly|the kids the ones who suffer from this being public|social media ruined relationships|team nobody|i believe {him}, sorry|i don't believe a word of it)`);
+add('gossip','F',`(i know the group chat in shambles|the ex watching this like|somebody's publicist just woke up in a sweat|the notes app apology loading|not the soft launch|hard launch and all|i need the tea hot not lukewarm|auntie in the comments ready|the blogs eating good today|sipping my tea quietly|i'm too invested in people i never met|why do i care, i got rent due|me reading this like it's my family business|adding this to my list of things that ain't my business but i'm here|the way i ran to the comments|comments section my favorite show|getting my popcorn and my bonnet|i need a seat and a snack|chile anyway|the mess, i love it here)`);
+add('gossip','N',`(wait they was together|since when|what happened to the last one|who is that with {him}|how long this been going on|is this old|what did {he} say exactly|where's the video|what's the backstory|did {he} respond yet|who posted first|are they still together|is this confirmed or a rumor|what i miss|how old is {he} again|who's the other person)`);
+add('gossip','T',`(sis did you see this|sending this to my bestie immediately|group chat wake up|tagging my cousin, we called this|my coworker gonna gag when she see this|whoever had this on their prediction list, come collect|to the ex, we see you watching|to everybody who said it wouldn't last, well|to the fans fighting in the replies, they don't know yall|auntie come get your niece|admin you messy for this caption|admin stay posting at the right time|roommate talk at 9, bring snacks|somebody check on {his} fans|not me sending this to my mama)`);
+/* short good ones that fit any upbeat post */
+add('uniL','L',`(love this|love to see it|this is it|big fan of this|huge W|no complaints|this what i like to see|so good|too good|great stuff|this is fire|top tier|elite|A1|never disappoints|needed this today|here for this|all the way here for it|yes to all of this|more of this|keep it coming|this right here|say less|facts|real|period|big facts|respect|salute|nothing but love|ten out of ten|undefeated|classic|iconic|legendary|goated|different|special|quality|good stuff|well deserved|about time|finally|i'm in|sold|count me in|sign me up|chef's kiss|no notes|flawless|beautiful|this hit|love everything about this)`);
+T.shock=T.wild;T.local=T.general;
+/* lines built from details in the story itself: the place, money, years, age, "again" */
+const FACT={
+N:bank(`(what part of {city}|not {city}|where in {city} was this|anybody from {city} know more|{city} people, what's the word|{city} in the news again)
+({money}? for real|{money} is a lot of money|where {he} get {money} from|{money} just like that|{money}, wow)
+({yrs} years|{yrs} years is a long time|{yrs} years, wow|{yrs} whole years)
+({age}, wow|only {age}|{age} is young)
+{again} (again?|not again|how many times is this now|another one|we been here before)`),
+S:bank(`(it's always {city}|something in the water in {city}|{city} been wild lately|{city} can't catch a break)
+({money} and still not happy|{money} could change a whole neighborhood|imagine what {money} could do for the community|{money} is nothing to them, that's the crazy part)
+({yrs} years for that while others walk free|{yrs} years ain't enough|{yrs} years is too much, be real|{yrs} years and the real ones still outside)
+{again} (at this point it's a pattern|fool me once, this is the third time|this feel like a rerun|same story different month)`),
+F:bank(`{again} (at this point it's a series|season two already|they running this back like a rerun|i've seen this episode before)
+({money}, meanwhile i'm checking my account before i buy gas|{money} and i'm over here splitting a pizza three ways|i can't even picture {money})
+({city} never boring|{city} stay giving us content|leave it to {city})`),
+sad:bank(`({age} is way too young|only {age}, heartbreaking|gone at {age}, no words|{age}, that's a whole life ahead)
+(praying for {city} tonight|{city} hurting right now|{city} lost a real one|sending love to everybody in {city})`)};
+const CITY=/\b(atlanta|houston|chicago|detroit|new york|nyc|brooklyn|the bronx|harlem|queens|los angeles|compton|oakland|miami|memphis|dallas|new orleans|philly|philadelphia|baltimore|washington dc|st\.? louis|charlotte|cleveland|milwaukee|las vegas|vegas|toronto|london|jacksonville|baton rouge|nashville|birmingham|new jersey|newark|boston|seattle|phoenix|denver|minneapolis|kansas city|indianapolis|columbus|cincinnati|pittsburgh|buffalo|sacramento|san francisco|the bay|texas|florida|georgia|california|ohio|michigan|louisiana|alabama|mississippi|tennessee|north carolina|south carolina|virginia|maryland)\b/i;
+function facts(t){t=String(t||'');const f={},c=t.match(CITY),m=t.match(/\$\s?\d[\d,.]*\s?(million|billion|mil|m|k|b)?\b/i),y=t.match(/\b(\d{1,3})\s*(?:years?|yrs?)\b(?![- ]old| ago)/i),a=t.match(/\b(?:at|aged?)\s(\d{2})\b|\b(\d{2})[- ]years?[- ]old/i);
+ if(c)f.city=c[1].toLowerCase().replace(/\b[a-z]/g,x=>x.toUpperCase()).replace(/^The /,'the ').replace('Nyc','NYC').replace(' Dc',' DC');if(m)f.money=m[0].replace(/\s+/g,' ').trim();if(y&&+y[1]>0)f.yrs=y[1];if(a)f.age=a[1]||a[2];if(/\b(again|another|second time|third time|once more|yet another)\b/i.test(t))f.again=' ';return f}
+/* emojis only: fire for songs, the right faces for everything else */
+const EONLY={music:['🔥','🔥','🔥','🔥','💯','🐐','😮‍💨','🙌','‼️','🎯','🚀','🔊','👏','😤','🥶','⚡','💥','🏆','👑'],rnb:['😍','🥹','😩','❤️‍🔥','🔥','🔥','💯','🙌','✨'],funnyvid:['😭','💀','😂','🤣'],wild:['😳','🤯','😱','👀','💀','😭'],beef:['🍿','👀','🔥','😳','🥊'],legal:['👀','😳','🤦','😬'],tour:['🔥','🙌','🎟️','😤','🎤'],general:['👀','🔥','👏','💯','😳'],rip:['🙏','🕊️','💔','😔'],hurt:['🙏','🙏🏾','😔','❤️‍🩹'],game:['🎮','🔥','🎮','💯','👀','🙌','😤','🕹️'],history:['🔥','🐐','👑','🙌','💯','📼','🙏','🏆']};EONLY.beats=EONLY.indie=EONLY.music;EONLY.shock=EONLY.wild;EONLY.local=EONLY.general;EONLY.gossip=['👀','😭','☕','🍵','💀','😍','🔥','👏'];
+function emo(S){const set=EONLY[S.topic]||EONLY[FAMILY(S.topic)==='music'?'music':'general'],sad=SAD(S.topic),a=pick(set),r=Math.random(),n=k=>1+Math.floor(Math.random()*k);
+ if(r<.45)return a.repeat(n(sad?3:8));const b=pick(set);if(b===a)return a.repeat(n(6));
+ if(r<.85)return a.repeat(n(sad?2:5))+b.repeat(n(sad?2:3));const c=pick(set);return a.repeat(n(3))+b.repeat(n(2))+(c!==a&&c!==b?c.repeat(n(2)):'')}
 /* a short second thought tacked on to a short comment (same mood, safe on any subject in that group) */
 const TAIL={
  music:{L:['run it up','keep going','don\'t stop','we see you','instant fan','you got one','keep cooking','on repeat','no skip','easy'],H:['do better','next','back to the studio','try again','sorry','just being honest'],
@@ -841,17 +1489,22 @@ const SPEAK=[[/\byou\b/g,'u',.6],[/\byour\b/g,'ur',.5],[/\bthough\b/g,'tho',.9],
 const SAD=t=>t==='rip'||t==='hurt';
 const FAMILY=t=>['rap','rnb','album','video'].includes(t)?'music':'news';
 /* which lists a topic draws from: [list, share] */
+const UPBEAT=['beats','history','indie','game','general','gossip','tour','local'];
 function pool(topic,tone){if(SAD(topic))return [[T[topic].L,1]];
- if(topic==='rap')return [[T.music[tone],1]];
- if(FAMILY(topic)==='music'){const x=T[topic][tone];return x&&x.length?[[x,.38],[T.music[tone],.62]]:[[T.music[tone],1]]}
- return [[T[topic][tone],1]]}
-function alt(t){let g=0;while(/\(([^()]*)\)/.test(t)&&g++<60)t=t.replace(/\(([^()]*)\)/,(m,x)=>pick(x.split('|')));return t}
+ const m=T.music[tone]||[],x=(T[topic]||{})[tone]||[],u=T.uni[tone]||[];
+ if(topic==='rap')return [[m,1]];
+ if(FAMILY(topic)==='music')return x.length?[[x,.35],[m,.65]]:[[m,1]];
+ const P=[];if(x.length)P.push([x,.65]);
+ if(u.length&&!['beats','history','indie'].includes(topic)&&(tone!=='S'||['general','beef','legal','gossip','local'].includes(topic)))P.push([u,.25]);
+ if(tone==='L'&&UPBEAT.includes(topic))P.push([T.uniL.L,.2]);return P.length?P:[[[],1]]}
+const wpick=P=>{let r=Math.random()*P.reduce((a,x)=>a+x[1],0);for(const [l,w] of P){if(r<w)return pick(l);r-=w}return pick(P[0][0])};
+function alt(t){let g=0;while(g++<90){const m=t.match(/\[(\w+)\]|\(([^()]*)\)/);if(!m)break;const v=m[1]?pick(G[m[1]]||['']):pick(m[2].split('|'));t=t.slice(0,m.index)+v+t.slice(m.index+m[0].length)}return t}
 const PRO={him:{he:'he',him:'him',his:'his',bro:['bro','dude','my boy','he','bro really'],himx:['him','that guy','the one']},her:{he:'she',him:'her',his:'her',bro:['sis','she','she really','shorty'],himx:['her','that girl','the one']},
  they:{he:'they',him:'them',his:'their',bro:['they','the gang','they really'],himx:['them','the ones']}};
-function fill(tpl,S){let t=alt(tpl),bad=false;const P=PRO[S.pro],rnb=S.topic==='rnb';
+function fill(tpl,S){let t=alt(tpl.replace(/^\^/,'')),bad=false;const P=PRO[S.pro],rnb=S.topic==='rnb';
  t=t.replace(/<([^|>]*)\|([^>]*)>/g,(m,a,b)=>S.pro==='they'?b:a);
  t=t.replace(/\{(\w+)\}/g,(m,k)=>{let v;
-  if(k==='a')v=S.a;else if(k==='a2')v=S.a2;else if(k==='s')v=S.s;
+  if(S.f&&S.f[k])v=S.f[k];else if(k==='a')v=S.a;else if(k==='a2')v=S.a2;else if(k==='s')v=S.s;
   else if(k==='rap')v=rnb?'singing':'rapping';else if(k==='rapper')v=rnb?'singer':pick(['rapper','artist']);else if(k==='bars')v=rnb?pick(['the lyrics','the writing','the pen']):pick(['the bars','the lyrics','the pen']);
   else if(k==='genre')v=rnb?pick(['r&b','real music']):pick(['rap','hip hop','real music','the underground']);
   else if(k==='his')v=P?P.his:(S.a?S.a+"'s":'');else if(k==='bro'||k==='himx')v=P?pick(P[k]):(k==='himx'?pick(['the one','that one']):S.a);
@@ -860,12 +1513,15 @@ function fill(tpl,S){let t=alt(tpl),bad=false;const P=PRO[S.pro],rnb=S.topic==='
  if(bad)return null;
  return t.replace(/\s+/g,' ').replace(/ ([,?!:])/g,'$1').replace(/^[,:]\s*/,'').replace(/[,:]\s*$/,'').trim()}
 const hasWord=t=>/[a-z]/i.test(t);
-/* type it the way people type */
-function style(t,tone,S,tail){if(!hasWord(t))return t;const sad=SAD(S.topic),fam=FAMILY(S.topic);
- const pre=PRE[tone],suf=SUF[tone];
- if(!sad&&R(tail?.05:.13)&&t.length<70){const p=pick(pre);if(!new RegExp('^('+pre.join('|')+')\\b','i').test(t)&&!/^(be |real talk|unpopular|hot take|might|am i|i'm the|ok|okay|alright|oh|yeah|if |which|who|what|when|where|why|how|is |not |no |sorry|whoever|somebody|someone)/i.test(t))t=p+' '+t}
+/* type it the way people type. fx remembers the longer openers and closers already used in this batch */
+function style(t,tone,S,tail,fx,proper){if(!hasWord(t))return t;const sad=SAD(S.topic),fam=FAMILY(S.topic),tn=PRE[tone]?tone:'L';
+ let E=S.topic==='hurt'?EMO.hurt:sad?EMO.sad:tn==='L'?(fam==='music'?(S.topic==='rnb'?EMO.rnb.concat(EMO.L):EMO.L):S.topic==='legal'?EMO.support:EMO.newsL):EMO[tn];
+ if(S.topic==='funnyvid'&&tn==='L')E=EMO.F;if(S.topic==='wild'&&tn==='L')E=['😳','😭','💀','🤯','😱','👀'];
+ if(proper){t=t[0].toUpperCase()+t.slice(1);if(R(.3))t=t.replace(/\.$/,'');if(R(.1))t+=' '+pick(E);return t}
+ const pre=PRE[tn],suf=SUF[tn],once=x=>!/ /.test(x)||(!fx.has(x)&&(fx.add(x),true));
+ if(!sad&&R(tail?.05:.13)&&t.length<70){const p=pick(pre);if(!new RegExp('^('+pre.join('|')+')\\b','i').test(t)&&!/^(be |real talk|unpopular|hot take|might|am i|i'm the|ok|okay|alright|oh|yeah|if |which|who|what|when|where|why|how|is |not |no |sorry|whoever|somebody|someone|to |tag|show|play|sending|shoutout|dear|note|reminder)/i.test(t)&&once(p))t=p+' '+t}
  const q=/\?$/.test(t);
- if(!sad&&!q&&!tail&&R(.15)&&t.length<70){const s=pick(suf);if(!new RegExp('\\b'+s+'$','i').test(t))t=t+' '+s}
+ if(!sad&&!q&&!tail&&R(.15)&&t.length<70){const x=pick(suf);if(!new RegExp('\\b'+x+'$','i').test(t)&&once(x))t=t+' '+x}
  if(!q&&tone==='N'&&/^(who|what|when|where|why|how|is|are|did|has|does|do|can|any|anybody|anyone|which)\b/i.test(t)&&R(.55))t+='?';
  if(R(.42))SPEAK.forEach(([r,w,p])=>{if(R(p))t=t.replace(r,w)});
  if(R(.5))t=t.replace(/(\w)'(\w)/g,'$1$2');
@@ -874,9 +1530,7 @@ function style(t,tone,S,tail){if(!hasWord(t))return t;const sad=SAD(S.topic),fam
  else if(r<.69&&t.length<26&&!sad&&tone!=='N')t=t.toUpperCase();
  else t=(t[0].toUpperCase()+t.slice(1)).replace(/\bi\b/g,'I').replace(/\bi'm\b/gi,"I'm").replace(/\bim\b/g,'Im');
  if(!sad&&!/\?$/.test(t)&&R(.06)){const m=t.match(/([a-z]{3,})$/i);if(m&&!/(fr|ngl|tbh|idc|lol|smh)$/i.test(t))t=t+t.slice(-1).repeat(2+Math.floor(Math.random()*4))}
- if(!/\?$/.test(t)&&R(.05)&&!sad)t+=tone==='H'?'...':tone==='L'||tone==='F'?'!!':'';
- let E=S.topic==='hurt'?EMO.hurt:sad?EMO.sad:tone==='L'?(fam==='music'?(S.topic==='rnb'?EMO.rnb.concat(EMO.L):EMO.L):S.topic==='legal'?EMO.support:EMO.newsL):EMO[tone];
- if(S.topic==='funnyvid'&&tone==='L')E=EMO.F;if(S.topic==='wild'&&tone==='L')E=['😳','😭','💀','🤯','😱','👀'];
+ if(!/\?$/.test(t)&&R(.05)&&!sad)t+=tn==='H'?'...':tn==='L'||tn==='F'?'!!':'';
  if(R(sad?.5:tone==='N'?.12:.4))t+=' '+pick(E);
  return t}
 /* ---- never twice for the same subject (kept in this browser) ---- */
@@ -884,36 +1538,52 @@ const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i)
 const norm=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'');
 let USED=null;const loadUsed=()=>{if(USED)return USED;try{USED=new Set((localStorage.getItem('cmt_used')||'').split(',').filter(Boolean))}catch(e){USED=new Set()}return USED};
 const saveUsed=()=>{try{let a=[...USED];if(a.length>40000)a=a.slice(-40000);localStorage.setItem('cmt_used',a.join(','))}catch(e){}};
-const EXTRA=()=>{const o={L:[],H:[],S:[],F:[],N:[]};let v='';try{v=localStorage.getItem('cmt_extra')||''}catch(e){}v.split('\n').map(x=>x.trim()).filter(Boolean).forEach(l=>{const k={'+':'L','-':'H','!':'S','?':'N'}[l[0]];o[k||'F'].push((k?l.slice(1):l).trim().replace(/\bNAME\b/g,'{a}').replace(/\bSONG\b/g,'{s}'))});return o};
+const EXTRA=()=>{const o={L:[],H:[],S:[],F:[],N:[],T:[],E:[]};let v='';try{v=localStorage.getItem('cmt_extra')||''}catch(e){}v.split('\n').map(x=>x.trim()).filter(Boolean).forEach(l=>{const k={'+':'L','-':'H','!':'S','?':'N','@':'T'}[l[0]];o[k||'F'].push((k?l.slice(1):l).trim().replace(/\bNAME\b/g,'{a}').replace(/\bSONG\b/g,'{s}'))});return o};
 const AIL={};/* lines the small AI wrote, by subject key then tone */
-/* S: {topic, a, a2, s, pro}. mix: {L,H,S,F,N} weights. Returns [{t,tone}] */
-function make(S,n,mix){const used=loadUsed(),sk=norm([S.topic,S.a,S.s,S.k].join('|')),sad=SAD(S.topic),out=[],seen=new Set(),cnt=new Map(),extra=EXTRA(),ai=AIL[sk]||{};
- const tones=sad?['L']:['L','H','S','F','N'].filter(k=>mix[k]>0),tot=tones.reduce((a,k)=>a+(sad?1:mix[k]),0);
- const want={};tones.forEach(k=>want[k]=sad?n:Math.round(n*mix[k]/tot));const got={};tones.forEach(k=>got[k]=0);
- const fam=FAMILY(S.topic);let tries=0,cap=3;
- while(out.length<n&&tries++<n*220){if(tries===n*90)cap=8;if(tries===n*160)cap=999;
-  let open=tones.filter(k=>got[k]<want[k]);if(!open.length)open=tones;const tone=pick(open);
-  let tpl,src='';const ex=extra[tone],al=sad?[]:(ai[tone]||[]);
+/* no phrase twice in one batch: every pair of meaningful words and every three-word run is used once,
+   and no single word shows up more than a few times */
+const STOP=new Set(`a an the this that these those i im ive me my we us our you u ur your yall he she they his her their him them it its is was are be been am were do did does dont didnt doesnt aint cant wont not no nah to of and or but in on at by for from with wit about bout like just really so too very more most some any every even still only as if than then there here now up out all one get got gonna gotta wanna will would could should need want have has had who what when where why how which yeah ok okay oh`.split(' '));
+function grams(core,S){let t=' '+core.toLowerCase().replace(/['’]/g,'')+' ';[S.a,S.a2,S.s].filter(Boolean).forEach(n=>{t=t.split(n.toLowerCase().replace(/['’]/g,'')).join(' § ')});
+ const w=t.replace(/[^a-z0-9§ ]+/g,' ').split(/\s+/).filter(Boolean),c=x=>x!=='§'&&!STOP.has(x),g=[],words=[];
+ w.forEach((x,i)=>{if(c(x))words.push(x);if(i&&c(x)&&c(w[i-1]))g.push(w[i-1]+' '+x);if(i>1&&x!=='§'&&w[i-1]!=='§'&&w[i-2]!=='§'&&(c(x)||c(w[i-1])||c(w[i-2])))g.push(w[i-2]+' '+w[i-1]+' '+x)});return {g,words}}
+/* S: {topic, a, a2, s, pro, k}. mix: {L,H,S,F,N,T,E} weights. Returns [{t,tone}] */
+function make(S,n,mix){const used=loadUsed(),sk=norm([S.topic,S.a,S.s,S.k].join('|')),sad=SAD(S.topic),out=[],seen=new Set(),GR=new Map(),WC=new Map(),fx=new Set(),extra=EXTRA(),ai=AIL[sk]||{};
+ const m=sad?{L:92,E:8}:mix,tones=['L','H','S','F','N','T','E'].filter(k=>m[k]>0),tot=tones.reduce((a,k)=>a+m[k],0)||1;
+ const want={},got={},miss={};tones.forEach(k=>{want[k]=Math.round(n*m[k]/tot);got[k]=0;miss[k]=0});
+ const hasF=S.f&&Object.keys(S.f).length>0,JOIN=[', ','. ',' and ',' plus ',' no lie ',', and ','. also '],fam=FAMILY(S.topic),CAP=sad?99:Math.max(3,Math.ceil(n/40)),GMAX=sad?2:1,dead=new Set();let tries=0;
+ while(out.length<n&&tries++<n*400){let open=tones.filter(k=>got[k]<want[k]&&!dead.has(k));if(!open.length)open=tones.filter(k=>!dead.has(k)&&k!=='E');if(!open.length)break;
+  const tone=pick(open);
+  if(tone==='E'){const e=emo(S),h=hash(sk+'|'+e);if(seen.has(e)||used.has(h)){if(++miss.E>400)dead.add('E');continue}seen.add(e);used.add(h);got.E++;out.push({t:e,tone:'E'});continue}
+  let tpl,src='';const ex=extra[tone]||[],al=sad?[]:(ai[tone]||[]);
   if(al.length&&R(.3)){tpl=pick(al);src='ai'}else if(!sad&&ex.length&&R(.12)){tpl=pick(ex);src='own'}
-  else{const P=pool(S.topic,tone);let r=Math.random(),L=P[0][0];for(const [l,w] of P){if(r<w){L=l;break}r-=w}tpl=pick(L)}
-  if(!tpl)continue;const c=cnt.get(tpl)||0;if(c>=(src?1:cap))continue;
-  let core=src==='ai'?tpl:fill(tpl,S);if(!core)continue;
-  const tails=(TAIL[fam][tone]||[]);let tail=0;if(!src&&!sad&&tails.length&&core.length<34&&hasWord(core)&&!/[?,:]/.test(core)&&R(.15)){core+=', '+pick(tails);tail=1}
-  const key=norm(core.replace(/\b(is|was|are|be|been|the|a|i|i'm|im|it's|its|really|just)\b/gi,''))||core;if(seen.has(key))continue;const h=hash(sk+'|'+key);if(used.has(h))continue;
-  seen.add(key);used.add(h);cnt.set(tpl,c+1);got[tone]++;out.push({t:style(core,tone,S,tail),tone:sad?'L':tone,src})}
+  else if(hasF&&FACT[sad?'sad':tone]&&R(.14)){tpl=pick(FACT[sad?'sad':tone]);src='fact'}else tpl=wpick(pool(S.topic,tone));
+  const bad=()=>{if(++miss[tone]>2500)dead.add(tone)};
+  if(!tpl){bad();continue}const proper=tpl[0]==='^';
+  let core=src==='ai'?tpl:fill(tpl,S);if(!core){bad();continue}if(src==='fact')src='';
+  /* some people write more: two thoughts in one comment */
+  if(!src&&!proper&&['L','H','S','F'].includes(tone)&&hasWord(core)&&core.length<60&&core.split(' ').length>2&&!/[?]/.test(core)&&R(.38)){const t2=wpick(pool(S.topic,tone));if(t2&&t2!==tpl&&t2[0]!=='^'){const c2=fill(t2,S);if(c2&&hasWord(c2)&&c2.length<60&&c2.split(' ').length>2&&!/[?]/.test(c2))core+=(sad?pick([', ','. ']):pick(JOIN))+c2}}
+  const tails=(TAIL[fam][tone]||[]);let tail=0;if(!src&&!sad&&!proper&&tails.length&&core.length<34&&hasWord(core)&&!/[?,:]/.test(core)&&R(.12)){core+=', '+pick(tails);tail=1}
+  const key=norm(core.replace(/\b(is|was|are|be|been|the|a|i|i'm|im|it's|its|really|just)\b/gi,''))||core;if(seen.has(key)){bad();continue}const h=hash(sk+'|'+key);if(used.has(h)){bad();continue}
+  const G2=hasWord(core)?grams(core,S):{g:[core],words:[]};
+  if(G2.g.some(x=>(GR.get(x)||0)>=GMAX)||G2.words.some(x=>(WC.get(x)||0)>=CAP)){bad();continue}
+  G2.g.forEach(x=>GR.set(x,(GR.get(x)||0)+1));new Set(G2.words).forEach(x=>WC.set(x,(WC.get(x)||0)+1));
+  seen.add(key);used.add(h);got[tone]++;miss[tone]=0;out.push({t:style(core,tone,S,tail,fx,proper),tone,src})}
  saveUsed();for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
 /* ---- what kind of story is it ---- */
 const KIND=[['rip',/\b(rip|r\.i\.p|dies|died|dead at|passed away|passes away|death of|killed|fatal|funeral|tribute to|mourns?|remembering|found dead|overdose)\b/i],
  ['hurt',/\b(shot|shooting|hospitalized|hospital|injured|crash|accident|stabbed|robbed|critical condition|wounded)\b/i],
  ['legal',/\b(court|arrest(ed)?|charged|charges|lawsuit|sued|sues|trial|sentenced|jail|prison|indicted|rico|guilty|verdict|police|feds|warrant|bail|bond|robbery|raid|custody)\b/i],
  ['beef',/\b(beef|diss(es|ed)?|feud|clap ?s? ?back|responds? to|fires? back|shots at|calls? out|goes at|vs\.?)\b/i],
+ ['game',/\b(video ?games?|gaming|gamers?|gta|grand theft auto|call of duty|cod|2k\d*|madden|fortnite|playstation|ps5|ps6|xbox|nintendo|switch 2|dlc|gameplay|esports|twitch|rockstar games|battle pass)\b/i],['history',/\b(anniversary|years ago|on this day|throwback|hip.?hop history|this day in|turns \d+|back in (19|20)\d\d)\b/i],
  ['tour',/\b(tour|concert|festival|tickets|live show|residency)\b/i],
  ['album',/\b(album|tracklist|deluxe|mixtape|ep)\b/i],['video',/\b(music video|visual|official video)\b/i],
  ['rap',/\b(drops?|dropped|releases?|new (single|song|music|track)|out now|snippet|remix|freestyle)\b/i],
+ ['gossip',/\b(dating|boyfriend|girlfriend|married|marries|wedding|engaged|divorce|split|breakup|broke up|cheat(ing|ed|s)?|pregnan(t|cy)|baby (mama|daddy|bump)|expecting|spotted with|new boo|relationship|rumors?|claps back at fans)\b/i],
+ ['beats',/\b(type beat|instrumentals?|beat ?tape|producer|beats?)\b/i],['indie',/\b(indie|independent|unsigned|underground artist|spotlight|next up)\b/i],
  ['funnyvid',/\b(funny|hilarious|lol|meme|comedy|skit|jokes?|roast(ed|s)?|laugh)\b/i],
  ['wild',/\b(wild|crazy|fight|brawl|goes off|chaos|caught on (camera|video)|viral|shocking|insane|wtf|chase|melee)\b/i]];
 const kindOf=t=>{const k=KIND.find(([,r])=>r.test(t||''));return k?k[0]:'general'};
-const VERB=/\b(drops?|dropped|releases?|released|arrested|charged|dies|dead|died|passes|passed|responds?|announces?|says?|said|shot|sued|sues|reacts?|claps?|signs?|signed|shares?|reveals?|speaks?|goes|gets?|got|is|was|has|calls?|fires?|addresses|denies|confirms?|buys?|wins?|loses?|joins?|teases?|unveils?|breaks?|slams?|returns?|launches|performs?|sentenced|indicted|hospitalized|robbed|found|faces?|pleads?|explains?|admits?|debuts?|links?|brings?|takes?|makes?|gives?|talks?|opens|just|allegedly|reportedly|officially|finally)\b/i;
+const VERB=/\b(delayed|cancell?ed|leaks?|leaked|trailer|update|review|drops?|dropped|releases?|released|arrested|charged|dies|dead|died|passes|passed|responds?|announces?|says?|said|shot|sued|sues|reacts?|claps?|signs?|signed|shares?|reveals?|speaks?|goes|gets?|got|is|was|has|calls?|fires?|addresses|denies|confirms?|buys?|wins?|loses?|joins?|teases?|unveils?|breaks?|slams?|returns?|launches|performs?|sentenced|indicted|hospitalized|robbed|found|faces?|pleads?|explains?|admits?|debuts?|links?|brings?|takes?|makes?|gives?|talks?|opens|just|allegedly|reportedly|officially|finally)\b/i;
 const tc=s=>s===s.toUpperCase()?s.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase()):s;
 function whoOf(title){let t=String(title||'').replace(/^[^A-Za-z0-9$]*/,'').replace(/^(breaking|exclusive|update|watch|just in|news|new music|report|video)\s*[:!\-]\s*/i,'');const m=t.match(VERB);if(!m||!m.index)return '';const w=t.slice(0,m.index).trim().replace(/[,:\-]+$/,'');return w&&w.split(/\s+/).length<=4?tc(w):''}
 const names=s=>String(s||'').split(/\s*(?:,|&|\bx\b|\bft\.?|\bfeat\.?|\bfeaturing|\band\b|\bwith\b)\s*/i).map(x=>x.trim()).filter(Boolean);
@@ -936,14 +1606,14 @@ async function aiLines(S,headline,st){if(!navigator.gpu)throw new Error('This br
  return Object.values(o).reduce((a,x)=>a+x.length,0)}
 
 /* ------------------------------------------------ the tab */
-const NAMES={L:'GOOD',H:'BAD',S:'CONTROVERSIAL',F:'FUNNY',N:'OTHER'};
-const KINDS={drop:[['rap','RAP / HIP-HOP'],['rnb','R&B'],['album','ALBUM / TAPE'],['video','MUSIC VIDEO']],
- news:[['general','NEWS'],['rap','NEW MUSIC'],['beef','BEEF'],['legal','CRIME + COURT'],['rip','TRAGIC: PASSED AWAY'],['hurt','TRAGIC: SOMEONE HURT'],['wild','WILD VIDEO'],['funnyvid','FUNNY VIDEO'],['tour','TOUR + SHOWS']]};
+const NAMES={L:'GOOD',H:'BAD',S:'CONTROVERSIAL',F:'FUNNY',T:'TO SOMEBODY',E:'EMOJIS ONLY',N:'OTHER'},MK=['L','H','S','F','T','E','N'];
+const KINDS={drop:[['rap','RAP / HIP-HOP'],['rnb','R&B'],['album','ALBUM / TAPE'],['video','MUSIC VIDEO'],['beats','BEAT / INSTRUMENTAL']],
+ news:[['general','NEWS'],['rap','NEW MUSIC'],['beef','BEEF'],['legal','CRIME + COURT'],['rip','TRAGIC: PASSED AWAY'],['hurt','TRAGIC: SOMEONE HURT'],['wild','WILD VIDEO'],['funnyvid','FUNNY VIDEO'],['tour','TOUR + SHOWS'],['gossip','CELEB + RELATIONSHIPS'],['local','LOCAL NEWS'],['shock','SHOCKING NEWS'],['game','VIDEO GAMES'],['beats','BEATS + INSTRUMENTALS'],['history','HIP-HOP HISTORY'],['indie','INDIE ARTIST']]};
 function init(){const box=document.getElementById('t-comments');if(!box||box.dataset.on)return;box.dataset.on=1;
  const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}};
  let st0={};try{st0=JSON.parse(LS('cmt_state')||'{}')}catch(e){}
  const V={from:st0.from||'drop',topic:st0.topic||'rap',pro:st0.pro||'',n:st0.n||300,kindSet:false},LIST=[];let filt='';
- box.innerHTML=`<p class="sub">Comments for what you made in THE DROP or NEWS. It reads the subject, then writes a fresh batch every time: good ones, bad ones, controversial ones and jokes, typed the way people type. A comment is never made twice for the same subject.</p>
+ box.innerHTML=`<p class="sub">Comments for what you made in THE DROP or NEWS. It reads the subject, then writes a fresh batch every time: good ones, bad ones, controversial ones, jokes, ones said to somebody and emoji-only ones. Some people type proper, most type slang. No phrase is used twice in a batch, and no comment is ever made twice for the same subject.</p>
  <div class="ctl"><div class="cur">THE SUBJECT <span>(filled in from what you made, change anything)</span></div>
  <div class="seg"><button data-cf="drop">FROM THE DROP</button><button data-cf="news">FROM THE NEWS</button></div>
  <span id="cm-drop"><input id="cma" class="tx" placeholder="Artist name"><input id="cms" class="tx" placeholder="Song name"></span>
@@ -951,23 +1621,23 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
  <div class="cm-row"><b>WHAT KIND</b><span id="cm-kinds"></span></div>
  <div class="cm-row"><b>THEY ARE</b><div class="seg"><button data-cp="">NOT SURE</button><button data-cp="him">HIM</button><button data-cp="her">HER</button><button data-cp="they">A GROUP</button></div><small>so the comments say he, she or they the right way</small></div></div>
  <div class="ctl"><div class="cur">THE METER <span>(how the comments lean)</span></div>
- ${[['L','👍 GOOD',55],['H','👎 BAD',20],['S','🌶 CONTROVERSIAL',15],['D','🎲 JOKES + OTHER',10]].map(([k,n,d])=>`<div class="sl"><span>${n} <b data-pc="${k}"></b></span><input type="range" data-m="${k}" min="0" max="100" value="${st0['m'+k]==null?d:st0['m'+k]}"></div>`).join('')}
+ ${[['L','👍 GOOD',42],['H','👎 BAD',14],['S','🌶 CONTROVERSIAL',12],['F','😂 FUNNY',10],['T','💬 TO SOMEBODY',8],['E','🔥 EMOJIS ONLY',8],['N','❓ QUESTIONS + OTHER',6]].map(([k,n,d])=>`<div class="sl"><span>${n} <b data-pc="${k}"></b></span><input type="range" data-m="${k}" min="0" max="100" value="${st0['m'+k]==null?d:st0['m'+k]}"></div>`).join('')}
  <small id="cm-sad" hidden>Tragic news: every comment is respectful. No jokes, no hate, whatever the meter says.</small>
  <div class="cm-row"><b>HOW MANY</b><div class="seg"><button data-cn="50">50</button><button data-cn="100">100</button><button data-cn="300">300</button></div></div>
  <button id="cm-go" class="go">MAKE THE COMMENTS</button><button id="cm-all" class="go gr2">COPY ALL</button><button id="cm-ai" class="go gr2"${window.RM_CMT_AI?'':' hidden'}>🤖 ADD THE SMALL AI</button>
  <small id="cm-st">Nothing leaves this computer.</small></div>
  <div class="ctl" id="cm-bar" hidden><div class="seg" id="cm-f"></div><small>Click a comment to copy it. Copied ones go dim so you know which you used.</small></div>
  <div id="cm-list"></div>
- <details class="cm-own"><summary>ADD YOUR OWN LINES AND SLANG</summary><small>One per line. Start a line with <b>+</b> for a good one, <b>-</b> for a bad one, <b>!</b> for a controversial one, <b>?</b> for a question, nothing for a joke. Write NAME where the artist goes and SONG where the song goes. Saved on this computer and mixed into every batch.</small>
+ <details class="cm-own"><summary>ADD YOUR OWN LINES AND SLANG</summary><small>One per line. Start a line with <b>+</b> for a good one, <b>-</b> for a bad one, <b>!</b> for a controversial one, <b>?</b> for a question, <b>@</b> for one said to somebody, nothing for a joke. Write NAME where the artist goes and SONG where the song goes. Saved on this computer and mixed into every batch.</small>
  <textarea id="cm-own" placeholder="+ NAME got the streets on lock\n- this aint the one twin\n! SONG is carried by the beat"></textarea><button id="cm-mem" class="rs">FORGET PAST COMMENTS</button></details>`;
  const $=s=>box.querySelector(s),$$=s=>box.querySelectorAll(s),msg=h=>$('#cm-st').innerHTML=h,toast=t=>{if(typeof say==='function')say(t);else msg(esc(t))};
  const save=()=>{const o={from:V.from,topic:V.topic,pro:V.pro,n:V.n};$$('[data-m]').forEach(i=>o['m'+i.dataset.m]=+i.value);LS('cmt_state',JSON.stringify(o))};
- const mix=()=>{const g=k=>+$(`[data-m="${k}"]`).value,d=g('D');return {L:g('L'),H:g('H'),S:g('S'),F:d*.6,N:d*.4}};
+ const mix=()=>{const o={};MK.forEach(k=>o[k]=+$(`[data-m="${k}"]`).value);return o};
  const drawKinds=()=>{$('#cm-kinds').innerHTML='<div class="seg">'+KINDS[V.from].map(([k,n])=>`<button data-ck="${k}" class="${k===V.topic?'on':''}">${n}</button>`).join('')+'</div>'};
  const draw=()=>{$$('[data-cf]').forEach(b=>b.classList.toggle('on',b.dataset.cf===V.from));$('#cm-drop').style.display=V.from==='drop'?'contents':'none';$('#cm-news').style.display=V.from==='news'?'contents':'none';
   if(!KINDS[V.from].some(([k])=>k===V.topic))V.topic=KINDS[V.from][0][0];drawKinds();
   $$('[data-cp]').forEach(b=>b.classList.toggle('on',b.dataset.cp===V.pro));$$('[data-cn]').forEach(b=>b.classList.toggle('on',+b.dataset.cn===V.n));
-  const m=mix(),t=m.L+m.H+m.S+m.F+m.N||1,pc={L:m.L,H:m.H,S:m.S,D:m.F+m.N};Object.keys(pc).forEach(k=>$(`[data-pc="${k}"]`).textContent=Math.round(pc[k]/t*100)+'%');
+  const m=mix(),t=MK.reduce((a,k)=>a+m[k],0)||1;MK.forEach(k=>$(`[data-pc="${k}"]`).textContent=Math.round(m[k]/t*100)+'%');
   $('#cm-sad').hidden=!SAD(V.topic);$('#cm-go').textContent=`MAKE ${V.n} COMMENTS`};
  /* pull the subject from the Drop and News boxes on this page (or what was typed there last) */
  const el=id=>document.getElementById(id),val=id=>(el(id)&&el(id).value||'').trim();
@@ -980,9 +1650,9 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
   if(id==='nt'){$('#cmt').value=val('nt');$('#cmw').value=whoOf(val('nt'));if(!V.kindSet&&V.from==='news')V.topic=kindOf(val('nt'))}else{$('#cma').value=tc(val('da'));$('#cms').value=tc(val('ds'))}})});
  $('#cmt').addEventListener('input',()=>{$('#cmw').value=whoOf($('#cmt').value);if(!V.kindSet){V.topic=kindOf($('#cmt').value);drawKinds()}});
  const subject=()=>{if(V.from==='drop'){const N=names($('#cma').value);return {topic:V.topic,a:N[0]||'',a2:N[1]||'',s:$('#cms').value.trim(),pro:V.pro}}
-  const N=names($('#cmw').value);return {topic:V.topic,a:N[0]||'',a2:N[1]||'',s:'',pro:V.pro,k:$('#cmt').value.trim()}};
+  const N=names($('#cmw').value);return {topic:V.topic,a:N[0]||'',a2:N[1]||'',s:'',pro:V.pro,k:$('#cmt').value.trim(),f:facts($('#cmt').value+' '+val('ncap'))}};
  const show=()=>{const L=LIST.filter(x=>!filt||x.tone===filt);$('#cm-bar').hidden=!LIST.length;
-  const c={};LIST.forEach(x=>c[x.tone]=(c[x.tone]||0)+1);$('#cm-f').innerHTML=`<button data-f="" class="${filt?'':'on'}">ALL ${LIST.length}</button>`+Object.keys(NAMES).filter(k=>c[k]).map(k=>`<button data-f="${k}" class="${filt===k?'on':''}">${SAD(V.topic)?'RESPECT':NAMES[k]} ${c[k]}</button>`).join('');
+  const c={};LIST.forEach(x=>c[x.tone]=(c[x.tone]||0)+1);$('#cm-f').innerHTML=`<button data-f="" class="${filt?'':'on'}">ALL ${LIST.length}</button>`+MK.filter(k=>c[k]).map(k=>`<button data-f="${k}" class="${filt===k?'on':''}">${SAD(V.topic)&&k==='L'?'RESPECT':NAMES[k]} ${c[k]}</button>`).join('');
   $('#cm-list').innerHTML=L.map(x=>`<button class="cm-c t${x.tone}${x.done?' done':''}" data-i="${LIST.indexOf(x)}"><i></i><span>${esc(x.t)}</span>${x.src==='ai'?'<em>AI</em>':''}<u>COPY</u></button>`).join('')};
  const copy=async t=>{try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}};
  box.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
@@ -993,7 +1663,7 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
  $$('[data-m]').forEach(i=>i.oninput=()=>{draw();save()});
  $('#cm-go').onclick=()=>{const S=subject();if(!S.a&&FAMILY(S.topic)==='music'){msg('<b class="cm-w">Type the artist name first.</b>');return}
   const t0=performance.now(),L=make(S,V.n,mix());LIST.length=0;L.forEach(x=>LIST.push(x));filt='';show();
-  msg(L.length<V.n?`<b class="cm-w">Made ${L.length}. That is every new comment left for this subject with this meter: move the meter, add your own lines, or use the small AI for more.</b>`:`Made ${L.length} new comments in ${Math.max(1,Math.round(performance.now()-t0))} ms. Press it again for a whole new batch.`);
+  msg(L.length<V.n?`<b class="cm-w">Made ${L.length}. That is every comment left for this subject without repeating a phrase: move the meter or add your own lines for more.</b>`:`Made ${L.length} new comments in ${Math.max(1,Math.round(performance.now()-t0))} ms. Press it again for a whole new batch.`+(S.f&&Object.keys(S.f).length?' Picked up from the story: '+esc(Object.entries(S.f).map(([k,v])=>k==='again'?'it happened again':k==='yrs'?v+' years':k==='age'?'age '+v:v).join(', '))+'.':''));
   $('#cm-list').scrollIntoView({behavior:'smooth',block:'start'})};
  $('#cm-all').onclick=async()=>{const L=LIST.filter(x=>!filt||x.tone===filt);if(!L.length){msg('Make the comments first.');return}await copy(L.map(x=>x.t).join('\n'));toast(L.length+' comments copied')};
  $('#cm-ai').onclick=async()=>{const b=$('#cm-ai');b.disabled=true;try{const S=subject();if(!S.a&&!$('#cmt').value){msg('<b class="cm-w">Type the subject first.</b>');b.disabled=false;return}
@@ -1007,12 +1677,12 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
  if(tabBtn)tabBtn.addEventListener('click',enter);
  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tab!=='comments'){try{localStorage.setItem('stu_last',b.dataset.tab)}catch(e){}V.from=b.dataset.tab==='news'?'news':'drop';V.kindSet=false;['#cma','#cms','#cmt','#cmw'].forEach(s=>$(s).value='')}}));
  enter()}
-window.CMT={make,kindOf,whoOf,T,init,fill};
+window.CMT={make,kindOf,whoOf,T,init,fill,facts,pool,wpick};
 const css=document.createElement('style');css.textContent=`#t-comments .cm-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%;margin-top:4px}#t-comments .cm-row>b{font:800 11px Inter,sans-serif;letter-spacing:.14em;color:#bbb;min-width:90px}
 #t-comments [hidden]{display:none!important}#t-comments .seg{flex-wrap:wrap}#t-comments .sl b{color:#e11d2a;margin-left:4px}
 #cm-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px;margin:14px 0 30px}
 .cm-c{display:flex;align-items:center;gap:10px;text-align:left;background:#141414;border:1px solid #2a2a2a;color:#fff;padding:10px 12px;font:15px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;min-height:44px}
-.cm-c:hover{border-color:#e11d2a}.cm-c span{flex:1;overflow-wrap:anywhere}.cm-c i{width:8px;height:8px;border-radius:50%;flex:none;background:#888}.cm-c.tL i{background:#2ecc71}.cm-c.tH i{background:#e11d2a}.cm-c.tS i{background:#f39c12}.cm-c.tF i{background:#4aa3ff}
+.cm-c:hover{border-color:#e11d2a}.cm-c span{flex:1;overflow-wrap:anywhere}.cm-c i{width:8px;height:8px;border-radius:50%;flex:none;background:#888}.cm-c.tL i{background:#2ecc71}.cm-c.tH i{background:#e11d2a}.cm-c.tS i{background:#f39c12}.cm-c.tF i{background:#4aa3ff}.cm-c.tT i{background:#b06cff}.cm-c.tE i{background:#ff7a1a}
 .cm-c u{text-decoration:none;font:800 10px Inter,sans-serif;letter-spacing:.12em;color:#888;flex:none}.cm-c em{font:800 9px Inter,sans-serif;letter-spacing:.1em;color:#111;background:#f39c12;padding:2px 5px;font-style:normal;flex:none}
 .cm-c.done{opacity:.35}.cm-w{color:#e8a33a}
 .cm-own{margin:0 0 40px;color:#bbb;font:13px Inter,sans-serif}.cm-own summary{cursor:pointer;font:800 12px Inter,sans-serif;letter-spacing:.14em;color:#fff;padding:10px 0}.cm-own textarea{display:block;width:100%;min-height:120px;margin:10px 0;background:#0b0b0b;border:1px solid #333;color:#fff;padding:10px;font:14px system-ui,sans-serif;box-sizing:border-box}`;
