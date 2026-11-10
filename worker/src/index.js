@@ -9,6 +9,8 @@ const LIVE = `p.status='published' AND p.published_at <= datetime('now')`;
 const LIST = `p.id,p.slug,p.title,p.dek,p.cover,p.cover_alt,p.category,p.tags,p.featured,p.views,p.published_at,p.updated_at,COALESCE(a.name,p.author) author,a.slug author_slug,a.verified author_verified`;
 const FROM = `FROM posts p LEFT JOIN authors a ON a.id=p.author_id`;
 
+import Anthropic from '@anthropic-ai/sdk';
+
 export default {
   async scheduled(ev, env, ctx) { ctx.waitUntil(autoSocial(env)); ctx.waitUntil(rebuildIfNewlyLive(env)); ctx.waitUntil(indieDaily(env).catch(() => { })) /* keeps Stay #1 and the weekly ranks moving with nobody on the site */ },
   async fetch(req, env, ctx) {
@@ -112,6 +114,9 @@ export default {
       if (!p.startsWith('/api/admin/')) return json({ error: 'Not found' }, 404);
       if (!(await authed(req, env))) return json({ error: 'Not logged in' }, 401);
       const body = req.method === 'POST' && !(req.headers.get('Content-Type') || '').startsWith('multipart') ? await req.json().catch(() => ({})) : null;
+
+      /* Studio comment writer: Claude reads the story and writes lines that fit it */
+      if (p === '/api/admin/comments' && req.method === 'POST') { const [d, st] = await aiComments(env, body || {}); return json(d, st) }
 
       /* posts */
       if (p === '/api/admin/posts' && req.method === 'GET') return json({ posts: await all(`SELECT ${LIST},p.status,p.social_fb,p.social_x FROM posts p LEFT JOIN authors a ON a.id=p.author_id ORDER BY COALESCE(p.published_at,p.updated_at) DESC`) });
@@ -460,3 +465,50 @@ async function sign(s, env) { const b = await crypto.subtle.sign('HMAC', await h
 async function same(a, b) { const [x, y] = await Promise.all([a, b].map(v => crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)))); const u = new Uint8Array(x), w = new Uint8Array(y); let d = 0; for (let i = 0; i < u.length; i++) d |= u[i] ^ w[i]; return d === 0 }
 async function authed(req, env) { const t = (req.headers.get('Authorization') || '').replace(/^Bearer /, ''), [exp, sig] = t.split('.'); if (!exp || !sig || +exp < Date.now()) return false; return same(sig, await sign(exp, env)) }
 
+
+/* ---------- Studio comment writer (Claude Haiku). The key lives in the ANTHROPIC_API_KEY secret. ---------- */
+const CMT_KEYS = ['good', 'bad', 'controversial', 'funny', 'to_somebody', 'questions'];
+const CMT_SCHEMA = { type: 'object', additionalProperties: false, required: CMT_KEYS, properties: Object.fromEntries(CMT_KEYS.map(k => [k, { type: 'array', items: { type: 'string' } }])) };
+const CMT_SYSTEM = `You write the comment section for a hip-hop and entertainment media page. The page owner posts a story or a new song and needs realistic audience comments about that exact post.
+
+Read the post first and work out what actually happened: who it is about, what they did or what happened to them, and what has not happened. Every comment must be true to that. If a game is delayed, nobody has played it. If someone was arrested, nobody says they were convicted. Never add facts, quotes, crimes, relationships or details that are not in the post.
+
+How the comments sound:
+- Like real people on Instagram and YouTube, each one a different person. Most type lowercase slang with loose grammar. Some type properly with full sentences. A few are one or two words. A few are long, two or three sentences.
+- React to specific things in the post: the names, the place, the numbers, what happened. Mention the person or title by name in some comments, not all of them. Never use @ handles or hashtags.
+- No emojis. They are added afterwards.
+- Never write like an ad, a press release or a review. No "masterpiece", "truly", "incredible talent", "kudos".
+- No two comments may share a phrase or an opening. Vary length, wording and angle every time.
+- Bad and controversial comments are opinions about the work or the situation. No slurs, no threats, no sexual comments, nothing about anyone's race, body or family, and no claims that someone committed a crime beyond what the post says.
+- If the post is about a death, an injury or another tragedy: every comment is respectful and sympathetic. Put them all in "good" and leave the other lists empty.
+
+Lists: "good" likes it or supports. "bad" dislikes it or is unimpressed. "controversial" is a hot take that starts an argument. "funny" is a joke about this post. "to_somebody" talks to a person: a friend, the artist, the page, or other commenters. "questions" asks something a reader of this post would really ask.`;
+async function aiComments(env, b) {
+  if (!env.ANTHROPIC_API_KEY) return [{ error: 'The AI key is not on the server yet.', setup: true }, 503];
+  const c = (v, n) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n);
+  const kind = c(b.kind, 40), head = c(b.headline, 300), cap = c(b.caption, 600), artist = c(b.artist, 80), song = c(b.song, 120), who = c(b.who, 80), each = Math.min(40, Math.max(8, +b.each || 25));
+  if (!head && !artist && !song) return [{ error: 'Type the subject first.' }, 400];
+  const post = b.from === 'drop'
+    ? `A new ${kind === 'beats' ? 'beat / instrumental' : kind === 'rnb' ? 'R&B song' : kind === 'album' ? 'album' : kind === 'video' ? 'music video' : 'rap song'} was just posted.\nArtist: ${artist || '(not given)'}\nTitle: ${song || '(not given)'}`
+    : `Kind of post: ${kind || 'news'}\nHeadline: ${head}${cap ? '\nCaption: ' + cap : ''}${who ? '\nMainly about: ' + who : ''}`;
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 1 });
+  try {
+    const r = await client.messages.create({
+      model: 'claude-haiku-5-5', max_tokens: 12000, system: CMT_SYSTEM,
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: CMT_SCHEMA } },
+      messages: [{ role: 'user', content: `${post}\n\nWrite ${each} comments for each list.` }],
+    });
+    if (r.stop_reason === 'refusal') return [{ error: 'The AI would not write comments for this post.' }, 422];
+    if (r.stop_reason === 'max_tokens') return [{ error: 'The AI ran out of room. Try again.' }, 502];
+    let d; try { d = JSON.parse(r.content.filter(x => x.type === 'text').map(x => x.text).join('')) } catch (e) { return [{ error: 'The AI answer could not be read. Try again.' }, 502] }
+    const tidy = a => [...new Set((Array.isArray(a) ? a : []).map(x => c(x, 260).replace(/^["'\-\s]+|["'\s]+$/g, '')).filter(x => x.length > 1 && !/[#@]/.test(x)))];
+    return [{ lines: { L: tidy(d.good), H: tidy(d.bad), S: tidy(d.controversial), F: tidy(d.funny), T: tidy(d.to_somebody), N: tidy(d.questions) }, tokens: { in: r.usage.input_tokens, out: r.usage.output_tokens } }, 200];
+  } catch (e) {
+    if (e instanceof Anthropic.AuthenticationError) return [{ error: 'The AI key on the server is not accepted. Check it and set it again.', setup: true }, 503];
+    if (e instanceof Anthropic.PermissionDeniedError) return [{ error: 'This AI key is not allowed to use the model.', setup: true }, 503];
+    if (e instanceof Anthropic.RateLimitError) return [{ error: 'The AI is busy. Wait a minute and try again.' }, 429];
+    if (e instanceof Anthropic.APIConnectionError) return [{ error: 'Could not reach the AI. Try again.' }, 502];
+    if (e instanceof Anthropic.APIError) return [{ error: 'The AI said no (' + e.status + '): ' + c(e.message, 160) }, 502];
+    throw e;
+  }
+}

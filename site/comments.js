@@ -1553,11 +1553,12 @@ function make(S,n,mix){const used=loadUsed(),sk=norm([S.topic,S.a,S.s,S.k].join(
  const hasF=S.f&&Object.keys(S.f).length>0,JOIN=[', ','. ',' and ',' plus ',' no lie ',', and ','. also '],fam=FAMILY(S.topic),CAP=sad?99:Math.max(3,Math.ceil(n/40)),GMAX=sad?2:1,dead=new Set();let tries=0;
  while(out.length<n&&tries++<n*400){let open=tones.filter(k=>got[k]<want[k]&&!dead.has(k));if(!open.length)open=tones.filter(k=>!dead.has(k)&&k!=='E');if(!open.length)break;
   const tone=pick(open);
+  if(tone==='E'&&S.only){dead.add('E');continue}
   if(tone==='E'){const e=emo(S),h=hash(sk+'|'+e);if(seen.has(e)||used.has(h)){if(++miss.E>400)dead.add('E');continue}seen.add(e);used.add(h);got.E++;out.push({t:e,tone:'E'});continue}
+  const bad=()=>{if(++miss[tone]>(S.only?300:2500))dead.add(tone)};
   let tpl,src='';const ex=extra[tone]||[],al=sad?[]:(ai[tone]||[]);
-  if(al.length&&R(.3)){tpl=pick(al);src='ai'}else if(!sad&&ex.length&&R(.12)){tpl=pick(ex);src='own'}
+  if(al.length&&(S.only||R(.55))){tpl=pick(al);src='ai'}else if(S.only){bad();continue}else if(!sad&&ex.length&&R(.12)){tpl=pick(ex);src='own'}
   else if(hasF&&FACT[sad?'sad':tone]&&R(.14)){tpl=pick(FACT[sad?'sad':tone]);src='fact'}else tpl=wpick(pool(S.topic,tone));
-  const bad=()=>{if(++miss[tone]>2500)dead.add(tone)};
   if(!tpl){bad();continue}const proper=tpl[0]==='^';
   let core=src==='ai'?tpl:fill(tpl,S);if(!core){bad();continue}if(src==='fact')src='';
   /* some people write more: two thoughts in one comment */
@@ -1589,21 +1590,16 @@ function whoOf(title){let t=String(title||'').replace(/^[^A-Za-z0-9$]*/,'').repl
 const names=s=>String(s||'').split(/\s*(?:,|&|\bx\b|\bft\.?|\bfeat\.?|\bfeaturing|\band\b|\bwith\b)\s*/i).map(x=>x.trim()).filter(Boolean);
 
 /* ------------------------------------------------ the small AI (optional): runs in this browser, no account, no limit */
-let ENG=null,ENGID='';
-const AIBAD=/\b(as an ai|here are|here's|sure|certainly|comment|delve|testament|vibrant|resonates?|truly|masterpiece|showcas|captivat|kudos|bravo|indeed|moreover|furthermore|absolutely|incredible|amazing|talented|kudos|hashtag|nigg\w*|bitch\w*|fuck\w*|shit\w*|hoe|hoes|fag\w*|retard\w*|rape\w*|kill yourself)\b|[#*"“”()\[\]]|^\W*$/i;
-async function aiLines(S,headline,st){if(!navigator.gpu)throw new Error('This browser cannot run the small AI (it needs WebGPU: use Chrome, Edge or Brave on a computer with a graphics card). The comments still work without it.');
- st('Loading the small AI…');const w=await import('https://esm.run/@mlc-ai/web-llm');
- if(!ENG){const have=w.prebuiltAppConfig.model_list.map(m=>m.model_id);ENGID=['Qwen2.5-1.5B-Instruct-q4f16_1-MLC','Llama-3.2-1B-Instruct-q4f16_1-MLC','Qwen2.5-0.5B-Instruct-q4f16_1-MLC','SmolLM2-360M-Instruct-q4f16_1-MLC'].find(x=>have.includes(x))||have.find(x=>/(1\.5B|1B|0\.5B).*Instruct/i.test(x));
-  if(!ENGID)throw new Error('No small model found');ENG=await w.CreateMLCEngine(ENGID,{initProgressCallback:p=>st('Getting the AI ready (first time is a big download, after that it is saved): '+esc(p.text||''))})}
- const sk=norm([S.topic,S.a,S.s,S.k].join('|')),o=AIL[sk]=AIL[sk]||{},sad=SAD(S.topic);
- const what=FAMILY(S.topic)==='music'?`a new ${S.topic==='rnb'?'R&B':'rap'} ${S.topic==='album'?'album':S.topic==='video'?'music video':'song'}${S.s?` called "${S.s}"`:''}${S.a?' by '+S.a:''}`:`this news: "${headline||S.a}"`;
- const moods=sad?{L:'sad and respectful, sending prayers'}:{L:'they love it',H:'they do not like it',S:'a controversial hot take that starts arguments',F:'a joke about it',N:'a short question about it'};
- for(const k of Object.keys(moods)){st('The AI is writing: '+moods[k]+'…');const eg=make({...S},6,{L:0,H:0,S:0,F:0,N:0,[k]:1}).map(x=>x.t.replace(/[^\x00-\x7F]+/g,'').trim()).filter(Boolean);
-  eg.forEach(()=>0);const r=await ENG.chat.completions.create({temperature:.7,top_p:.9,frequency_penalty:.4,max_tokens:420,messages:[{role:'system',content:'You write short social media comments exactly like real hip-hop fans type them: casual, lowercase, slang, blunt, no hashtags, no emojis, no quotes, no numbering. Never sound like an ad or a review. One comment per line.'},
-   {role:'user',content:`People are commenting on ${what}.\nMood: ${moods[k]}.\nWrite 14 different comments, 3 to 14 words each, that are about this exact subject.\nExamples of the style:\n${eg.join('\n')}`}]});
-  const L=String(r.choices[0].message.content||'').split('\n').map(x=>x.replace(/^[\s\-\*\d\.\)"'“”]+|["'“”\s]+$/g,'').trim()).filter(x=>x.length>=6&&x.length<=110&&x.split(/\s+/).length<=18&&!AIBAD.test(x));
-  o[k]=[...new Set((o[k]||[]).concat(L))]}
- return Object.values(o).reduce((a,x)=>a+x.length,0)}
+/* asks the site's server, where Claude reads the story and writes lines that fit what actually happened */
+async function aiLines(S,o,st){let tok='';try{tok=localStorage.getItem('rm_tok')||''}catch(e){}
+ if(!tok)throw new Error('Log in to the back office first (open admin.html in this browser), then come back and press it again.');
+ st('The AI is reading the story…');
+ const r=await fetch((window.RM_API||'')+'/api/admin/comments',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({from:o.from,kind:S.topic,headline:o.headline,caption:o.caption,artist:S.a+(S.a2?' ft. '+S.a2:''),song:S.s,who:S.a,each:30})}),d=await r.json().catch(()=>({}));
+ if(r.status===401)throw new Error('Your back office login ran out. Log in again at admin.html, then come back.');
+ if(r.status===404)throw new Error('The server update for the AI is not live yet.');
+ if(!r.ok)throw new Error(d.error||'The AI did not answer');
+ const sk=norm([S.topic,S.a,S.s,S.k].join('|')),t=AIL[sk]=AIL[sk]||{};let n=0;
+ Object.entries(d.lines||{}).forEach(([k,L])=>{t[k]=[...new Set((t[k]||[]).concat(L))];n+=L.length});return n}
 
 /* ------------------------------------------------ the tab */
 const NAMES={L:'GOOD',H:'BAD',S:'CONTROVERSIAL',F:'FUNNY',T:'TO SOMEBODY',E:'EMOJIS ONLY',N:'OTHER'},MK=['L','H','S','F','T','E','N'];
@@ -1624,7 +1620,7 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
  ${[['L','👍 GOOD',42],['H','👎 BAD',14],['S','🌶 CONTROVERSIAL',12],['F','😂 FUNNY',10],['T','💬 TO SOMEBODY',8],['E','🔥 EMOJIS ONLY',8],['N','❓ QUESTIONS + OTHER',6]].map(([k,n,d])=>`<div class="sl"><span>${n} <b data-pc="${k}"></b></span><input type="range" data-m="${k}" min="0" max="100" value="${st0['m'+k]==null?d:st0['m'+k]}"></div>`).join('')}
  <small id="cm-sad" hidden>Tragic news: every comment is respectful. No jokes, no hate, whatever the meter says.</small>
  <div class="cm-row"><b>HOW MANY</b><div class="seg"><button data-cn="50">50</button><button data-cn="100">100</button><button data-cn="300">300</button></div></div>
- <button id="cm-go" class="go">MAKE THE COMMENTS</button><button id="cm-all" class="go gr2">COPY ALL</button><button id="cm-ai" class="go gr2"${window.RM_CMT_AI?'':' hidden'}>🤖 ADD THE SMALL AI</button>
+ <button id="cm-go" class="go">MAKE THE COMMENTS</button><button id="cm-all" class="go gr2">COPY ALL</button><button id="cm-ai" class="go gr2">🤖 AI: READ THE STORY</button><label class="cm-only"><input type="checkbox" id="cm-only"> ONLY AI COMMENTS</label>
  <small id="cm-st">Nothing leaves this computer.</small></div>
  <div class="ctl" id="cm-bar" hidden><div class="seg" id="cm-f"></div><small>Click a comment to copy it. Copied ones go dim so you know which you used.</small></div>
  <div id="cm-list"></div>
@@ -1662,12 +1658,12 @@ function init(){const box=document.getElementById('t-comments');if(!box||box.dat
   else if(d.i!=null){const x=LIST[+d.i];await copy(x.t);x.done=1;b.classList.add('done');b.querySelector('u').textContent='COPIED ✓';toast('Copied')}});
  $$('[data-m]').forEach(i=>i.oninput=()=>{draw();save()});
  $('#cm-go').onclick=()=>{const S=subject();if(!S.a&&FAMILY(S.topic)==='music'){msg('<b class="cm-w">Type the artist name first.</b>');return}
-  const t0=performance.now(),L=make(S,V.n,mix());LIST.length=0;L.forEach(x=>LIST.push(x));filt='';show();
+  S.only=$('#cm-only').checked;const t0=performance.now(),L=make(S,V.n,mix());LIST.length=0;L.forEach(x=>LIST.push(x));filt='';show();
   msg(L.length<V.n?`<b class="cm-w">Made ${L.length}. That is every comment left for this subject without repeating a phrase: move the meter or add your own lines for more.</b>`:`Made ${L.length} new comments in ${Math.max(1,Math.round(performance.now()-t0))} ms. Press it again for a whole new batch.`+(S.f&&Object.keys(S.f).length?' Picked up from the story: '+esc(Object.entries(S.f).map(([k,v])=>k==='again'?'it happened again':k==='yrs'?v+' years':k==='age'?'age '+v:v).join(', '))+'.':''));
   $('#cm-list').scrollIntoView({behavior:'smooth',block:'start'})};
  $('#cm-all').onclick=async()=>{const L=LIST.filter(x=>!filt||x.tone===filt);if(!L.length){msg('Make the comments first.');return}await copy(L.map(x=>x.t).join('\n'));toast(L.length+' comments copied')};
  $('#cm-ai').onclick=async()=>{const b=$('#cm-ai');b.disabled=true;try{const S=subject();if(!S.a&&!$('#cmt').value){msg('<b class="cm-w">Type the subject first.</b>');b.disabled=false;return}
-   const n=await aiLines(S,V.from==='news'?$('#cmt').value:'',msg);msg(`The small AI wrote ${n} lines about this subject. Press MAKE to mix them in (they show an AI tag).`)}catch(e){msg('<b class="cm-w">'+esc(e.message||e)+'</b>')}b.disabled=false};
+   const n=await aiLines(S,{from:V.from,headline:V.from==='news'?$('#cmt').value:'',caption:V.from==='news'?val('ncap'):''},msg);msg(`The AI read the story and wrote ${n} comments about it. Press MAKE to mix them in (they show an AI tag), or tick ONLY AI COMMENTS first. Press the AI button again for ${n} more.`)}catch(e){msg('<b class="cm-w">'+esc(e.message||e)+'</b>')}b.disabled=false};
  $('#cm-own').value=LS('cmt_extra');$('#cm-own').oninput=()=>LS('cmt_extra',$('#cm-own').value);
  $('#cm-mem').onclick=()=>{USED=new Set();saveUsed();toast('Memory cleared')};
  const tabBtn=document.querySelector('[data-tab="comments"]');
@@ -1684,7 +1680,7 @@ const css=document.createElement('style');css.textContent=`#t-comments .cm-row{d
 .cm-c{display:flex;align-items:center;gap:10px;text-align:left;background:#141414;border:1px solid #2a2a2a;color:#fff;padding:10px 12px;font:15px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;min-height:44px}
 .cm-c:hover{border-color:#e11d2a}.cm-c span{flex:1;overflow-wrap:anywhere}.cm-c i{width:8px;height:8px;border-radius:50%;flex:none;background:#888}.cm-c.tL i{background:#2ecc71}.cm-c.tH i{background:#e11d2a}.cm-c.tS i{background:#f39c12}.cm-c.tF i{background:#4aa3ff}.cm-c.tT i{background:#b06cff}.cm-c.tE i{background:#ff7a1a}
 .cm-c u{text-decoration:none;font:800 10px Inter,sans-serif;letter-spacing:.12em;color:#888;flex:none}.cm-c em{font:800 9px Inter,sans-serif;letter-spacing:.1em;color:#111;background:#f39c12;padding:2px 5px;font-style:normal;flex:none}
-.cm-c.done{opacity:.35}.cm-w{color:#e8a33a}
+.cm-only{display:inline-flex;gap:6px;align-items:center;font:800 11px Inter,sans-serif;letter-spacing:.12em;color:#bbb;cursor:pointer}.cm-only input{accent-color:#e11d2a;width:16px;height:16px}.cm-c.done{opacity:.35}.cm-w{color:#e8a33a}
 .cm-own{margin:0 0 40px;color:#bbb;font:13px Inter,sans-serif}.cm-own summary{cursor:pointer;font:800 12px Inter,sans-serif;letter-spacing:.14em;color:#fff;padding:10px 0}.cm-own textarea{display:block;width:100%;min-height:120px;margin:10px 0;background:#0b0b0b;border:1px solid #333;color:#fff;padding:10px;font:14px system-ui,sans-serif;box-sizing:border-box}`;
 document.head.appendChild(css);
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',init);else init();
