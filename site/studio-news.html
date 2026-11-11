@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=14"></script><script src="hashtags.js?v=2"></script><script src="share.js?v=5"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=15"></script><script src="hashtags.js?v=2"></script><script src="share.js?v=5"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -83,7 +83,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <div id="t-news" hidden>
 <p class="sub">News, memes and viral posts: your video or photo fills the screen, the RAPAECHELON logo sits on a dark fade at the top, and your headline and caption sit on a fade at the bottom. 20 designs, each as a Story (9:16) or a Post (4:5).</p>
 <div class="ctl"><div class="cur">EDITING: <b id="ncn"></b> <span>(click any design below to pick it)</span></div>
-<div class="seg"><button data-nfit="mid" class="on">PHOTO IN MIDDLE</button><button data-nfit="full">FULL SCREEN</button><button data-nfit="whole">WHOLE PERSON</button></div><div class="seg"><button data-nsz="story" class="on">STORY 9:16</button><button data-nsz="post">POST 4:5</button></div><button id="nart" class="up gr">USE AN ARTICLE</button><label class="up">+ YOUR OWN PHOTO OR VIDEO<input type="file" id="nf" accept="image/*,video/*" hidden></label>
+<div class="seg"><button data-nfit="mid" class="on">PHOTO IN MIDDLE</button><button data-nfit="full">FULL SCREEN</button><button data-nfit="whole">WHOLE PERSON</button><button data-nfit="split">SPLIT SCREEN</button></div><div class="seg"><button data-nsz="story" class="on">STORY 9:16</button><button data-nsz="post">POST 4:5</button></div><button id="nart" class="up gr">USE AN ARTICLE</button><label class="up">+ YOUR OWN PHOTO OR VIDEO<input type="file" id="nf" accept="image/*,video/*" hidden></label>
 <input id="nt" class="tx" value="BREAKING: ARTIST DROPS SURPRISE ALBUM" placeholder="Title"><input id="ncap" class="tx" value="Fans are going crazy after the midnight release. Link in bio for the full story." placeholder="Caption"><input id="nk" class="tx" style="min-width:160px;flex:0" value="WORLD EXCLUSIVE" placeholder="Small top line"><input id="nn" class="tx" style="min-width:90px;flex:0" value="1M" placeholder="Big number">
 <div class="sl"><span>LEFT ↔ RIGHT</span><input type="range" id="nx" min="0" max="100" value="50"></div>
 <div class="sl"><span>UP ↕ DOWN</span><input type="range" id="ny" min="0" max="100" value="50"></div>
@@ -173,7 +173,8 @@ const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"
 const NH=()=>NSZ==='post'?1350:1920,P=()=>NSZ==='post';
 const M1=(i,st,ct)=>`<div class="md${ct?' ct':''}" data-n="${i}"${ct?' data-fit="contain"':''} style="${st}">${NM?(NMV?(NLIVE||!NPOSTER?`<video src="${NM}" ${NLIVE?'autoplay':'preload="metadata"'} muted loop playsinline></video>`:`<img src="${NPOSTER}">`):`<img src="${NM}">`):'<div class="ph">PHOTO / VIDEO</div>'}</div>`;
 /* MIDDLE: the photo sits between the logo and the words (faces stay clear), with a blurred copy of it filling the screen */
-const MEDIA=(i,st)=>st||NFIT==='full'?M1(i,st||'inset:0'):NFIT==='whole'?M1(i,'inset:-80px;filter:blur(36px) brightness(.5)')+M1(i,`left:0;right:0;top:${P()?150:200}px;bottom:${P()?230:330}px`,1):M1(i,'inset:-80px;filter:blur(36px) brightness(.55)')+M1(i,`left:0;right:0;top:${P()?200:290}px;height:${P()?560:900}px;box-shadow:0 30px 60px rgba(0,0,0,.5)`);
+const M2=st=>{const X=window.NX&&NX.m2;return `<div class="md" data-n2 style="${st}">${X?(X.video?`<video src="${X.url}" muted loop playsinline ${NLIVE?'autoplay':''}></video>`:`<img src="${X.url}">`):'<div class="ph">2ND PHOTO / VIDEO</div>'}</div>`};
+const MEDIA=(i,st)=>!st&&NFIT==='split'?M1(i,'left:0;top:0;bottom:0;width:50%')+M2('right:0;top:0;bottom:0;width:50%')+'<div style="position:absolute;left:calc(50% - 4px);top:0;bottom:0;width:8px;background:#e11d2a"></div>':st||NFIT==='full'?M1(i,st||'inset:0'):NFIT==='whole'?M1(i,'inset:-80px;filter:blur(36px) brightness(.5)')+M1(i,`left:0;right:0;top:${P()?150:200}px;bottom:${P()?230:330}px`,1):M1(i,'inset:-80px;filter:blur(36px) brightness(.55)')+M1(i,`left:0;right:0;top:${P()?200:290}px;height:${P()?560:900}px;box-shadow:0 30px 60px rgba(0,0,0,.5)`);
 const TOPF=(h,c)=>{if(NFIT==='whole')h=Math.round(h*.6);return `<div style="position:absolute;left:0;right:0;top:0;height:${h}px;background:linear-gradient(${c||'rgba(0,0,0,.95)'} 30%,transparent)"></div>`};
 const BOTF=(h,c)=>{if(NFIT==='whole')h=Math.round(h*.55);return `<div style="position:absolute;left:0;right:0;bottom:0;height:${h}px;background:linear-gradient(transparent,${c||'rgba(0,0,0,.96)'} 60%)"></div>`};
 const LG=(w)=>{w=w||(NFIT==='whole'?(P()?260:320):(P()?400:520));return `<img src="logo.webp" style="position:absolute;top:${NFIT==='whole'?(P()?30:50):(P()?40:60)}px;width:${w}px;left:calc(50% - ${w/2}px)">`};
@@ -191,7 +192,8 @@ const FM=i=>NFIT==='whole'?M1(i,'inset:-80px;filter:blur(36px) brightness(.5)')+
 const LGS=()=>`<img src="logo.webp" style="position:absolute;top:${P()?30:50}px;width:${P()?220:260}px;left:calc(50% - ${P()?110:130}px);filter:drop-shadow(0 3px 10px rgba(0,0,0,.6))">`;
 const MT=b=>Math.round(b*(P()?.85:1)*tk());
 const KF=(b,d,n)=>Math.round(b*Math.min(1,n/Math.max(1,(nk.value||d).length))),KV=d=>e(nk.value||d);
-const NT=()=>[
+const NT=()=>NT0().map(([n,d,f])=>[n,d,i=>f(i)+(window.NXover?NXover():'')]);
+const NT0=()=>[
 ['BREAKING STAMP','Huge rubber stamp across the picture',i=>`${MEDIA(i)}${BOTF(B(760))}${LG()}<div style="position:absolute;left:50%;top:${P()?560:820}px;transform:translate(-50%,-50%) rotate(-12deg);border:${P()?12:16}px solid #e11d2a;color:#e11d2a;font:400 ${KF(P()?150:190,'BREAKING',8)}px/1 Anton;padding:6px 36px;background:rgba(0,0,0,.25);white-space:nowrap">${KV('BREAKING')}</div>${TI(`left:50px;right:50px;bottom:${B(300)}px`,104)}${CA(`left:50px;right:50px;bottom:${B(110)}px`)}`],
 ['REPORTS SAY','Orange REPORTS label for news not confirmed yet',i=>`${MEDIA(i)}${TOPF(320)}${BOTF(B(820))}${LG()}<div style="position:absolute;left:50px;bottom:${B(540)}px;background:#f97316;color:#000;font:800 ${fs(36)}px Inter;letter-spacing:.2em;padding:10px 22px">REPORTS:</div>${TI(`left:50px;right:50px;bottom:${B(300)}px`,108)}${CA(`left:50px;right:50px;bottom:${B(110)}px`)}<div style="position:absolute;right:50px;bottom:${B(560)}px;font:700 ${fs(24)}px Inter;color:#f97316;letter-spacing:.15em">NOT CONFIRMED</div>`],
 ['SPLIT REPORT','Video on the left, red headline block on the right',i=>`${M1(i,'left:0;top:0;bottom:0;width:56%')}<div style="position:absolute;right:0;top:0;bottom:0;width:44%;background:#e11d2a"></div><img src="logo.webp" style="position:absolute;right:40px;top:${P()?40:70}px;width:${P()?260:320}px">${TI(`right:40px;width:38%;top:50%;transform:translateY(-50%)`,96)}${CA(`right:40px;width:38%;bottom:${B(90)}px`,30)}`],
@@ -268,4 +270,4 @@ nart.onclick=async()=>{const API=window.RM_API||window.API||'';const m=document.
    m.remove();ndraw()})};
  show('');m.querySelector('input').oninput=ev=>show(ev.target.value)};
 stuInit();openTab();
-</script><script src="comments.js?v=5"></script></body></html>
+</script><script src="comments.js?v=5"></script><script src="extras.js?v=1"></script></body></html>

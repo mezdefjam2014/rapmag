@@ -29,6 +29,27 @@ export default {
         if (range && obj.range) { const o = obj.range.offset || 0, l = obj.range.length ?? obj.size - o; h.set('Content-Range', `bytes ${o}-${o + l - 1}/${obj.size}`); h.set('Content-Length', l); return new Response(obj.body, { status: 206, headers: h }) }
         return new Response(obj.body, { headers: h });
       }
+      /* ---------- Studio "story from a link": reads a news page's title, summary and photo.
+         Only for our own site (Origin check), only public http(s) hosts, small reads. ---------- */
+      if ((p === '/api/og' || p === '/api/og/img') && req.method === 'GET') {
+        if (!allowed.includes(origin) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return json({ error: 'not allowed' }, 403);
+        let t; try { t = new URL(url.searchParams.get('url') || '') } catch (e) { return json({ error: 'bad link' }, 400) }
+        if (!/^https?:$/.test(t.protocol) || /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|\[)/.test(t.hostname) || !t.hostname.includes('.')) return json({ error: 'bad link' }, 400);
+        const r = await fetch(t.toString(), { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RapEchelonStudio/1.0)', 'Accept': p === '/api/og' ? 'text/html' : 'image/*' }, redirect: 'follow', cf: { cacheTtl: 600 } });
+        if (!r.ok) return json({ error: 'that site said ' + r.status }, 502);
+        if (p === '/api/og/img') {
+          const ct = r.headers.get('Content-Type') || '', n = +(r.headers.get('Content-Length') || 0);
+          if (!ct.startsWith('image/') || n > 15e6) return json({ error: 'not a picture' }, 400);
+          return new Response(r.body, { headers: { 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600', ...cors } });
+        }
+        const html = (await r.text()).slice(0, 400000);
+        const meta = k => { const m = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${k}["'][^>]*>`, 'i')); const c = m && m[0].match(/content=["']([^"']*)["']/i); return c ? c[1] : '' };
+        const dec = s => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d)).trim();
+        let title = dec(meta('og:title') || meta('twitter:title') || ((html.match(/<title[^>]*>([^<]*)/i) || [])[1] || ''));
+        title = title.replace(/\s+[|\-–—]\s+[^|\-–—]{2,40}$/, '');
+        let img = dec(meta('og:image') || meta('twitter:image') || ''); if (img) try { img = new URL(img, t).toString() } catch (e) { img = '' }
+        return json({ title, desc: dec(meta('og:description') || meta('description') || ''), image: img });
+      }
       /* ---------- public ---------- */
       if (p === '/api/posts' && req.method === 'GET') {
         const cat = url.searchParams.get('cat'), au = url.searchParams.get('author'), q = (url.searchParams.get('q') || '').trim(), lim = Math.min(50, +url.searchParams.get('limit') || 24), off = Math.max(0, +url.searchParams.get('offset') || 0);
