@@ -58,8 +58,8 @@ window.previewDesign=(html,H,o={})=>{const m=document.createElement('div');m.cla
 function box(title){const m=document.createElement('div');m.className='rb';m.innerHTML=`<div class="rb-pn"><h3>${title}</h3><div class="rb-bar"><i></i></div><p class="rb-st">Getting ready…</p><div class="rb-out"></div><button class="rb-x">CLOSE</button></div>`;document.body.appendChild(m);
  const B={m,stopped:0,st:t=>m.querySelector('.rb-st').textContent=t,bar:k=>m.querySelector('.rb-bar i').style.width=Math.round(k*100)+'%',out:h=>m.querySelector('.rb-out').innerHTML=h};m.querySelector('.rb-x').onclick=()=>{B.stopped=1;m.remove()};return B}
 /* draw an image/video into a box like object-fit:cover with the user's position and zoom */
-function cover(ctx,src,r,S,filter){const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height;if(!sw||!sh)return;
- const k=Math.max(r.w/sw,r.h/sh),dw=sw*k,dh=sh*k,px=(S.x??50)/100,py=(S.y??50)/100,z=S.z||1;
+function cover(ctx,src,r,S,filter,fit){const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height;if(!sw||!sh)return;
+ const k=(fit==='contain'?Math.min:Math.max)(r.w/sw,r.h/sh),dw=sw*k,dh=sh*k,px=(S.x??50)/100,py=(S.y??50)/100,z=S.z||1;
  ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();if(filter)ctx.filter=filter;
  const ox=r.x+(r.w-dw)*px,oy=r.y+(r.h-dh)*py,cx=r.x+r.w*px,cy=r.y+r.h*py;ctx.translate(cx,cy);ctx.scale(z,z);ctx.translate(-cx,-cy);ctx.drawImage(src,ox,oy,dw,dh);ctx.restore()}
 /* the audio wave, drawn live from the music */
@@ -72,7 +72,7 @@ async function core(html,H,o,B){await lib();B.st((o.label||'')+'Laying out the d
  try{if(o.place)o.place(off);
   await Promise.all([...off.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));await document.fonts.ready;
   const root=off.firstElementChild,R0=root.getBoundingClientRect(),rect=el=>{const r=el.getBoundingClientRect();return {x:r.left-R0.left,y:r.top-R0.top,w:r.width,h:r.height}};
-  medias=[...root.querySelectorAll('.md')].map(el=>({...rect(el),filter:el.style.filter||'',el}));
+  medias=[...root.querySelectorAll('.md')].map(el=>({...rect(el),filter:el.style.filter||'',fit:el.dataset.fit||'',el}));
   waves=[...root.querySelectorAll('.wave')].map(el=>({...rect(el),n:el.children.length,color:getComputedStyle(el).color,el}));
   medias.forEach(m=>{m.el.style.visibility='hidden'});root.style.background='transparent';waves.forEach(w=>{w.el.style.visibility='hidden'});root.querySelectorAll('video').forEach(v=>v.remove());
   root.querySelectorAll('*').forEach(e=>{e.style.animation='none'});
@@ -80,7 +80,7 @@ async function core(html,H,o,B){await lib();B.st((o.label||'')+'Laying out the d
  const cv=document.createElement('canvas');cv.width=1080;cv.height=H;const ctx=cv.getContext('2d');
  let img=null,vid=null;if(o.media&&o.media.url){if(o.media.video){vid=document.createElement('video');vid.src=o.media.url;vid.playsInline=true;vid.preload='auto';await new Promise((ok,no)=>{vid.onloadedmetadata=ok;vid.onerror=()=>no(new Error('Could not read that video'))})}
   else{img=new Image();img.src=o.media.url;await img.decode()}}
- const frame=()=>{ctx.fillStyle='#000';ctx.fillRect(0,0,1080,H);medias.forEach(m=>{const src=vid||img;if(src)cover(ctx,src,m,o.S||{},m.filter)});ctx.drawImage(overlay,0,0)};
+ const frame=()=>{ctx.fillStyle='#000';ctx.fillRect(0,0,1080,H);medias.forEach(m=>{const src=vid||img;if(src)cover(ctx,src,m,m.fit?{x:50,y:50,z:1}:(o.S||{}),m.filter,m.fit)});ctx.drawImage(overlay,0,0)};
  if(o.still||(!vid&&!o.audio)){frame();return {blob:await new Promise(r=>cv.toBlob(r,'image/jpeg',.93)),ext:'jpg'}}
  /* sound: from the audio file, or from the video's own sound */
  const AC=new (window.AudioContext||window.webkitAudioContext)(),dest=AC.createMediaStreamDestination(),an=AC.createAnalyser();an.fftSize=256;an.smoothingTimeConstant=.75;const data=new Uint8Array(an.frequencyBinCount);an.connect(dest);

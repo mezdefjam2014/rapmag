@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=13"></script><script src="hashtags.js?v=2"></script><script src="share.js?v=5"></script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>RAPAECHELON Studio</title><script src="config.js?v=3"></script><script src="studio.js?v=14"></script><script src="hashtags.js?v=2"></script><script src="share.js?v=5"></script>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;600;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{--red:#e11d2a}
@@ -37,7 +37,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 .tabs{display:flex;gap:6px;margin:6px 0 18px}.tabs button{background:#1a1a1a;color:#bbb;border:1px solid #333;font:400 26px Anton,sans-serif;letter-spacing:.04em;padding:10px 26px;cursor:pointer}.tabs button.on{background:var(--red);color:#fff;border-color:var(--red)}
 .tx{background:#0b0b0b;border:1px solid #333;color:#fff;font:600 13px Inter;padding:11px 12px;min-width:260px;flex:1}.rs{background:#222;color:#fff;border:1px solid #333;font:800 12px Inter;letter-spacing:.12em;padding:11px 14px;cursor:pointer}
 .md{position:absolute;overflow:hidden;background:repeating-linear-gradient(45deg,#2a2a2a 0 40px,#333 40px 80px)}.md img,.md video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.md .ph{position:absolute;inset:0;display:grid;place-items:center;font:800 50px Inter;letter-spacing:.25em;color:#777}
+.md.ct{background:none}.md.ct img,.md.ct video{object-fit:contain}.md .ph{position:absolute;inset:0;display:grid;place-items:center;font:800 50px Inter;letter-spacing:.25em;color:#777}
 .bob{animation:bb 1s ease-in-out infinite alternate}@keyframes bb{to{transform:translateY(-14px)}}
 @keyframes tk{to{transform:translateX(-50%)}}
 .go{background:#e11d2a;color:#fff;border:0;font:400 24px Anton,sans-serif;letter-spacing:.06em;padding:10px 26px;cursor:pointer}.up.gr{background:#333;color:#fff;border:0;cursor:pointer}
@@ -83,7 +83,7 @@ h1{font:400 44px Anton,sans-serif;margin:0 0 4px;letter-spacing:.02em}h1 span{co
 <div id="t-news" hidden>
 <p class="sub">News, memes and viral posts: your video or photo fills the screen, the RAPAECHELON logo sits on a dark fade at the top, and your headline and caption sit on a fade at the bottom. 20 designs, each as a Story (9:16) or a Post (4:5).</p>
 <div class="ctl"><div class="cur">EDITING: <b id="ncn"></b> <span>(click any design below to pick it)</span></div>
-<div class="seg"><button data-nfit="mid" class="on">PHOTO IN MIDDLE</button><button data-nfit="full">FULL SCREEN</button></div><div class="seg"><button data-nsz="story" class="on">STORY 9:16</button><button data-nsz="post">POST 4:5</button></div><button id="nart" class="up gr">USE AN ARTICLE</button><label class="up">+ YOUR OWN PHOTO OR VIDEO<input type="file" id="nf" accept="image/*,video/*" hidden></label>
+<div class="seg"><button data-nfit="mid" class="on">PHOTO IN MIDDLE</button><button data-nfit="full">FULL SCREEN</button><button data-nfit="whole">WHOLE PERSON</button></div><div class="seg"><button data-nsz="story" class="on">STORY 9:16</button><button data-nsz="post">POST 4:5</button></div><button id="nart" class="up gr">USE AN ARTICLE</button><label class="up">+ YOUR OWN PHOTO OR VIDEO<input type="file" id="nf" accept="image/*,video/*" hidden></label>
 <input id="nt" class="tx" value="BREAKING: ARTIST DROPS SURPRISE ALBUM" placeholder="Title"><input id="ncap" class="tx" value="Fans are going crazy after the midnight release. Link in bio for the full story." placeholder="Caption"><input id="nk" class="tx" style="min-width:160px;flex:0" value="WORLD EXCLUSIVE" placeholder="Small top line"><input id="nn" class="tx" style="min-width:90px;flex:0" value="1M" placeholder="Big number">
 <div class="sl"><span>LEFT ↔ RIGHT</span><input type="range" id="nx" min="0" max="100" value="50"></div>
 <div class="sl"><span>UP ↕ DOWN</span><input type="range" id="ny" min="0" max="100" value="50"></div>
@@ -119,7 +119,7 @@ const TT=()=>[
 .tabs{display:flex;gap:6px;margin:6px 0 18px}.tabs button{background:#1a1a1a;color:#bbb;border:1px solid #333;font:400 26px Anton,sans-serif;letter-spacing:.04em;padding:10px 26px;cursor:pointer}.tabs button.on{background:var(--red);color:#fff;border-color:var(--red)}
 .tx{background:#0b0b0b;border:1px solid #333;color:#fff;font:600 13px Inter;padding:11px 12px;min-width:260px;flex:1}.rs{background:#222;color:#fff;border:1px solid #333;font:800 12px Inter;letter-spacing:.12em;padding:11px 14px;cursor:pointer}
 .md{position:absolute;overflow:hidden;background:repeating-linear-gradient(45deg,#2a2a2a 0 40px,#333 40px 80px)}.md img,.md video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.md .ph{position:absolute;inset:0;display:grid;place-items:center;font:800 50px Inter;letter-spacing:.25em;color:#777}
+.md.ct{background:none}.md.ct img,.md.ct video{object-fit:contain}.md .ph{position:absolute;inset:0;display:grid;place-items:center;font:800 50px Inter;letter-spacing:.25em;color:#777}
 @keyframes tk{to{transform:translateX(-50%)}}
 </style>`],
 ['POLAROID STACK','Photos tossed on a table',`<div style="position:absolute;inset:0;background:#d8d2c4"></div>${LOGO(100)}<div style="position:absolute;left:120px;top:520px;width:560px;height:660px;background:#fff;padding:30px 30px 120px;rotate:-6deg;box-shadow:0 20px 50px rgba(0,0,0,.35)"><div class="cover" style="position:relative;width:100%;height:100%"></div></div><div style="position:absolute;left:420px;top:700px;width:540px;height:640px;background:#fff;padding:30px 30px 120px;rotate:5deg;box-shadow:0 20px 50px rgba(0,0,0,.35)"><div class="vid" style="position:relative;width:100%;height:100%;font-size:28px">CLIP</div></div><div class="big" style="top:1460px;color:#111">SONG NAME</div><div class="art" style="left:0;right:0;text-align:center;top:1610px;color:var(--red)">ARTIST NAME</div>`],
@@ -152,22 +152,25 @@ const openTab=()=>{let t=/studio-comments/.test(location.pathname)?'comments':/s
 let NLIVE=0,NPOSTER='';let NM=null,NMV=0,NSZ='story',NFIT='mid';const NS={};let NSEL=0;const ns=i=>NS[i]||(NS[i]={x:50,y:30,z:1});
 const e=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 const NH=()=>NSZ==='post'?1350:1920,P=()=>NSZ==='post';
-const M1=(i,st)=>`<div class="md" data-n="${i}" style="${st}">${NM?(NMV?(NLIVE||!NPOSTER?`<video src="${NM}" ${NLIVE?'autoplay':'preload="metadata"'} muted loop playsinline></video>`:`<img src="${NPOSTER}">`):`<img src="${NM}">`):'<div class="ph">PHOTO / VIDEO</div>'}</div>`;
+const M1=(i,st,ct)=>`<div class="md${ct?' ct':''}" data-n="${i}"${ct?' data-fit="contain"':''} style="${st}">${NM?(NMV?(NLIVE||!NPOSTER?`<video src="${NM}" ${NLIVE?'autoplay':'preload="metadata"'} muted loop playsinline></video>`:`<img src="${NPOSTER}">`):`<img src="${NM}">`):'<div class="ph">PHOTO / VIDEO</div>'}</div>`;
 /* MIDDLE: the photo sits between the logo and the words (faces stay clear), with a blurred copy of it filling the screen */
-const MEDIA=(i,st)=>st||NFIT==='full'?M1(i,st||'inset:0'):M1(i,'inset:-80px;filter:blur(36px) brightness(.55)')+M1(i,`left:0;right:0;top:${P()?200:290}px;height:${P()?560:900}px;box-shadow:0 30px 60px rgba(0,0,0,.5)`);
-const TOPF=(h,c)=>`<div style="position:absolute;left:0;right:0;top:0;height:${h}px;background:linear-gradient(${c||'rgba(0,0,0,.95)'} 30%,transparent)"></div>`;
-const BOTF=(h,c)=>`<div style="position:absolute;left:0;right:0;bottom:0;height:${h}px;background:linear-gradient(transparent,${c||'rgba(0,0,0,.96)'} 60%)"></div>`;
-const LG=(w)=>`<img src="logo.webp" style="position:absolute;top:${P()?40:60}px;width:${w||(P()?400:520)}px;left:calc(50% - ${(w||(P()?400:520))/2}px)">`;
+const MEDIA=(i,st)=>st||NFIT==='full'?M1(i,st||'inset:0'):NFIT==='whole'?M1(i,'inset:-80px;filter:blur(36px) brightness(.5)')+M1(i,`left:0;right:0;top:${P()?150:200}px;bottom:${P()?230:330}px`,1):M1(i,'inset:-80px;filter:blur(36px) brightness(.55)')+M1(i,`left:0;right:0;top:${P()?200:290}px;height:${P()?560:900}px;box-shadow:0 30px 60px rgba(0,0,0,.5)`);
+const TOPF=(h,c)=>{if(NFIT==='whole')h=Math.round(h*.6);return `<div style="position:absolute;left:0;right:0;top:0;height:${h}px;background:linear-gradient(${c||'rgba(0,0,0,.95)'} 30%,transparent)"></div>`};
+const BOTF=(h,c)=>{if(NFIT==='whole')h=Math.round(h*.55);return `<div style="position:absolute;left:0;right:0;bottom:0;height:${h}px;background:linear-gradient(transparent,${c||'rgba(0,0,0,.96)'} 60%)"></div>`};
+const LG=(w)=>{w=w||(NFIT==='whole'?(P()?260:320):(P()?400:520));return `<img src="logo.webp" style="position:absolute;top:${NFIT==='whole'?(P()?30:50):(P()?40:60)}px;width:${w}px;left:calc(50% - ${w/2}px)">`};
 const T=()=>e(nt.value),C=()=>e(ncap.value);
 const red1=()=>{const w=T().split(' ');return `<span style="color:#e11d2a">${w[0]}</span> ${w.slice(1).join(' ')}`};
-const fs=(b)=>Math.round(b*(P()?.82:1)); /* post is shorter, so text is a bit smaller */
+const fs=(b)=>Math.round(b*(P()?.82:1)*(NFIT==='whole'?.6:1)); /* post is shorter, so text is a bit smaller */
 /* long headlines and captions shrink to fit, so they never run into each other */
 const tk=()=>Math.max(.55,Math.min(1,Math.sqrt(48/Math.max(1,T().length)))),ck=()=>Math.max(.6,Math.min(1,Math.sqrt(95/Math.max(1,C().length))));
 const tf=b=>Math.round(fs(b)*tk()),cf=b=>Math.round(fs(b)*ck());
 const TI=(st,f,x)=>`<div style="position:absolute;${st};font:400 ${tf(f)}px/0.95 Anton;text-transform:uppercase;color:#fff;${x||''}">${T()}</div>`;
 const CA=(st,f,x)=>`<div style="position:absolute;${st};font:600 ${cf(f||38)}px/1.3 Inter;color:#fff;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;${x||''}">${C()}</div>`;
-const B=(px)=>P()?Math.round(px*.75):px; /* bottom spacing */
+const B=(px)=>Math.round((P()?px*.75:px)*(NFIT==='whole'?.45:1)); /* bottom spacing */
 const NT=()=>[
+['LOWER THIRD','Small headline at the bottom, person stays in view',i=>`${MEDIA(i)}${LG()}<div style="position:absolute;left:0;right:0;bottom:0;height:${P()?260:360}px;background:linear-gradient(transparent,rgba(0,0,0,.92) 45%)"></div><div style="position:absolute;left:50px;bottom:${P()?150:200}px;background:#e11d2a;font:800 ${P()?24:28}px Inter;letter-spacing:.2em;padding:6px 16px">${e(nk.value||'NEWS')}</div><div style="position:absolute;left:50px;right:50px;bottom:${P()?50:80}px;font:400 ${Math.round((P()?54:64)*tk())}px/1 Anton;text-transform:uppercase;color:#fff">${T()}</div>`],
+['TOP + BOTTOM','Headline up top, caption at the bottom',i=>`${MEDIA(i)}<div style="position:absolute;left:0;right:0;top:0;height:${P()?230:300}px;background:linear-gradient(rgba(0,0,0,.95) 55%,transparent)"></div><img src="logo.webp" style="position:absolute;top:24px;left:40px;width:${P()?190:230}px">${TI(`left:40px;right:40px;top:${P()?100:120}px`,Math.round((P()?70:80)/(NFIT==='whole'?.6:1)))}<div style="position:absolute;left:0;right:0;bottom:0;height:${P()?200:260}px;background:linear-gradient(transparent,rgba(0,0,0,.9) 50%)"></div>${CA(`left:40px;right:40px;bottom:${P()?40:60}px`,Math.round(34/(NFIT==='whole'?.6:1)))}`],
+['SLIM BAR','Thin red news bar, nothing else',i=>`${MEDIA(i)}<img src="logo.webp" style="position:absolute;top:30px;right:40px;width:${P()?170:210}px">${'<div style="position:absolute;left:30px;right:30px;bottom:'+(P()?60:90)+'px;background:rgba(0,0,0,.85);border-left:12px solid #e11d2a;padding:20px 26px">'}<div style="font:400 ${Math.round((P()?46:54)*tk())}px/1.02 Anton;text-transform:uppercase;color:#fff">${T()}</div></div>`],
 ['HEADLINE ONLY','One giant headline',i=>`${MEDIA(i)}${TOPF(340)}${BOTF(B(820))}${LG()}${TI(`left:60px;right:60px;bottom:${B(140)}px`,150)}`],
 ['CLASSIC','Headline and caption, centered',i=>`${MEDIA(i)}${TOPF(340)}${BOTF(B(760))}${LG()}${TI(`left:60px;right:60px;bottom:${B(300)}px;text-align:center`,108)}${CA(`left:80px;right:80px;bottom:${B(110)}px;text-align:center`)}`],
 ['HOT TAKE','Question to get comments',i=>`${MEDIA(i)}${TOPF(340)}${BOTF(B(820))}${LG()}${TI(`left:60px;right:60px;bottom:${B(420)}px;text-align:center`,100)}<div style="position:absolute;left:0;right:0;bottom:${B(270)}px;text-align:center"><span style="display:inline-block;background:#e11d2a;font:800 ${fs(36)}px Inter;letter-spacing:.18em;padding:14px 28px;border-radius:60px">AGREE OR NAH? COMMENT 👇</span></div>${CA(`left:80px;right:80px;bottom:${B(100)}px;text-align:center`,34)}`],
