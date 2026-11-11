@@ -91,14 +91,19 @@ async function core(html,H,o,B){await lib();B.st((o.label||'')+'Laying out the d
   const type=pickType();if(!type)throw new Error('This browser cannot record video. Use Chrome or Edge.');
   /* quality: as high as fits under 25 MB for this length */
   const vbps=Math.max(1.5e6,Math.min(8e6,Math.floor((MAXMB*8e6)/dur)-160e3));
-  const stream=new MediaStream([...cv.captureStream(30).getVideoTracks(),...dest.stream.getAudioTracks()]);
+  /* frames are pushed by hand (requestFrame) on a steady clock that keeps running when the tab is in the background,
+     so the picture never freezes while the sound carries on */
+  const vtr=cv.captureStream(0).getVideoTracks()[0],push=()=>{try{vtr.requestFrame()}catch(e){}};
+  const stream=new MediaStream([vtr,...dest.stream.getAudioTracks()]);
   const rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:vbps,audioBitsPerSecond:128000});const chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-  frame();await AC.resume();rec.start(500);if(srcNode)srcNode.start(0,start,dur);if(vid)await vid.play();const t0=performance.now();
-  B.st((o.label||'')+'Recording… keep this tab open (it takes as long as the clip).');
-  await new Promise(res=>{const tick=()=>{if(B.stopped)return res();const t=(performance.now()-t0)/1000;
+  frame();push();await AC.resume();rec.start(1000);if(srcNode)srcNode.start(0,start,dur);if(vid)await vid.play();const a0=AC.currentTime;
+  B.st((o.label||'')+'Recording… it takes as long as the clip.');
+  const clk=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),1000/30)'],{type:'text/javascript'})));
+  await new Promise(res=>{let busy=false;clk.onmessage=()=>{if(busy)return;busy=true;try{if(B.stopped)return res();const t=AC.currentTime-a0;
    if(vid&&!o.audio&&vid.currentTime>=start+dur-.03)vid.pause();
    if(vid&&o.audio&&(vid.ended||vid.currentTime>=vid.duration-.05)){vid.currentTime=vs;vid.play()} /* a short video loops under a longer song */
-   frame();waves.forEach(w=>wave(ctx,w,an,data));B.bar(Math.min(1,((o.done||0)+Math.min(1,t/dur))/(o.total||1)));if(t>=dur)return res();requestAnimationFrame(tick)};tick()});
+   frame();waves.forEach(w=>wave(ctx,w,an,data));push();B.bar(Math.min(1,((o.done||0)+Math.min(1,t/dur))/(o.total||1)));if(t>=dur)res()}finally{busy=false}}});
+  clk.terminate();frame();push();await new Promise(r=>setTimeout(r,150));
   rec.stop();await new Promise(r=>rec.onstop=r);
   return {blob:new Blob(chunks,{type:type.split(';')[0]}),ext:type.includes('mp4')?'mp4':'webm'}}
  finally{if(vid){vid.pause();vid.removeAttribute('src');vid.load()}if(srcNode)try{srcNode.stop()}catch(e){};AC.close()}}
@@ -109,6 +114,7 @@ window.renderDesign=async(html,H,o)=>{const B=box(o.still||(!o.audio&&!(o.media&
  try{const r=await core(html,H,o,B);if(B.stopped)return;const mb=(r.blob.size/1048576).toFixed(1),u=URL.createObjectURL(r.blob),name=`rapaechelon-${slug(o.name)}.${r.ext}`;B.bar(1);
   B.st(`Done: ${mb} MB${r.blob.size>25*1048576?' (over 25 MB, use a shorter cut)':''}.`);
   B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">✉ SHARE / EMAIL</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
+  if(window.HASH)try{HASH.panel(B.m.querySelector('.rb-act').parentNode,o.ctx||{})}catch(e){}
   B.m.querySelector('.rb-ig').onclick=()=>window.SHARE?SHARE.panel(r.blob,{h:H,name,ctx:o.ctx||{}}):say('The share box did not load. Refresh the page.');
   if(o.share)B.m.querySelector('.rb-ig').click(); /* RENDER + EMAIL: straight to the share box when it is done */
   B.m.querySelector('.rb-sh').onclick=async()=>{const f=new File([r.blob],name,{type:r.blob.type});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]}).catch(()=>{});else B.st('Sharing works on phones. On a computer, click SAVE.')}}
