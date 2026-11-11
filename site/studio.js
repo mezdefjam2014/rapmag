@@ -15,7 +15,7 @@ window.stuPoster=url=>new Promise(res=>{const v=document.createElement('video');
 const load=(src,ok,no)=>{const x=document.createElement('script');x.src=src;x.onload=ok;x.onerror=no;document.head.appendChild(x)};
 const lib=()=>window.htmlToImage?Promise.resolve():new Promise((ok,no)=>load('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js',ok,no));
 const zipLib=()=>window.JSZip?Promise.resolve():new Promise((ok,no)=>load('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',ok,no));
-const pickType=()=>['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4','video/webm;codecs=vp9,opus','video/webm'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
+const pickType=()=>['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
 /* the fonts have to be packed into the picture, or the video falls back to a plain font */
 let FONTCSS=null;async function fontCSS(){if(FONTCSS!=null)return FONTCSS;try{const l=[...document.querySelectorAll('link[href*="fonts.googleapis"]')].map(x=>x.href);let out='';
  for(const h of l){const css=await fetch(h).then(r=>r.text());const blocks=css.split('/*').filter(b=>/^\s*latin\s*\*\//.test(b)).map(b=>b.replace(/^\s*latin\s*\*\//,''));
@@ -88,7 +88,7 @@ async function core(html,H,o,B){await lib();B.st((o.label||'')+'Laying out the d
  try{if(o.audio){B.st((o.label||'')+'Reading the song…');const buf=await AC.decodeAudioData(await o.audio.file.arrayBuffer());start=Math.min(start,Math.max(0,buf.duration-1));dur=Math.min(dur,buf.duration-start);srcNode=AC.createBufferSource();srcNode.buffer=buf;srcNode.connect(an)}
   else if(vid){start=Math.min(start,Math.max(0,vid.duration-.5));dur=Math.min(dur,vid.duration-start);AC.createMediaElementSource(vid).connect(an)}
   let vs=start;if(vid){if(o.audio){vid.muted=true;vs=Math.min(o.vstart||0,Math.max(0,vid.duration-.5))}vid.currentTime=vs;await new Promise(r=>vid.onseeked=r)}
-  const type=pickType();if(!type)throw new Error('This browser cannot record video. Use Chrome or Edge.');
+  const type=pickType();if(!type)throw new Error('This browser cannot make MP4 videos. Open the Studio in Chrome or Edge (up to date).');
   /* quality: as high as fits under 25 MB for this length */
   const vbps=Math.max(1.5e6,Math.min(8e6,Math.floor((MAXMB*8e6)/dur)-160e3));
   /* frames are pushed by hand (requestFrame) on a steady clock that keeps running when the tab is in the background,
@@ -113,7 +113,7 @@ const resHTML=(r,u)=>r.ext==='jpg'?`<img src="${u}">`:`<video src="${u}" control
 window.renderDesign=async(html,H,o)=>{const B=box(o.still||(!o.audio&&!(o.media&&o.media.video))?'MAKING YOUR PICTURE':'MAKING YOUR VIDEO');
  try{const r=await core(html,H,o,B);if(B.stopped)return;const mb=(r.blob.size/1048576).toFixed(1),u=URL.createObjectURL(r.blob),name=`rapaechelon-${slug(o.name)}.${r.ext}`;B.bar(1);
   B.st(`Done: ${mb} MB${r.blob.size>25*1048576?' (over 25 MB, use a shorter cut)':''}.`);
-  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">✉ SHARE / EMAIL</button></div>${r.ext==='webm'?'<small>This browser saves WEBM. Use Chrome or Edge for MP4.</small>':''}`);
+  B.out(`${resHTML(r,u)}<div class="rb-act"><a class="rb-dl" href="${u}" download="${name}">SAVE ${r.ext==='jpg'?'PICTURE':'VIDEO'}</a><button class="rb-sh">SHARE</button><button class="rb-ig">✉ SHARE / EMAIL</button></div>`);
   if(window.HASH)try{HASH.panel(B.m.querySelector('.rb-act').parentNode,o.ctx||{})}catch(e){}
   B.m.querySelector('.rb-ig').onclick=()=>window.SHARE?SHARE.panel(r.blob,{h:H,name,ctx:o.ctx||{}}):say('The share box did not load. Refresh the page.');
   if(o.share)B.m.querySelector('.rb-ig').click(); /* RENDER + EMAIL: straight to the share box when it is done */
